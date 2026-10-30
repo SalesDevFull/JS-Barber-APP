@@ -70,6 +70,10 @@ create table if not exists public.registros (
 );
 create index if not exists registros_colecao_idx on public.registros (barbearia_id, colecao);
 
+-- Qual barbeiro da agenda é cada conta (o barbeiro só vê as próprias comandas e ganhos).
+alter table public.membros  add column if not exists barbeiro_id text;
+alter table public.convites add column if not exists barbeiro_id text;
+
 create or replace function public.tocar_atualizado_em() returns trigger
 language plpgsql as $$
 begin
@@ -132,8 +136,45 @@ create policy membros_remover on public.membros for delete using (public.eh_dono
 drop policy if exists convites_dono on public.convites;
 create policy convites_dono on public.convites for all using (public.eh_dono(barbearia_id)) with check (public.eh_dono(barbearia_id));
 
+-- Papel de quem está logado nesta barbearia (só se a barbearia estiver liberada).
+create or replace function public.meu_papel(b uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select m.papel from membros m join barbearias x on x.id = m.barbearia_id
+  where m.barbearia_id = b and m.user_id = auth.uid() and barbearia_liberada(x.ativa, x.vencimento) limit 1;
+$$;
+create or replace function public.meu_barbeiro(b uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select m.barbeiro_id from membros m where m.barbearia_id = b and m.user_id = auth.uid() limit 1;
+$$;
+
+-- Dono: tudo. Barbeiro: agenda, clientes e estoque; comandas e vales só os dele; despesas não.
 drop policy if exists registros_membro on public.registros;
-create policy registros_membro on public.registros for all using (public.eh_membro(barbearia_id)) with check (public.eh_membro(barbearia_id));
+drop policy if exists registros_dono on public.registros;
+drop policy if exists registros_barbeiro_ler on public.registros;
+drop policy if exists registros_barbeiro_criar on public.registros;
+drop policy if exists registros_barbeiro_editar on public.registros;
+drop policy if exists registros_barbeiro_apagar on public.registros;
+create policy registros_dono on public.registros for all
+  using (public.meu_papel(barbearia_id) = 'dono') with check (public.meu_papel(barbearia_id) = 'dono');
+create policy registros_barbeiro_ler on public.registros for select using (
+  public.meu_papel(barbearia_id) = 'barbeiro' and (
+    colecao in ('agendamentos', 'clientes', 'produtos')
+    or (colecao in ('comandas', 'vales') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+create policy registros_barbeiro_criar on public.registros for insert with check (
+  public.meu_papel(barbearia_id) = 'barbeiro' and (
+    colecao in ('agendamentos', 'clientes')
+    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+create policy registros_barbeiro_editar on public.registros for update using (
+  public.meu_papel(barbearia_id) = 'barbeiro' and (
+    colecao in ('agendamentos', 'clientes', 'produtos')
+    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))))
+  with check (
+  public.meu_papel(barbearia_id) = 'barbeiro' and (
+    colecao in ('agendamentos', 'clientes', 'produtos')
+    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+create policy registros_barbeiro_apagar on public.registros for delete using (
+  public.meu_papel(barbearia_id) = 'barbeiro' and colecao = 'comandas'
+  and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id));
 
 -- Ativação, vencimento, mensalidade e anotações só o administrador muda; o dono não consegue mexer.
 create or replace function public.proteger_ativa() returns trigger
@@ -176,12 +217,67 @@ returns integer language plpgsql security definer set search_path = public as $$
 declare v_email text := lower(coalesce(auth.jwt() ->> 'email', '')); v_n integer;
 begin
   if auth.uid() is null or v_email = '' then return 0; end if;
-  insert into membros (barbearia_id, user_id, papel)
-    select barbearia_id, auth.uid(), papel from convites where lower(email) = v_email
+  insert into membros (barbearia_id, user_id, papel, barbeiro_id)
+    select barbearia_id, auth.uid(), papel, barbeiro_id from convites where lower(email) = v_email
     on conflict (barbearia_id, user_id) do nothing;
   get diagnostics v_n = row_count;
   delete from convites where lower(email) = v_email;
   return v_n;
+end $$;
+
+-- Dono vê quem tem acesso (e-mail, papel e qual barbeiro da agenda é).
+create or replace function public.equipe_acessos(p_b uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare v json;
+begin
+  if not eh_dono(p_b) then raise exception 'Só o dono vê os acessos.'; end if;
+  select coalesce(json_agg(json_build_object('user_id', m.user_id, 'email', u.email, 'papel', m.papel,
+           'barbeiro_id', m.barbeiro_id, 'eu', m.user_id = auth.uid()) order by m.criado_em), '[]'::json)
+  into v from membros m join auth.users u on u.id = m.user_id where m.barbearia_id = p_b;
+  return v;
+end $$;
+
+-- Dono muda o papel de alguém ou liga a conta a um barbeiro da agenda.
+create or replace function public.equipe_ajustar(p_b uuid, p_user uuid, p_papel text, p_barbeiro text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not eh_dono(p_b) then raise exception 'Só o dono pode mudar acessos.'; end if;
+  if p_papel not in ('dono', 'barbeiro') then raise exception 'Papel inválido.'; end if;
+  if p_user = auth.uid() and p_papel <> 'dono' then raise exception 'Você não pode tirar o seu próprio acesso de dono.'; end if;
+  update membros set papel = p_papel, barbeiro_id = nullif(p_barbeiro, '') where barbearia_id = p_b and user_id = p_user;
+  if not found then raise exception 'Pessoa não encontrada na equipe.'; end if;
+end $$;
+
+-- ---------- Regras de horário (valem pro painel e pra página do cliente) ----------
+-- config.semana: {"0": null | {"abre":"09:00","fecha":"19:00"}, ... "6": ...}  (0 = domingo; null = fechado)
+-- config.almoco: {"ini":"12:00","fim":"13:00"} ou null
+-- config.barbeiros[].folgas: [0, 1]  (dias da semana de folga)
+-- config.bloqueios: [{"id","data":"2026-11-02","barbeiroId":null|"b1","ini":null|"14:00","fim":null|"16:00","motivo"}]
+create or replace function public.expediente(c jsonb, p_dia date) returns jsonb
+language sql immutable as $$
+  select case when c ? 'semana' then c -> 'semana' -> (extract(dow from p_dia)::int::text)
+              else jsonb_build_object('abre', coalesce(c ->> 'abre', '09:00'), 'fecha', coalesce(c ->> 'fecha', '19:00')) end;
+$$;
+
+create or replace function public.horario_permitido(c jsonb, p_dia date, p_ini int, p_dur int, p_barb text) returns boolean
+language plpgsql immutable as $$
+declare e jsonb; b jsonb; x jsonb;
+begin
+  e := expediente(c, p_dia);
+  if e is null or jsonb_typeof(e) <> 'object' then return false; end if;
+  if p_ini < minutos(e ->> 'abre') or p_ini + p_dur > minutos(e ->> 'fecha') then return false; end if;
+  if jsonb_typeof(c -> 'almoco') = 'object' and coalesce(c -> 'almoco' ->> 'ini', '') <> '' then
+    if p_ini < minutos(c -> 'almoco' ->> 'fim') and minutos(c -> 'almoco' ->> 'ini') < p_ini + p_dur then return false; end if;
+  end if;
+  select y into b from jsonb_array_elements(coalesce(c -> 'barbeiros', '[]'::jsonb)) y where y ->> 'id' = p_barb limit 1;
+  if b is not null and jsonb_typeof(b -> 'folgas') = 'array' and (b -> 'folgas') @> to_jsonb(extract(dow from p_dia)::int) then return false; end if;
+  for x in select z from jsonb_array_elements(coalesce(c -> 'bloqueios', '[]'::jsonb)) z loop
+    if x ->> 'data' = p_dia::text and (coalesce(x ->> 'barbeiroId', '') = '' or x ->> 'barbeiroId' = p_barb) then
+      if coalesce(x ->> 'ini', '') = '' then return false; end if;
+      if p_ini < minutos(x ->> 'fim') and minutos(x ->> 'ini') < p_ini + p_dur then return false; end if;
+    end if;
+  end loop;
+  return true;
 end $$;
 
 -- ---------- Funções públicas (cliente final, sem login) ----------
@@ -220,8 +316,13 @@ returns json language sql stable security definer set search_path = public as $$
                 'prazo', coalesce((b.config -> 'sinal' ->> 'prazo')::int, 30)) end,
     'servicos', coalesce((select json_agg(json_build_object('id', s ->> 'id', 'nome', s ->> 'nome', 'preco', (s ->> 'preco')::numeric, 'dur', (s ->> 'dur')::int))
                           from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s), '[]'::json),
-    'barbeiros', coalesce((select json_agg(json_build_object('id', x ->> 'id', 'nome', x ->> 'nome'))
-                          from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x), '[]'::json)
+    'barbeiros', coalesce((select json_agg(json_build_object('id', x ->> 'id', 'nome', x ->> 'nome', 'folgas', coalesce(x -> 'folgas', '[]'::jsonb)))
+                          from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x), '[]'::json),
+    'semana', b.config -> 'semana',
+    'almoco', b.config -> 'almoco',
+    'bloqueios', coalesce((select json_agg(json_build_object('data', z ->> 'data', 'barbeiroId', z ->> 'barbeiroId', 'ini', z ->> 'ini', 'fim', z ->> 'fim'))
+                          from jsonb_array_elements(coalesce(b.config -> 'bloqueios', '[]'::jsonb)) z
+                          where z ->> 'data' >= ((now() at time zone 'America/Sao_Paulo')::date)::text), '[]'::json)
   )
   from barbearias b where b.slug = p_slug and barbearia_liberada(b.ativa, b.vencimento);
 $$;
@@ -273,7 +374,10 @@ begin
   select s into v_serv from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = p_servico limit 1;
   if v_serv is null then raise exception 'Serviço não encontrado.'; end if;
   v_dur := coalesce((v_serv ->> 'dur')::int, 30);
-  if v_ini < minutos(coalesce(b.config ->> 'abre', '09:00')) or v_ini + v_dur > minutos(coalesce(b.config ->> 'fecha', '19:00')) + 1 then
+  if expediente(b.config, v_dia) is null or jsonb_typeof(expediente(b.config, v_dia)) <> 'object' then
+    raise exception 'A barbearia não abre nesse dia.';
+  end if;
+  if v_ini < minutos(expediente(b.config, v_dia) ->> 'abre') or v_ini + v_dur > minutos(expediente(b.config, v_dia) ->> 'fecha') then
     raise exception 'Fora do horário de funcionamento.';
   end if;
 
@@ -291,7 +395,8 @@ begin
   end if;
 
   for v_barb in select x from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x loop
-    if (p_barbeiro = 'qualquer' or v_barb ->> 'id' = p_barbeiro) and not exists (
+    if (p_barbeiro = 'qualquer' or v_barb ->> 'id' = p_barbeiro)
+       and horario_permitido(b.config, v_dia, v_ini, v_dur, v_barb ->> 'id') and not exists (
       select 1 from registros r
       where r.barbearia_id = b.id and r.colecao = 'agendamentos'
         and r.dados ->> 'data' = p_dia
@@ -304,7 +409,7 @@ begin
       exit;
     end if;
   end loop;
-  if v_barb_id is null then raise exception 'Esse horário acabou de ser ocupado. Escolha outro.'; end if;
+  if v_barb_id is null then raise exception 'Esse horário não está mais disponível. Escolha outro.'; end if;
 
   v_cli := 'c' || v_tel;
   insert into registros (barbearia_id, colecao, id, dados)
@@ -446,6 +551,10 @@ grant execute on function public.barbearia_publica(text) to anon, authenticated;
 grant execute on function public.horarios_ocupados(text, text) to anon, authenticated;
 grant execute on function public.agendar_publico(text, text, text, text, text, text, text) to anon, authenticated;
 grant execute on function public.status_agendamento(text, text) to anon, authenticated;
+revoke all on function public.equipe_acessos(uuid) from public, anon;
+revoke all on function public.equipe_ajustar(uuid, uuid, text, text) from public, anon;
+grant execute on function public.equipe_acessos(uuid) to authenticated;
+grant execute on function public.equipe_ajustar(uuid, uuid, text, text) to authenticated;
 grant execute on function public.desistir_reserva(text, text) to anon, authenticated;
 revoke all on function public.exigir_admin() from public, anon;
 revoke all on function public.admin_barbearias() from public, anon;
