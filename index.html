@@ -683,7 +683,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     itens.forEach((i, idx) => { h += '<div class="item"><span class="grow">' + esc(i.nome) + (i.tipo === 'p' ? ' <span class="tiny">(produto)</span>' : '') + '</span><span class="num" style="font-weight:500">' + brl(i.preco) + '</span><button type="button" class="btn sm" data-act="cmRemover" data-id="' + esc(x.id) + '" data-v="' + idx + '" aria-label="Remover ' + esc(i.nome) + '">✕</button></div>'; });
     h += '<div class="row between"><span class="sub">Total</span><span class="big num">' + brl(total) + '</span></div>' +
       (sinal ? '<div class="row between"><span class="sub">Sinal já pago no Pix</span><span class="num c-ok">− ' + brl(sinal) + '</span></div><div class="row between"><span class="sub">Falta receber</span><span class="mid num">' + brl(falta) + '</span></div>' : '') +
-      '<span class="tiny c-acc">Comissão do ' + esc(b ? b.nome : 'barbeiro') + ': ' + brl(com) + ' (' + (b ? b.com : 40) + '% em serviços, ' + (b && b.comProd != null ? b.comProd : 10) + '% em produtos)</span></section>';
+      '<span class="tiny c-acc">' + esc(b ? primeiroNome(b.nome) : 'O barbeiro') + ' recebe ' + brl(com) + ' (' + (b ? num(b.com) : 40) + '% do valor' + (itens.some((i) => i.tipo === 'p') ? ', ' + (b && b.comProd != null ? num(b.comProd) : 10) + '% nos produtos' : '') + ')</span></section>';
     h += '<section class="stack"><span class="lbl">Serviços</span><div class="grid2">';
     (c.servicos || []).forEach((s) => { h += '<button type="button" class="pick" data-act="cmAdd" data-id="' + esc(x.id) + '" data-v="s:' + esc(s.id) + '"><b>' + esc(s.nome) + '</b><span>' + brl(s.preco) + '</span></button>'; });
     h += '</div>';
@@ -740,13 +740,15 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     let h = '<div class="chips">' + tabs.map((t) => chip(t[1], 'gesTab', t[0], S.ui.gesTab === t[0])).join('') + '</div>';
     const g = S.ui.gesTab; const c = cfg(); const m = mesAtual();
     if (g === 'equipe') {
-      h += '<span class="sub">' + MES[new Date().getMonth()] + ' · comissão calculada a cada comanda fechada</span>';
+      const sEx = (c.servicos || [])[0];
+      h += '<span class="sub">A comissão é a porcentagem que o barbeiro ganha em cima do valor cheio de cada serviço. Sem descontos. Os valores abaixo são de ' + MES[new Date().getMonth()] + '.</span>';
       (c.barbeiros || []).forEach((b) => {
         const r = resumoBarbeiro(b.id, m);
         h += '<section class="card"><div class="row"><span class="logo" style="width:40px;height:40px;font-size:16px" aria-hidden="true">' + esc(String(b.nome)[0] || '?') + '</span><div class="grow"><div class="h2">' + esc(b.nome) + '</div><div class="tiny">' + r.n + ' atendimentos · ' + brl(r.serv + r.prod) + ' faturado</div></div><div style="text-align:right"><div class="tiny">a receber</div><div class="mid num c-acc">' + brl(r.receber) + '</div></div></div>' +
           '<div class="tiny">Comissão ' + brl(r.com) + ' + gorjetas ' + brl(r.gorj) + ' − vales ' + brl(r.vales) + '</div>' +
-          '<div class="grid2"><div class="field"><label for="com-' + esc(b.id) + '">% em serviços</label><input class="small" id="com-' + esc(b.id) + '" inputmode="numeric" data-chg="barbCom" data-id="' + esc(b.id) + '" value="' + esc(b.com) + '"></div>' +
-          '<div class="field"><label for="comp-' + esc(b.id) + '">% em produtos</label><input class="small" id="comp-' + esc(b.id) + '" inputmode="numeric" data-chg="barbComProd" data-id="' + esc(b.id) + '" value="' + esc(b.comProd != null ? b.comProd : 10) + '"></div></div>' +
+          '<div class="grid2"><div class="field"><label for="com-' + esc(b.id) + '">Comissão nos serviços (%)</label><input class="small" id="com-' + esc(b.id) + '" inputmode="numeric" data-chg="barbCom" data-id="' + esc(b.id) + '" value="' + esc(b.com) + '"></div>' +
+          '<div class="field"><label for="comp-' + esc(b.id) + '">Comissão nos produtos (%)</label><input class="small" id="comp-' + esc(b.id) + '" inputmode="numeric" data-chg="barbComProd" data-id="' + esc(b.id) + '" value="' + esc(b.comProd != null ? b.comProd : 10) + '"></div></div>' +
+          (sEx ? '<span class="tiny">Ex.: ' + esc(sEx.nome.toLowerCase()) + ' de ' + brl(sEx.preco) + ' → ' + esc(primeiroNome(b.nome)) + ' recebe <b>' + brl(num(sEx.preco) * num(b.com) / 100) + '</b>. Salva sozinho quando você sai do campo.</span>' : '') +
           '<button type="button" class="btn bad sm" data-act="barbRemover" data-id="' + esc(b.id) + '">' + conf('br' + b.id, 'Remover da equipe') + '</button></section>';
       });
       if (S.papel === 'dono') {
@@ -757,7 +759,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
         S.convites.forEach((c) => { h += '<div class="item"><span class="grow">' + esc(c.email) + ' <span class="tiny">aguardando cadastro</span></span><button type="button" class="btn sm" data-act="desconvidar" data-v="' + esc(c.email) + '" aria-label="Cancelar convite">✕</button></div>'; });
         h += '</section>';
       }
-      h += '<section class="card"><span class="h2">Adicionar barbeiro</span><div class="field"><label for="nb-nome">Nome</label><input id="nb-nome" data-f="nbNome" value="' + esc(fv('nbNome')) + '"></div><div class="field"><label for="nb-com">% de comissão em serviços</label><input id="nb-com" inputmode="numeric" data-f="nbCom" value="' + esc(fv('nbCom', '40')) + '"></div><button type="button" class="btn pri" data-act="barbNovo">Adicionar</button></section>';
+      h += '<section class="card"><span class="h2">Adicionar barbeiro</span><div class="field"><label for="nb-nome">Nome</label><input id="nb-nome" data-f="nbNome" value="' + esc(fv('nbNome')) + '"></div><div class="field"><label for="nb-com">Comissão nos serviços (%)</label><input id="nb-com" inputmode="numeric" data-f="nbCom" value="' + esc(fv('nbCom', '40')) + '"></div><button type="button" class="btn pri" data-act="barbNovo">Adicionar</button></section>';
       if ((c.barbeiros || []).length) {
         h += '<section class="card"><span class="h2">Lançar vale (adiantamento)</span><div class="grid2"><div class="field"><label for="vl-barb">Barbeiro</label><select id="vl-barb" data-f="vlBarb">' + c.barbeiros.map((b) => '<option value="' + esc(b.id) + '"' + (fv('vlBarb', c.barbeiros[0].id) === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div><div class="field"><label for="vl-valor">Valor (R$)</label><input id="vl-valor" inputmode="decimal" data-f="vlValor" value="' + esc(fv('vlValor')) + '"></div></div><button type="button" class="btn" data-act="valeNovo">Lançar vale</button>';
         S.vales.filter((v) => String(v.data).indexOf(m) === 0).sort((a, b) => String(b.data).localeCompare(String(a.data))).forEach((v) => { h += '<div class="item"><span class="grow">' + esc(barbNome(v.barbeiroId)) + ' <span class="tiny">' + esc(fmtDia(v.data)) + '</span></span><span class="num c-bad">− ' + brl(v.valor) + '</span><button type="button" class="btn sm" data-act="valeApagar" data-id="' + esc(v.id) + '" aria-label="Apagar vale">✕</button></div>'; });
@@ -779,16 +781,16 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
         '<button type="button" class="btn pri" data-act="prodNovo">Cadastrar produto</button></section>';
     }
     if (g === 'servicos') {
-      const bs = c.barbeiros || []; const comMedia = bs.length ? bs.reduce((a, b) => a + num(b.com), 0) / bs.length : 40;
-      h += '<span class="sub">Margem = preço − comissão média da equipe (' + Math.round(comMedia) + '%) − custo de insumos.</span>';
+      const bs = c.barbeiros || [];
+      h += '<span class="sub">A comissão é sempre em cima do valor cheio do serviço. Pra mudar a porcentagem de cada barbeiro, vá em Equipe.</span>';
       (c.servicos || []).forEach((s, i) => {
-        const sobra = num(s.preco) - num(s.preco) * comMedia / 100 - num(s.custo); const pct = num(s.preco) ? Math.round(sobra / num(s.preco) * 100) : 0;
+        const quanto = bs.map((b) => '<div class="item"><span class="grow">' + esc(b.nome) + ' <span class="tiny">(' + num(b.com) + '%)</span></span><span class="num" style="font-weight:600">' + brl(num(s.preco) * num(b.com) / 100) + '</span></div>').join('');
         h += '<section class="card tight"><div class="field"><label for="sv-n-' + i + '">Nome</label><input class="small" id="sv-n-' + i + '" data-chg="svEdit" data-id="' + i + '" data-v="nome" value="' + esc(s.nome) + '"></div>' +
-          '<div class="grid3"><div class="field"><label for="sv-p-' + i + '">Preço</label><input class="small" id="sv-p-' + i + '" inputmode="decimal" data-chg="svEdit" data-id="' + i + '" data-v="preco" value="' + esc(s.preco) + '"></div><div class="field"><label for="sv-d-' + i + '">Minutos</label><input class="small" id="sv-d-' + i + '" inputmode="numeric" data-chg="svEdit" data-id="' + i + '" data-v="dur" value="' + esc(s.dur) + '"></div><div class="field"><label for="sv-c-' + i + '">Insumos</label><input class="small" id="sv-c-' + i + '" inputmode="decimal" data-chg="svEdit" data-id="' + i + '" data-v="custo" value="' + esc(s.custo || 0) + '"></div></div>' +
-          '<div class="row between"><span class="tiny">Sobra ' + brl(sobra) + ' por atendimento</span><span class="' + (pct >= 40 ? 'c-ok' : 'c-warn') + '" style="font-weight:700">' + pct + '%</span></div><div class="bar"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%;background:' + (pct >= 40 ? 'var(--ok)' : 'var(--warn)') + '"></i></div>' +
+          '<div class="grid2"><div class="field"><label for="sv-p-' + i + '">Preço (R$)</label><input class="small" id="sv-p-' + i + '" inputmode="decimal" data-chg="svEdit" data-id="' + i + '" data-v="preco" value="' + esc(s.preco) + '"></div><div class="field"><label for="sv-d-' + i + '">Duração (min)</label><input class="small" id="sv-d-' + i + '" inputmode="numeric" data-chg="svEdit" data-id="' + i + '" data-v="dur" value="' + esc(s.dur) + '"></div></div>' +
+          (quanto ? '<span class="lbl">O barbeiro recebe</span><div>' + quanto + '</div>' : '') +
           '<button type="button" class="btn bad sm" data-act="svApagar" data-id="' + i + '">' + conf('sv' + s.id, 'Remover serviço') + '</button></section>';
       });
-      h += '<section class="card"><span class="h2">Novo serviço</span><div class="field"><label for="ns-nome">Nome</label><input id="ns-nome" data-f="nsNome" value="' + esc(fv('nsNome')) + '"></div><div class="grid2"><div class="field"><label for="ns-preco">Preço</label><input id="ns-preco" inputmode="decimal" data-f="nsPreco" value="' + esc(fv('nsPreco')) + '"></div><div class="field"><label for="ns-dur">Minutos</label><input id="ns-dur" inputmode="numeric" data-f="nsDur" value="' + esc(fv('nsDur', '30')) + '"></div></div><button type="button" class="btn pri" data-act="svNovo">Adicionar serviço</button></section>';
+      h += '<section class="card"><span class="h2">Novo serviço</span><div class="field"><label for="ns-nome">Nome</label><input id="ns-nome" data-f="nsNome" value="' + esc(fv('nsNome')) + '"></div><div class="grid2"><div class="field"><label for="ns-preco">Preço (R$)</label><input id="ns-preco" inputmode="decimal" data-f="nsPreco" value="' + esc(fv('nsPreco')) + '"></div><div class="field"><label for="ns-dur">Duração (min)</label><input id="ns-dur" inputmode="numeric" data-f="nsDur" value="' + esc(fv('nsDur', '30')) + '"></div></div><button type="button" class="btn pri" data-act="svNovo">Adicionar serviço</button></section>';
     }
     if (g === 'despesas') {
       const fm = fechadas().filter((x) => String(x.data || '').indexOf(m) === 0);
@@ -1146,8 +1148,14 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     bkNome: (el) => { const cl = S.clientes.find((c) => c.nome === el.value); if (cl && !String(fv('bkTel')).trim()) { S.f.bkTel = cl.telefone || ''; const t = document.getElementById('bk-tel'); if (t) t.value = S.f.bkTel; } S.dirty = true; },
     cmBarb: (el) => { W(() => col('comandas').doc(el.dataset.id).update({ barbeiroId: el.value })); },
     cmGorj: (el) => { W(() => col('comandas').doc(el.dataset.id).update({ gorjeta: num(el.value) })); },
-    barbCom: (el) => { salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { com: num(el.value) }) : b)) }); },
-    barbComProd: (el) => { salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { comProd: num(el.value) }) : b)) }); },
+    barbCom: async (el) => {
+      const v = Math.max(0, Math.min(100, num(el.value))); const b0 = barb(el.dataset.id);
+      if (await salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { com: v }) : b)) })) toast('Comissão do ' + primeiroNome(b0 ? b0.nome : '') + ' salva: ' + v + '% nos serviços');
+    },
+    barbComProd: async (el) => {
+      const v = Math.max(0, Math.min(100, num(el.value))); const b0 = barb(el.dataset.id);
+      if (await salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { comProd: v }) : b)) })) toast('Comissão do ' + primeiroNome(b0 ? b0.nome : '') + ' salva: ' + v + '% nos produtos');
+    },
     svEdit: (el) => {
       const i = Number(el.dataset.id); const k = el.dataset.v; const n = cfg().servicos.slice();
       if (!n[i]) return; const o = Object.assign({}, n[i]); o[k] = k === 'nome' ? (el.value.trim() || o.nome) : num(el.value); n[i] = o;
