@@ -589,7 +589,8 @@ button.logo:active{transform:scale(.94)}
     const hojeAgs = S.ags.filter((a) => a.data === t && segura(a)).sort(byHora);
     const naCadeira = hojeAgs.filter((a) => a.status === 'cadeira');
     const fila = hojeAgs.filter((a) => (a.status === 'agendado' || a.status === 'aguardando_sinal') && toMin(a.hora) + 20 >= nowMin());
-    const pend = S.ags.filter((a) => a.status === 'aguardando_sinal' && !sinalExpirado(a));
+    const pend = S.ags.filter((a) => a.status === 'aguardando_sinal' && !sinalExpirado(a) && !a.mp && !a.pagOnline);
+    const devolver = S.papel === 'dono' ? S.ags.filter((a) => a.pagoSemHorario && !a.devolvidoOk) : [];
     const pl = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
 
     let h = '';
@@ -609,6 +610,11 @@ button.logo:active{transform:scale(.94)}
     h += cardLink();
     if (S.ehAdmin) h += cardAdmin();
     if (pend.length) h += '<section class="card warn"><span class="lbl c-warn">Sinal pra conferir</span><span>' + pl(pend.length, 'reserva esperando', 'reservas esperando') + ' o Pix do sinal. Confira no app do banco e confirme na agenda.</span><button type="button" class="btn warn" data-act="verPendentes">Ver reservas</button></section>';
+    devolver.forEach((a) => {
+      const waD = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Recebemos seu pagamento de ' + brl(a.sinalPago) + ', mas o horário de ' + fmtDia(a.data) + ' às ' + a.hora + ' não estava mais livre. Vamos devolver o valor ou remarcar, como preferir?');
+      h += '<section class="card warn"><span class="lbl c-warn">Pagamento pra devolver</span><span>' + esc(a.clienteNome) + ' pagou ' + brl(a.sinalPago) + ' pelo Mercado Pago, mas a reserva de ' + esc(fmtDia(a.data)) + ' às ' + esc(a.hora) + ' já tinha caído. Devolva pelo app do Mercado Pago (Atividade → pagamento → Devolver) ou remarque com o cliente.</span>' +
+        '<div class="grid2">' + (waD ? '<a class="btn sm ok" href="' + esc(waD) + '" target="_blank" rel="noopener">Falar no WhatsApp</a>' : '<span></span>') + '<button type="button" class="btn sm" data-act="devolvidoOk" data-id="' + esc(a.id) + '">Já resolvi</button></div></section>';
+    });
 
     h += '<section class="card"><div class="row between"><span class="lbl">Agora</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Agenda completa</button></div>';
     if (!naCadeira.length && !fila.length) h += '<span class="sub">Ninguém na cadeira nem esperando.</span>';
@@ -679,12 +685,12 @@ button.logo:active{transform:scale(.94)}
       else if (a.status === 'aguardando_sinal') {
         const exp = sinalExpirado(a);
         const waS = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Vi sua reserva na ' + cfg().nome + ' pra ' + fmtDia(a.data) + ' às ' + a.hora + '. Já fez o Pix do sinal de ' + brl(a.sinalValor) + '?');
-        h += '<div class="msg">' + (exp ? 'O prazo do sinal de ' + brl(a.sinalValor) + ' acabou às ' + horaDe(a.sinalExpira) + '. O horário voltou a ficar livre pra outros clientes.' : 'Sinal de <b>' + brl(a.sinalValor) + '</b> no Pix. Horário reservado até <b>' + horaDe(a.sinalExpira) + '</b>. Confira no app do banco antes de confirmar.') + '</div>' +
+        h += '<div class="msg">' + (exp ? 'O prazo do sinal de ' + brl(a.sinalValor) + ' acabou às ' + horaDe(a.sinalExpira) + '. O horário voltou a ficar livre pra outros clientes.' : (a.mp || a.pagOnline) ? 'Sinal de <b>' + brl(a.sinalValor) + '</b> pelo Mercado Pago. Quando o cliente pagar, o horário confirma sozinho. Reservado até <b>' + horaDe(a.sinalExpira) + '</b>.' : 'Sinal de <b>' + brl(a.sinalValor) + '</b> no Pix. Horário reservado até <b>' + horaDe(a.sinalExpira) + '</b>. Confira no app do banco antes de confirmar.') + '</div>' +
           '<div class="grid2"><button type="button" class="btn pri sm" data-act="confirmarSinal" data-id="' + esc(a.id) + '">' + (exp ? 'Recebi mesmo assim' : 'Sinal recebido') + '</button>' +
           (waS ? '<a class="btn sm ok" href="' + esc(waS) + '" target="_blank" rel="noopener">Falar no WhatsApp</a>' : '<span></span>') +
           '<button type="button" class="btn sm bad" data-act="cancelarAg" data-id="' + esc(a.id) + '">' + conf('cancel' + a.id, 'Cancelar reserva') + '</button></div>';
       } else if (a.status === 'agendado') {
-        if (num(a.sinalPago)) h += '<span class="tiny c-ok">Sinal de ' + brl(a.sinalPago) + ' pago</span>';
+        if (num(a.sinalPago)) h += '<span class="tiny c-ok">Sinal de ' + brl(a.sinalPago) + ' pago' + (a.mpPagamento ? (a.sinalMetodo === 'pix' ? ' no Pix (Mercado Pago)' : ' no cartão (Mercado Pago)') : '') + '</span>';
         const wa = waLink(a.telefone, lembreteTxt(a));
         h += '<div class="grid2"><button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">Abrir comanda</button>' +
           (wa ? '<a class="btn sm ok" href="' + esc(wa) + '" target="_blank" rel="noopener">Lembrete WhatsApp</a>' : '<span class="btn sm" style="color:var(--dim)">Sem telefone</span>') +
@@ -859,6 +865,36 @@ button.logo:active{transform:scale(.94)}
       '<span class="tiny">Os avisos chegam com o app aberto (ou em segundo plano). Com o app totalmente fechado, ainda não.</span></section>';
   }
 
+  // Mercado Pago: a conta é da barbearia, o app só ajuda a cobrar.
+  const mpOn = () => !!(S.mp && S.mp.conectado);
+  function cardMercadoPago(c) {
+    const mp = c.mp || {};
+    if (!S.mp) return '<section class="card"><span class="h2">Cartão de crédito e Pix automático</span><span class="sub">Carregando…</span></section>';
+    if (!S.mp.conectado) {
+      return '<section class="card"><span class="h2">Cartão de crédito e Pix automático</span>' +
+        '<span class="sub">Conecte a conta Mercado Pago da barbearia. O cliente paga o sinal no cartão ou no Pix na hora de agendar, o dinheiro cai na sua conta Mercado Pago e o horário confirma sozinho.</span>' +
+        '<button type="button" class="btn pri" data-act="mpConectar"' + (S.ui.mpCarregando ? ' disabled' : '') + '>' + (S.ui.mpCarregando ? 'Abrindo o Mercado Pago…' : 'Conectar Mercado Pago') + '</button>' +
+        '<span class="tiny">Você entra com a sua conta Mercado Pago e autoriza. As taxas são as do Mercado Pago. O app não cobra nada a mais.</span></section>';
+    }
+    const cartao = fv('mpCartao', mp.cartao === false ? '0' : '1') === '1';
+    const pix = fv('mpPix', mp.pix === false ? '0' : '1') === '1';
+    const parc = num(fv('mpParc', mp.parcelas || 1)) || 1;
+    return '<section class="card"><div class="row between"><span class="h2">Mercado Pago</span><span class="pill p-ok">Conectado</span></div>' +
+      '<span class="sub">Conta ' + esc(S.mp.conta || '') + (S.mp.desde ? ' · desde ' + esc(fmtDia(String(S.mp.desde).slice(0, 10))) : '') + (S.mp.teste ? ' · <b>conta de teste</b>' : '') + '</span>' +
+      '<span class="lbl">O cliente pode pagar com</span>' +
+      '<div class="chips">' + chip('Cartão de crédito', 'mpCartao', cartao ? '0' : '1', cartao) + chip('Pix automático', 'mpPix', pix ? '0' : '1', pix) + '</div>' +
+      (cartao ? '<div class="field"><label for="mp-parc">Parcelar o sinal em até</label><select id="mp-parc" data-f="mpParc">' + [1, 2, 3, 4, 5, 6, 10, 12].map((n) => '<option value="' + n + '"' + (parc === n ? ' selected' : '') + '>' + (n === 1 ? 'Só à vista' : n + 'x') + '</option>').join('') + '</select></div>' +
+        '<span class="tiny">Os juros do parcelamento seguem o que está configurado na sua conta Mercado Pago.</span>' : '') +
+      (!cartao && !pix ? '<span class="tiny c-warn">Com os dois desligados, o cliente volta pro Pix manual (se tiver chave Pix).</span>' : '') +
+      (!(c.sinal || {}).ativo ? '<span class="tiny c-warn">Pra cobrar na hora de agendar, ligue o "Sinal pra agendar" aqui embaixo.</span>' : '') +
+      '<button type="button" class="btn sm bad" data-act="mpDesconectar" style="align-self:flex-start">' + conf('mpDesc', 'Desconectar') + '</button></section>';
+  }
+  async function carregarMP() {
+    if (S.papel !== 'dono') return;
+    const r = await S.sb.rpc('mp_status', { p_b: S.bid });
+    S.mp = r.error ? { conectado: false } : r.data; scheduleRender();
+  }
+
   function cardLink() {
     const hoje = today();
     const n = S.ags.filter((a) => a.origem === 'link' && String(a.criadoEm || '').slice(0, 10) === hoje).length;
@@ -1019,17 +1055,18 @@ button.logo:active{transform:scale(.94)}
       const pctS = num(fv('pgPct', sn.pct || 50)) || 50;
       const s0 = (c.servicos || [])[0];
       h += '<section class="card"><span class="h2">Formas de pagamento</span><span class="sub">O que a barbearia aceita. Aparece na página de agendamento e no caixa.</span><div class="chips">' + FORMAS.map((f) => chip(f, 'pgForma', f, fs.indexOf(f) >= 0)).join('') + '</div></section>';
-      h += '<section class="card"><span class="h2">Chave Pix da barbearia</span><span class="sub">É pra ela que o cliente manda o sinal. O dinheiro cai direto na sua conta, sem taxa.</span>' +
+      h += cardMercadoPago(c);
+      h += '<section class="card"><span class="h2">Chave Pix da barbearia</span><span class="sub">' + (mpOn() ? 'Opcional com o Mercado Pago conectado. Serve pro Pix manual e pro teste abaixo.' : 'É pra ela que o cliente manda o sinal. O dinheiro cai direto na sua conta, sem taxa.') + '</span>' +
         '<div class="field"><label for="pg-tipo">Tipo de chave</label><select id="pg-tipo" data-f="pgTipo">' + [['celular', 'Celular'], ['cpf', 'CPF'], ['cnpj', 'CNPJ'], ['email', 'E-mail'], ['aleatoria', 'Chave aleatória']].map((k) => '<option value="' + k[0] + '"' + (tipo === k[0] ? ' selected' : '') + '>' + k[1] + '</option>').join('') + '</select></div>' +
         '<div class="field"><label for="pg-chave">Chave Pix</label><input id="pg-chave" data-f="pgChave" autocomplete="off" value="' + esc(fv('pgChave', px.chaveDigitada || px.chave || '')) + '"></div>' +
         '<div class="grid2"><div class="field"><label for="pg-nome">Nome de quem recebe</label><input id="pg-nome" data-f="pgNome" maxlength="25" value="' + esc(fv('pgNome', px.nome || c.nome || '')) + '"></div>' +
         '<div class="field"><label for="pg-cidade">Cidade</label><input id="pg-cidade" data-f="pgCidade" maxlength="15" value="' + esc(fv('pgCidade', px.cidade || '')) + '"></div></div>' +
         '<span class="tiny">Use o nome e a cidade como estão no seu banco. O app do cliente mostra esse nome antes de pagar.</span></section>';
-      h += '<section class="card"><span class="h2">Sinal pra agendar</span><span class="sub">Ligado, quem agenda pelo link paga uma parte no Pix pra garantir o horário. O horário fica reservado enquanto o cliente paga, e você confirma na agenda quando o Pix cair.</span>' +
+      h += '<section class="card"><span class="h2">Sinal pra agendar</span><span class="sub">' + (mpOn() ? 'Ligado, quem agenda pelo link paga uma parte no cartão ou no Pix pelo Mercado Pago. O horário confirma sozinho quando o pagamento é aprovado. Use 100% pra cobrar o valor todo.' : 'Ligado, quem agenda pelo link paga uma parte no Pix pra garantir o horário. O horário fica reservado enquanto o cliente paga, e você confirma na agenda quando o Pix cair.') + '</span>' +
         '<div class="chips">' + chip('Desligado', 'pgAtivo', '0', !ativo) + chip('Exigir sinal', 'pgAtivo', '1', ativo) + '</div>' +
         '<div class="grid2"><div class="field"><label for="pg-pct">Sinal (% do serviço)</label><select id="pg-pct" data-f="pgPct">' + [20, 30, 50, 100].map((n) => '<option value="' + n + '"' + (pctS === n ? ' selected' : '') + '>' + n + '%</option>').join('') + '</select></div>' +
         '<div class="field"><label for="pg-prazo">Prazo pra pagar</label><select id="pg-prazo" data-f="pgPrazo">' + [15, 30, 60].map((n) => '<option value="' + n + '"' + (String(fv('pgPrazo', sn.prazo || 30)) === String(n) ? ' selected' : '') + '>' + n + ' minutos</option>').join('') + '</select></div></div>' +
-        (s0 ? '<span class="tiny">Exemplo: ' + esc(s0.nome) + ' de ' + brl(s0.preco) + ' → sinal de ' + brl(num(s0.preco) * pctS / 100) + ' no Pix e o resto na barbearia. Se o cliente faltar, o sinal fica com você.</span>' : '') + '</section>';
+        (s0 ? '<span class="tiny">Exemplo: ' + esc(s0.nome) + ' de ' + brl(s0.preco) + ' → sinal de ' + brl(num(s0.preco) * pctS / 100) + ' ' + (mpOn() ? 'na hora de agendar' : 'no Pix') + ' e o resto na barbearia. Se o cliente faltar, o sinal fica com você.</span>' : '') + '</section>';
       h += '<button type="button" class="btn pri lg full" data-act="pgSalvar">Salvar pagamentos</button>';
       if (px.chave && window.Pix) {
         const codigo = window.Pix.brcode({ tipo: px.tipo, chave: px.chave, nome: px.nome, cidade: px.cidade, valor: 1, txid: 'TESTE' });
@@ -1400,6 +1437,22 @@ button.logo:active{transform:scale(.94)}
     },
     pgForma: (el) => { const fs = (S.f.pgFormas || formas()).slice(); const i = fs.indexOf(el.dataset.v); if (i >= 0) { if (fs.length > 1) fs.splice(i, 1); else { toast('Deixe pelo menos uma forma de pagamento.', true); return; } } else fs.push(el.dataset.v); S.f.pgFormas = FORMAS.filter((f) => fs.indexOf(f) >= 0); render(); },
     pgAtivo: (el) => { S.f.pgAtivo = el.dataset.v; render(); },
+    mpCartao: (el) => { S.f.mpCartao = el.dataset.v; render(); },
+    mpPix: (el) => { S.f.mpPix = el.dataset.v; render(); },
+    mpConectar: async () => {
+      S.ui.mpCarregando = true; render();
+      const r = await S.sb.functions.invoke('mp-oauth', { body: { barbearia_id: S.bid } });
+      S.ui.mpCarregando = false;
+      if (r.error || !r.data || !r.data.ok) { render(); toast((r.data && r.data.erro) || 'O Mercado Pago ainda não está configurado no servidor. Veja o guia docs/MERCADOPAGO.md.', true); return; }
+      location.href = r.data.url;
+    },
+    mpDesconectar: async () => {
+      if (precisaConfirmar('mpDesc')) return;
+      const r = await S.sb.rpc('mp_desconectar', { p_b: S.bid });
+      if (r.error) { toast('Não deu pra desconectar. Tente de novo.', true); return; }
+      S.mp = { conectado: false }; toast('Mercado Pago desconectado'); render();
+    },
+    devolvidoOk: async (el) => { await W(() => col('agendamentos').doc(el.dataset.id).update({ devolvidoOk: true }), 'Pronto'); },
     pgSalvar: async () => {
       const c = cfg(); const px = c.pix || {}; const sn = c.sinal || {};
       const tipo = campo('pg-tipo', 'pgTipo') || px.tipo || 'celular';
@@ -1407,13 +1460,18 @@ button.logo:active{transform:scale(.94)}
       const ativo = fv('pgAtivo', sn.ativo ? '1' : '0') === '1';
       const rot = { celular: 'celular com DDD', cpf: 'CPF', cnpj: 'CNPJ', email: 'e-mail', aleatoria: 'chave aleatória' }[tipo];
       if (chave && !window.Pix.validarChave(tipo, chave)) { toast('Essa chave não parece um ' + rot + ' válido. Confira o tipo e a chave.', true); return; }
-      if (ativo && (!chave || !nome || !cidade)) { toast('Pra exigir sinal, preencha a chave Pix, o nome e a cidade.', true); return; }
+      const mpc = c.mp || {};
+      const mpCartao = fv('mpCartao', mpc.cartao === false ? '0' : '1') === '1'; const mpPix = fv('mpPix', mpc.pix === false ? '0' : '1') === '1';
+      const online = mpOn() && (mpCartao || mpPix);
+      if (chave && (!nome || !cidade)) { toast('Preencha o nome e a cidade da chave Pix.', true); return; }
+      if (ativo && !chave && !online) { toast('Pra exigir sinal, conecte o Mercado Pago ou preencha a chave Pix.', true); return; }
       const ok = await salvarCfg({
+        mp: { cartao: mpCartao, pix: mpPix, parcelas: num(fv('mpParc', mpc.parcelas || 1)) || 1 },
         formas: S.f.pgFormas || formas(),
         pix: chave ? { tipo: tipo, chave: window.Pix.normalizarChave(tipo, chave), chaveDigitada: chave, nome: nome, cidade: cidade } : null,
         sinal: { ativo: ativo, pct: num(fv('pgPct', sn.pct || 50)) || 50, prazo: num(fv('pgPrazo', sn.prazo || 30)) || 30 }
       });
-      if (ok) { ['pgFormas', 'pgTipo', 'pgChave', 'pgNome', 'pgCidade', 'pgAtivo', 'pgPct', 'pgPrazo'].forEach((k) => { delete S.f[k]; }); toast(ativo ? 'Pronto! O sinal já vale na página de agendamento.' : 'Pagamentos salvos'); render(); }
+      if (ok) { ['pgFormas', 'pgTipo', 'pgChave', 'pgNome', 'pgCidade', 'pgAtivo', 'pgPct', 'pgPrazo', 'mpCartao', 'mpPix', 'mpParc'].forEach((k) => { delete S.f[k]; }); toast(ativo ? 'Pronto! O sinal já vale na página de agendamento.' : 'Pagamentos salvos'); render(); }
     },
     bbSalvar: async () => {
       const c = cfg();
@@ -1650,9 +1708,20 @@ button.logo:active{transform:scale(.94)}
       S.status = 'ok'; render();
       S.sb.rpc('eh_admin').then((r) => { S.ehAdmin = !r.error && r.data === true; if (S.ehAdmin && S.ui.tab === 'inicio') scheduleRender(); });
       carregarAcessos();
+      carregarMP();
+      voltaMP();
     } catch (e) {
       S.status = 'login'; render(); toast('Não deu pra carregar a barbearia. Confira a internet e entre de novo.', true);
     }
+  }
+  function voltaMP() {
+    const q = new URLSearchParams(location.search); const v = q.get('mp'); if (!v) return;
+    history.replaceState(null, '', location.pathname + '#gestao');
+    if (S.papel !== 'dono') return;
+    S.ui.gesTab = 'pagamentos'; go('gestao');
+    const mot = { cancelado: 'Você não autorizou no Mercado Pago.', expirou: 'O link expirou. Tente conectar de novo.', config: 'O Mercado Pago ainda não está configurado no servidor.' }[q.get('motivo')];
+    if (v === 'ok') toast('Mercado Pago conectado! Agora o cliente pode pagar no cartão ou no Pix.');
+    else toast(mot || 'Não deu pra conectar o Mercado Pago. Tente de novo.', true);
   }
   async function sincronizar() {
     if (S.status !== 'ok' || document.hidden) return;

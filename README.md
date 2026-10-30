@@ -38,7 +38,7 @@ São três aplicativos em um:
 | | Pra quem | O que faz |
 |---|---|---|
 | **Painel da barbearia** | Dono e barbeiros | Agenda, caixa, comissões, clientes, estoque, horários e configurações |
-| **Página de agendamento** | Cliente final | Escolhe serviço, barbeiro, dia e hora, e paga o sinal no Pix. Sem precisar de conta |
+| **Página de agendamento** | Cliente final | Escolhe serviço, barbeiro, dia e hora, e paga o sinal no Pix ou no cartão. Sem precisar de conta |
 | **Painel do administrador** | Dono do sistema | Todas as barbearias assinantes, mensalidades, testes grátis e bloqueios |
 
 E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, pisca, mexe o bigode e comemora cada comanda fechada.
@@ -116,6 +116,14 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 - O horário fica reservado enquanto o cliente paga (15, 30 ou 60 minutos) e é liberado sozinho se o prazo acabar.
 - O dinheiro cai direto na conta da barbearia, sem intermediário e sem taxa.
 
+### Cartão de crédito e Pix automático (Mercado Pago)
+- Cada barbearia **conecta a própria conta Mercado Pago** com um botão, sem copiar chave nenhuma.
+- O cliente paga o sinal (ou o valor todo, com 100%) **no cartão de crédito ou no Pix** na hora de agendar.
+- **Confirmação automática**: pagamento aprovado e o horário fica marcado sozinho, sem o dono conferir nada.
+- Parcelamento do sinal em até 12x, à escolha do dono. O dinheiro cai na conta Mercado Pago da barbearia.
+- Os dados do cartão vão direto pro Mercado Pago e nunca passam pelo app.
+- Se um pagamento chegar depois de a reserva cair, o painel avisa pra devolver ou remarcar.
+
 ### Página de agendamento do cliente
 - Sem cadastro e sem senha: serviço, barbeiro (ou "qualquer um"), dia e horário em poucos toques.
 - Mostra só horários realmente livres, e marca os dias fechados.
@@ -177,6 +185,7 @@ flowchart LR
 - O **cliente**, sem login, só vê o perfil público da barbearia e quais horários estão ocupados (sem nomes). Comissões, custos e dados de outros clientes nunca aparecem pra ele.
 - Cada WhatsApp só pode segurar uma reserva aguardando sinal por vez, pra ninguém travar a agenda.
 - Só o administrador muda vencimento, mensalidade e bloqueio de uma barbearia.
+- As chaves do Mercado Pago de cada barbearia ficam numa tabela que nenhum navegador consegue ler. O valor cobrado vem sempre do servidor, e um pagamento só confirma o horário depois de conferido direto no Mercado Pago.
 
 ---
 
@@ -188,6 +197,7 @@ flowchart LR
 | Banco de dados, login e tempo real | [Supabase](https://supabase.com) (Postgres com regras de acesso por linha) |
 | Hospedagem | [Vercel](https://vercel.com) |
 | Pix | Código "copia e cola" no padrão do Banco Central, gerado no próprio app (`pix.js`) |
+| Cartão e Pix automático | [Mercado Pago](https://www.mercadopago.com.br/developers) (OAuth, Card Payment Brick e API de pagamentos) em Supabase Edge Functions |
 | QR codes | qrcodejs |
 | Mascote e ícones | Desenhados em SVG |
 
@@ -198,6 +208,7 @@ flowchart LR
 ├── pix.js              Gerador do Pix "copia e cola"
 ├── config.js           Endereço e chave pública do Supabase
 ├── supabase/schema.sql Banco de dados, regras de acesso e funções
+├── supabase/functions/ Conexão e cobrança do Mercado Pago (mp-oauth, mp-pagar, mp-webhook)
 ├── manifest.webmanifest, *.png   Nome e ícone do app no celular
 └── docs/               Imagens deste README e guia técnico
 ```
@@ -206,7 +217,7 @@ flowchart LR
 
 ## Próximos passos
 
-- [ ] Cartão de crédito online pelo Mercado Pago, com confirmação automática do pagamento
+- [x] Cartão de crédito e Pix automático pelo Mercado Pago, com confirmação automática do pagamento
 - [ ] Aviso de agendamento com o app fechado (notificação push)
 - [ ] Lembrete automático no WhatsApp pela API oficial
 - [ ] Clube de assinatura pros clientes da barbearia
