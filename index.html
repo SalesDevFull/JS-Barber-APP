@@ -275,6 +275,19 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 .abertura .nome-app{background:linear-gradient(180deg,var(--gold1),var(--gold2) 55%,var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent}
 .badge-n{top:2px}
 
+button.logo{padding:0;cursor:pointer;flex-shrink:0}
+button.logo:active{transform:scale(.94)}
+.sair-top{min-height:40px;padding:0 12px;flex-shrink:0;background:rgba(0,0,0,.2)}
+#folha{position:fixed;inset:0;z-index:60}
+.folha-fundo{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .2s ease}
+.folha{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:#211710;border-top:2px solid var(--accent);border-radius:22px 22px 0 0;padding:14px max(16px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -12px 30px rgba(0,0,0,.6);animation:sobe .28s cubic-bezier(.2,.8,.3,1)}
+.folha-alca{width:44px;height:5px;border-radius:9px;background:#5A4129;align-self:center;margin-bottom:6px}
+.folha .logo{width:48px;height:48px}
+.folha-item{justify-content:flex-start}
+.folha-admin{color:#F3D58C;border-color:#8E6A2E}
+.admin-card{border-color:rgba(201,163,91,.7)!important}
+@keyframes sobe{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -282,11 +295,12 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 
 <div id="app">
   <header class="top">
-    <div class="logo" id="logo" aria-hidden="true">B</div>
+    <button type="button" class="logo" id="logo" data-act="menuConta" aria-label="Abrir menu da conta" aria-haspopup="dialog">B</button>
     <div class="grow">
       <small id="topSub">Carregando…</small>
       <h1 id="topTitle">Barbearia</h1>
     </div>
+    <button type="button" class="btn sm sair-top" data-act="sair">Sair</button>
   </header>
   <main id="view">
     <div class="empty">Carregando os dados da barbearia…</div>
@@ -302,6 +316,7 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
   </nav>
   <div id="toast" role="status" aria-live="polite" hidden></div>
   <div id="aviso" role="alert" hidden></div>
+  <div id="folha" hidden></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -555,7 +570,7 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
       const minha = S.ags.filter((a) => a.data === t0 && a.barbeiroId === S.meuBarb && segura(a) && a.status !== 'feito');
       const fala = !b ? 'Peça pro dono ligar sua conta a um barbeiro.' : (minha.length ? 'Você tem ' + minha.length + ' cliente' + (minha.length === 1 ? '' : 's') + ' na agenda hoje.' : 'Sua agenda de hoje está livre.');
       return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do JS Barber APP') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
-        '<div class="grid2"><button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button><button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button></div>' + vBarbeiro();
+        '<div class="grid2"><button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button><button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button></div>' + cardLink() + vBarbeiro();
     }
     const t = today(), m = mesAtual(), c = cfg();
     const fh = fechadas().filter((x) => x.data === t);
@@ -591,6 +606,8 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
       '<div class="balao"><b>' + saudacao() + (quem ? ', ' + esc(quem) : '') + '!</b><span>' + esc(fala) + '</span></div></div>' +
       '<div class="grid3 mini"><div><span class="tiny">Atendidos</span><b class="num">' + fh.length + '</b></div><div><span class="tiny">Na fila</span><b class="num">' + fila.length + '</b></div><div><span class="tiny">Livres</span><b class="num">' + liv.length + '</b></div></div></section>';
 
+    h += cardLink();
+    if (S.ehAdmin) h += cardAdmin();
     if (pend.length) h += '<section class="card warn"><span class="lbl c-warn">Sinal pra conferir</span><span>' + pl(pend.length, 'reserva esperando', 'reservas esperando') + ' o Pix do sinal. Confira no app do banco e confirme na agenda.</span><button type="button" class="btn warn" data-act="verPendentes">Ver reservas</button></section>';
 
     h += '<section class="card"><div class="row between"><span class="lbl">Agora</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Agenda completa</button></div>';
@@ -842,10 +859,30 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
       '<span class="tiny">Os avisos chegam com o app aberto (ou em segundo plano). Com o app totalmente fechado, ainda não.</span></section>';
   }
 
+  function cardLink() {
+    const hoje = today();
+    const n = S.ags.filter((a) => a.origem === 'link' && String(a.criadoEm || '').slice(0, 10) === hoje).length;
+    return '<section class="card"><span class="lbl">Seu link de agendamento</span>' +
+      '<span class="link">' + esc(linkPublico()) + '</span>' +
+      '<div class="grid3"><button type="button" class="btn pri" data-act="copiarLink">Copiar</button><button type="button" class="btn" data-act="compartilharLink">Compartilhar</button><button type="button" class="btn" data-act="qrLink">QR code</button></div>' +
+      '<span class="tiny">' + (n ? (n === 1 ? '1 agendamento chegou' : n + ' agendamentos chegaram') + ' por esse link hoje.' : 'Coloque na bio do Instagram e mande no WhatsApp dos clientes.') + '</span></section>';
+  }
+  function cardAdmin() {
+    return '<section class="card admin-card"><span class="lbl">Só você vê isto</span><div class="row"><div class="grow"><b class="h2">Painel do administrador</b><div class="tiny">Barbearias, mensalidades e bloqueios.</div></div><a class="btn pri sm" href="admin.html">Abrir</a></div></section>';
+  }
+  function abrirFolha(html) {
+    const f = document.getElementById('folha');
+    f.innerHTML = '<div class="folha-fundo" data-act="fecharFolha"></div><div class="folha" role="dialog" aria-modal="true" aria-label="Menu"><div class="folha-alca" aria-hidden="true"></div>' + html + '</div>';
+    f.hidden = false;
+    const b = f.querySelector('button, a'); if (b) b.focus();
+  }
+  function fecharFolha() { const f = document.getElementById('folha'); f.hidden = true; f.innerHTML = ''; }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('folha').hidden) fecharFolha(); });
+
   function vConta() {
     const b = barb(S.meuBarb);
     let h = '<section class="card"><span class="h2">Sua conta</span><span class="sub">' + esc(S.user ? S.user.email : '') + (b ? ' · ' + esc(b.nome) : '') + '</span>' +
-      (b ? '' : '<span class="tiny c-warn">Sua conta ainda não está ligada a um barbeiro da agenda. Peça pro dono ligar em Gestão → Equipe → Acesso ao app.</span>') +
+      (b || !souBarbeiro() ? '' : '<span class="tiny c-warn">Sua conta ainda não está ligada a um barbeiro da agenda. Peça pro dono ligar em Gestão → Equipe → Acesso ao app.</span>') +
       '<button type="button" class="btn" data-act="sair">Sair da conta</button></section>';
     h += cardAvisos();
     h += '<section class="card"><span class="h2">Link de agendamento</span><span class="link">' + esc(linkPublico()) + '</span><button type="button" class="btn pri" data-act="copiarLink">Copiar link</button></section>';
@@ -895,6 +932,7 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 
   function vGestao() {
     if (souBarbeiro()) return vConta();
+    if (S.ui.gesTab === 'conta') return '<button type="button" class="btn sm" data-act="gesTab" data-v="barbearia" style="align-self:flex-start">‹ Gestão</button>' + vConta();
     const tabs = [['barbearia', 'Barbearia'], ['horarios', 'Horários'], ['pagamentos', 'Pagamentos'], ['equipe', 'Equipe'], ['servicos', 'Serviços'], ['estoque', 'Estoque'], ['despesas', 'Despesas']];
     let h = '<div class="chips">' + tabs.map((t) => chip(t[1], 'gesTab', t[0], S.ui.gesTab === t[0])).join('') + '</div>';
     const g = S.ui.gesTab; const c = cfg(); const m = mesAtual();
@@ -1158,7 +1196,29 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
       if (r.error) { toast(r.error.message, true); return; }
       toast('Senha atualizada'); S.user = r.data.user; await carregarBarbearia();
     },
-    sair: async () => { await S.sb.auth.signOut(); location.hash = ''; location.reload(); },
+    sair: async () => {
+      fecharFolha(); await S.sb.auth.signOut(); location.hash = ''; location.reload(); },
+    menuConta: () => {
+      if (S.status !== 'ok') return;
+      const b = barb(S.meuBarb) || (S.papel === 'dono' ? (cfg().barbeiros || [])[0] : null);
+      abrirFolha('<div class="row" style="gap:12px;margin-bottom:6px"><span class="logo" aria-hidden="true">' + document.getElementById('logo').innerHTML + '</span><div><b>' + esc(b ? primeiroNome(b.nome) : 'Sua conta') + '</b><div class="tiny">' + esc(S.user ? S.user.email : '') + ' · ' + (S.papel === 'dono' ? 'dono' : 'barbeiro') + '</div></div></div>' +
+        '<button type="button" class="btn folha-item" data-act="irConta">Minha conta e avisos</button>' +
+        '<button type="button" class="btn folha-item" data-act="copiarLink">Copiar link de agendamento</button>' +
+        (S.ehAdmin ? '<a class="btn folha-item folha-admin" href="admin.html">Painel do administrador</a>' : '') +
+        '<button type="button" class="btn bad folha-item" data-act="sair">Sair da conta</button>');
+    },
+    fecharFolha: () => fecharFolha(),
+    irConta: () => { fecharFolha(); if (!souBarbeiro()) S.ui.gesTab = 'conta'; go('gestao'); },
+    compartilharLink: async () => {
+      const url = linkPublico(); const txt = 'Agende seu horário na ' + cfg().nome + ':';
+      if (navigator.share) { try { await navigator.share({ title: cfg().nome, text: txt, url: url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+      try { await navigator.clipboard.writeText(txt + ' ' + url); toast('Link copiado. Agora é só colar onde quiser.'); } catch (e) { toast('Não deu pra compartilhar aqui. Use o botão Copiar.', true); }
+    },
+    qrLink: () => {
+      abrirFolha('<b class="h2">QR code do agendamento</b><span class="sub">Imprima e cole no balcão ou no espelho. O cliente aponta a câmera e agenda.</span><div class="qr" id="folha-qr" role="img" aria-label="QR code do link de agendamento" style="align-self:center"></div><span class="link" style="text-align:center">' + esc(linkPublico()) + '</span><span class="tiny" style="text-align:center">Pra salvar: toque e segure no QR (ou clique com o botão direito).</span><button type="button" class="btn" data-act="fecharFolha">Fechar</button>');
+      const q = document.getElementById('folha-qr');
+      if (q && window.QRCode) { try { new window.QRCode(q, { text: linkPublico(), width: 140, height: 140, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) { q.textContent = 'QR indisponível'; } }
+    },
     copiarLink: async () => { try { await navigator.clipboard.writeText(linkPublico()); toast('Link copiado'); } catch (e) { toast('Não deu pra copiar. Selecione o link e copie.', true); } },
     convidar: async () => {
       const email = campo('cv-email', 'cvEmail').trim().toLowerCase();
@@ -1588,6 +1648,7 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
         })
         .subscribe();
       S.status = 'ok'; render();
+      S.sb.rpc('eh_admin').then((r) => { S.ehAdmin = !r.error && r.data === true; if (S.ehAdmin && S.ui.tab === 'inicio') scheduleRender(); });
       carregarAcessos();
     } catch (e) {
       S.status = 'login'; render(); toast('Não deu pra carregar a barbearia. Confira a internet e entre de novo.', true);
