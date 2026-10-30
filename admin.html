@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3B2617">
+<meta name="robots" content="noindex, nofollow">
+<title>JS Barber APP · Administração</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+/* Painel do administrador: mesma pele de couro e madeira do app, em uma coluna larga (até 900px) com cartões por barbearia. */
+:root{
+  color-scheme: dark;
+  --bg:#1A120D; --surface:#271B13; --surface2:#1F160F; --line:#3B2B1F; --line2:#4E3929;
+  --fg:#F3E9DA; --fg2:#E6D8C3; --muted:#C4AF95; --dim:#A08A73;
+  --accent:#C9A35B; --accent-ink:#1A120D; --accent-soft:#3A2B1C;
+  --ok:#8CC79A; --ok-line:#3A5236; --warn:#E3AE57; --warn-line:#6B4E25; --bad:#E48A72; --bad-line:#5E3326;
+  --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11; --stitch:rgba(201,163,91,.30);
+  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(rgba(255,235,205,.03) 1px,transparent 1px),radial-gradient(rgba(0,0,0,.22) 1px,transparent 1px);background-size:3px 3px,5px 5px;color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4}
+[hidden]{display:none!important}
+button,input,select,textarea{font-family:inherit}
+.top{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.04) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3));border-bottom:2px solid var(--accent);padding-block:16px 14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.selo{width:46px;height:46px;border-radius:999px;border:2px solid var(--accent);color:var(--accent);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 3px var(--bg),inset 0 0 0 4px var(--stitch)}
+.top small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.top h1{margin:0;font-family:var(--display);font-size:25px;font-weight:700}
+main{max-width:900px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.stitch::after{content:"";position:absolute;inset:5px;border:1px dashed var(--stitch);border-radius:10px;pointer-events:none}
+.card.alerta{border-color:var(--warn-line)} .card.bloq{border-color:var(--bad-line)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi b{font-family:var(--display);font-size:24px;font-variant-numeric:lining-nums tabular-nums}
+.row{display:flex;align-items:center;gap:10px;min-width:0}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.h2{margin:0;font-family:var(--display);font-size:20px;font-weight:700}
+.sub{font-size:14px;color:var(--muted)}
+.tiny{font-size:13px;color:var(--muted)}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line2);white-space:nowrap}
+.p-ok{color:var(--ok);border-color:var(--ok-line)} .p-warn{color:var(--warn);border-color:var(--warn-line)} .p-bad{color:var(--bad);border-color:var(--bad-line)} .p-acc{color:var(--accent);border-color:var(--line2)}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.meta div{display:flex;flex-direction:column;gap:1px}
+.meta span{font-size:12px;color:var(--muted)}
+.meta b{font-size:15px;font-variant-numeric:tabular-nums}
+.btn{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:var(--fg);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn.pri{background-color:var(--accent);background-image:linear-gradient(180deg,rgba(255,255,255,.2),rgba(0,0,0,.14));border-color:var(--accent);color:var(--accent-ink)}
+.btn.bad{color:var(--bad);border-color:var(--bad-line)} .btn.ok{color:var(--ok);border-color:var(--ok-line)}
+.btn.full{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--fg2);font-size:14px;font-weight:500;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+input,select,textarea{min-height:46px;width:100%;padding:0 12px;border-radius:10px;border:1px solid var(--line2);background:var(--surface2);color:var(--fg);font-size:16px}
+textarea{padding:10px 12px;min-height:70px;resize:vertical}
+.form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px}
+@media (max-width:560px){.form{grid-template-columns:1fr}}
+.form .span{grid-column:1/-1}
+.item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.item:last-child{border-bottom:none}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--fg);color:var(--bg);border:1px solid var(--accent);padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100% - 32px)}
+#toast.err{background:var(--bad);color:#1A0A06}
+.empty{text-align:center;color:var(--muted);padding:28px 12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="selo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></div>
+    <div class="grow"><small>JS Barber APP · Administração</small><h1 id="titulo">Barbearias</h1></div>
+  </div>
+</header>
+<main id="view"><p class="sub">Carregando…</p></main>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const brl = (n) => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pad = (n) => String(n).padStart(2, '0');
+  const hoje = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  const parseD = (s) => { const p = String(s).slice(0, 10).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const dias = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
+  const br = (s) => { if (!s) return '—'; const d = parseD(s); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); };
+  const quando = (ts) => { if (!ts) return 'nunca'; const n = dias(String(ts).slice(0, 10), hoje()); return n <= 0 ? 'hoje' : n === 1 ? 'ontem' : 'há ' + n + ' dias'; };
+  const num = (v) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : null; };
+  const TOL = 5;
+
+  const view = document.getElementById('view');
+  const S = { sb: null, lista: [], pags: [], filtro: 'todas', busca: '', aberto: null, modo: null, hist: {}, confirm: null, user: null };
+  let tT = null;
+  function toast(m, err) { const t = document.getElementById('toast'); t.textContent = m; t.className = err ? 'err' : ''; t.hidden = false; clearTimeout(tT); tT = setTimeout(() => { t.hidden = true; }, 3000); }
+
+  function situacao(b) {
+    const t = hoje(); const v = b.vencimento; const d = v ? dias(t, v) : null;
+    if (!b.ativa) return { k: 'bloq', txt: 'Desativada por você', cls: 'p-bad' };
+    if (!b.liberada) return { k: 'bloq', txt: 'Bloqueada · venceu em ' + br(v), cls: 'p-bad' };
+    if (d !== null && d < 0) return { k: 'vencendo', txt: 'Vencida há ' + (-d) + ' dia' + (d === -1 ? '' : 's') + ' · bloqueia em ' + (TOL + d + 1) + ' dia' + (TOL + d + 1 === 1 ? '' : 's'), cls: 'p-warn' };
+    if (Number(b.total_pago) <= 0) return { k: 'teste', txt: 'Teste grátis até ' + br(v), cls: 'p-acc' };
+    if (d !== null && d <= 7) return { k: 'vencendo', txt: 'Vence em ' + d + ' dia' + (d === 1 ? '' : 's'), cls: 'p-warn' };
+    return { k: 'ok', txt: v ? 'Em dia até ' + br(v) : 'Sem vencimento', cls: 'p-ok' };
+  }
+
+  function vLogin() {
+    return '<div class="card stitch" style="max-width:440px;margin:24px auto 0;width:100%"><p class="h2">Entrar como administrador</p>' +
+      '<div class="field"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="email"></div>' +
+      '<div class="field"><label for="a-senha">Senha</label><input id="a-senha" type="password" autocomplete="current-password"></div>' +
+      '<button type="button" class="btn pri full" data-a="entrar">Entrar</button>' +
+      '<span class="tiny">Use a mesma conta que você criou no app. Ela precisa estar cadastrada como administradora no banco (veja o README).</span></div>';
+  }
+
+  function render() {
+    const t = hoje(); const mes = t.slice(0, 7);
+    const L = S.lista;
+    const sit = L.map((b) => ({ b: b, s: situacao(b) }));
+    const liberadas = L.filter((b) => b.liberada);
+    const prevista = liberadas.reduce((a, b) => a + (Number(b.mensalidade) || 0), 0);
+    const recebidoMes = S.pags.filter((p) => String(p.pago_em).slice(0, 7) === mes).reduce((a, p) => a + Number(p.valor || 0), 0);
+    const cnt = (k) => sit.filter((x) => x.s.k === k).length;
+    let h = '<div class="kpis">' +
+      '<div class="kpi"><span>Barbearias</span><b>' + L.length + '</b></div>' +
+      '<div class="kpi"><span>Liberadas</span><b>' + liberadas.length + '</b></div>' +
+      '<div class="kpi"><span>Bloqueadas</span><b>' + cnt('bloq') + '</b></div>' +
+      '<div class="kpi"><span>Em teste grátis</span><b>' + cnt('teste') + '</b></div>' +
+      '<div class="kpi"><span>Receita mensal prevista</span><b>' + brl(prevista) + '</b></div>' +
+      '<div class="kpi"><span>Recebido este mês</span><b>' + brl(recebidoMes) + '</b></div></div>';
+    const filtros = [['todas', 'Todas'], ['vencendo', 'Vencendo ou vencidas (' + cnt('vencendo') + ')'], ['bloq', 'Bloqueadas (' + cnt('bloq') + ')'], ['teste', 'Em teste (' + cnt('teste') + ')'], ['ok', 'Em dia (' + cnt('ok') + ')']];
+    h += '<div class="chips">' + filtros.map((f) => '<button type="button" class="chip' + (S.filtro === f[0] ? ' on' : '') + '" data-a="filtro" data-v="' + f[0] + '" aria-pressed="' + (S.filtro === f[0]) + '">' + f[1] + '</button>').join('') + '</div>';
+    h += '<div class="field"><label for="busca" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar</label><input id="busca" type="search" placeholder="Buscar por nome, link ou e-mail do dono" value="' + esc(S.busca) + '"></div>';
+    const q = S.busca.toLowerCase().trim();
+    const vis = sit.filter((x) => (S.filtro === 'todas' || x.s.k === S.filtro) && (!q || (x.b.nome + ' ' + x.b.slug + ' ' + (x.b.dono_email || '')).toLowerCase().indexOf(q) >= 0));
+    if (!vis.length) h += '<div class="empty">' + (L.length ? 'Nenhuma barbearia nesse filtro.' : 'Nenhuma barbearia se cadastrou ainda. Quando alguém criar conta no app, aparece aqui.') + '</div>';
+    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+    vis.forEach((x) => {
+      const b = x.b, s = x.s, aberto = S.aberto === b.id;
+      h += '<section class="card' + (s.k === 'bloq' ? ' bloq' : s.k === 'vencendo' ? ' alerta' : '') + '">' +
+        '<div class="row wrap"><div class="grow"><p class="h2">' + esc(b.nome) + '</p><span class="tiny">' + esc(b.dono_email || 'sem dono') + ' · <a href="' + esc(base + 'agendar.html?b=' + encodeURIComponent(b.slug)) + '" target="_blank" rel="noopener">' + esc(b.slug) + '</a></span></div><span class="pill ' + s.cls + '">' + esc(s.txt) + '</span></div>' +
+        '<div class="meta"><div><span>Mensalidade</span><b>' + (b.mensalidade != null ? brl(b.mensalidade) : 'não definida') + '</b></div><div><span>Vencimento</span><b>' + br(b.vencimento) + '</b></div>' +
+        '<div><span>Uso (30 dias)</span><b>' + b.agendamentos_30d + ' agend. · ' + b.comandas_30d + ' comandas</b></div><div><span>Último uso</span><b>' + quando(b.ultima_atividade) + '</b></div></div>' +
+        (b.obs_admin ? '<span class="tiny">Anotação: ' + esc(b.obs_admin) + '</span>' : '') +
+        '<div class="row wrap"><button type="button" class="btn pri" data-a="modo" data-id="' + b.id + '" data-v="pagar">Registrar pagamento</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="editar">Editar</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="hist">Histórico</button>' +
+        (b.ativa ? '<button type="button" class="btn bad" data-a="desativar" data-id="' + b.id + '">' + (S.confirm === 'd' + b.id ? 'Toque de novo pra desativar' : 'Desativar') + '</button>' : '<button type="button" class="btn ok" data-a="reativar" data-id="' + b.id + '">Reativar</button>') + '</div>';
+      if (aberto && S.modo === 'pagar') {
+        h += '<div class="form"><div class="field"><label for="pg-valor">Valor recebido (R$)</label><input id="pg-valor" inputmode="decimal" value="' + esc(b.mensalidade != null ? String(b.mensalidade).replace('.', ',') : '') + '"></div>' +
+          '<div class="field"><label for="pg-meses">Meses pagos</label><select id="pg-meses">' + [1, 2, 3, 6, 12].map((m) => '<option value="' + m + '">' + m + (m === 1 ? ' mês' : ' meses') + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label for="pg-obs">Anotação (opcional)</label><input id="pg-obs" placeholder="Pix, cartão…"></div>' +
+          '<span class="tiny span">O vencimento avança a partir de ' + br(b.vencimento && b.vencimento > t ? b.vencimento : t) + ' e o acesso é liberado na hora.</span>' +
+          '<button type="button" class="btn pri span" data-a="pagar" data-id="' + b.id + '">Confirmar pagamento</button></div>';
+      }
+      if (aberto && S.modo === 'editar') {
+        h += '<div class="form"><div class="field"><label for="ed-mens">Mensalidade (R$)</label><input id="ed-mens" inputmode="decimal" value="' + esc(b.mensalidade != null ? String(b.mensalidade).replace('.', ',') : '') + '"></div>' +
+          '<div class="field"><label for="ed-venc">Vencimento</label><input id="ed-venc" type="date" value="' + esc(b.vencimento || '') + '"></div>' +
+          '<div class="field"><label for="ed-ativa">Acesso</label><select id="ed-ativa"><option value="1"' + (b.ativa ? ' selected' : '') + '>Ativa</option><option value="0"' + (!b.ativa ? ' selected' : '') + '>Desativada</option></select></div>' +
+          '<div class="field span"><label for="ed-obs">Anotação interna (só você vê)</label><textarea id="ed-obs">' + esc(b.obs_admin || '') + '</textarea></div>' +
+          '<span class="tiny span">Deixe o vencimento em branco pra barbearia nunca ser bloqueada automaticamente (ex.: parceiro ou cortesia).</span>' +
+          '<button type="button" class="btn pri span" data-a="salvar" data-id="' + b.id + '">Salvar</button></div>';
+      }
+      if (aberto && S.modo === 'hist') {
+        const ps = S.pags.filter((p) => p.barbearia_id === b.id);
+        h += '<div class="form"><div class="span">' + (ps.length ? ps.map((p) => '<div class="item"><span class="grow">' + br(String(p.pago_em).slice(0, 10)) + ' · ' + p.meses + (p.meses === 1 ? ' mês' : ' meses') + ' · até ' + br(p.vence_ate) + (p.obs ? ' · ' + esc(p.obs) : '') + '</span><b class="num">' + brl(p.valor) + '</b><button type="button" class="btn" data-a="apagarPag" data-id="' + p.id + '" aria-label="Apagar pagamento">' + (S.confirm === 'p' + p.id ? 'Confirmar' : '✕') + '</button></div>').join('') : '<span class="tiny">Nenhum pagamento registrado.</span>') +
+          '</div><span class="tiny span">Total pago: ' + brl(b.total_pago) + ' · Cliente desde ' + br(String(b.criado_em).slice(0, 10)) + ' · ' + b.membros + ' pessoa' + (b.membros == 1 ? '' : 's') + ' com acesso</span></div>';
+      }
+      h += '</section>';
+    });
+    h += '<div class="row wrap" style="justify-content:space-between"><span class="tiny">' + esc(S.user ? S.user.email : '') + ' · tolerância de ' + TOL + ' dias após o vencimento</span><button type="button" class="btn" data-a="atualizar">Atualizar</button><button type="button" class="btn" data-a="sair">Sair</button></div>';
+    view.innerHTML = h;
+  }
+
+  async function carregar() {
+    const [a, b] = await Promise.all([S.sb.rpc('admin_barbearias'), S.sb.rpc('admin_pagamentos', { p_id: null })]);
+    if (a.error) { toast(a.error.message, true); return; }
+    S.lista = a.data || []; S.pags = b.data || [];
+    render();
+  }
+
+  async function aposLogin() {
+    const r = await S.sb.rpc('eh_admin');
+    if (r.error || !r.data) {
+      view.innerHTML = '<div class="card stitch" style="max-width:440px;margin:24px auto 0;width:100%"><p class="h2">Sem acesso</p><span class="sub">A conta ' + esc(S.user.email) + ' não é administradora. Siga o passo "Virar administrador" do README e entre de novo.</span><button type="button" class="btn" data-a="sair">Sair</button></div>';
+      return;
+    }
+    await carregar();
+  }
+
+  view.addEventListener('input', (e) => {
+    if (e.target.id === 'busca') {
+      S.busca = e.target.value; const pos = e.target.selectionStart; render();
+      const i = document.getElementById('busca'); i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) { /* ok */ }
+    }
+  });
+  view.addEventListener('click', async (e) => {
+    const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
+    const a = el.dataset.a, id = el.dataset.id;
+    if (a !== 'desativar' && a !== 'apagarPag') S.confirm = null;
+    if (a === 'entrar') {
+      const r = await S.sb.auth.signInWithPassword({ email: document.getElementById('a-email').value.trim(), password: document.getElementById('a-senha').value });
+      if (r.error) { toast('E-mail ou senha incorretos.', true); return; }
+      S.user = r.data.user; aposLogin();
+    }
+    if (a === 'sair') { await S.sb.auth.signOut(); location.reload(); }
+    if (a === 'atualizar') { await carregar(); toast('Atualizado'); }
+    if (a === 'filtro') { S.filtro = el.dataset.v; render(); }
+    if (a === 'modo') { if (S.aberto === id && S.modo === el.dataset.v) { S.aberto = null; S.modo = null; } else { S.aberto = id; S.modo = el.dataset.v; } render(); }
+    if (a === 'pagar') {
+      const v = num(document.getElementById('pg-valor').value); const m = Number(document.getElementById('pg-meses').value);
+      if (v === null) { toast('Informe o valor recebido.', true); return; }
+      el.disabled = true;
+      const r = await S.sb.rpc('admin_registrar_pagamento', { p_id: id, p_valor: v, p_meses: m, p_obs: document.getElementById('pg-obs').value });
+      if (r.error) { toast(r.error.message, true); el.disabled = false; return; }
+      toast('Pagamento registrado. Vence em ' + br(r.data) + '.'); S.aberto = null; S.modo = null; await carregar();
+    }
+    if (a === 'salvar') {
+      const mens = document.getElementById('ed-mens').value.trim();
+      const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: document.getElementById('ed-ativa').value === '1', p_vencimento: document.getElementById('ed-venc').value || null, p_mensalidade: mens ? num(mens) : null, p_obs: document.getElementById('ed-obs').value });
+      if (r.error) { toast(r.error.message, true); return; }
+      toast('Salvo'); S.aberto = null; S.modo = null; await carregar();
+    }
+    if (a === 'desativar' || a === 'reativar') {
+      if (a === 'desativar' && S.confirm !== 'd' + id) { S.confirm = 'd' + id; render(); return; }
+      S.confirm = null;
+      const b = S.lista.find((x) => x.id === id);
+      const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: a === 'reativar', p_vencimento: b.vencimento, p_mensalidade: b.mensalidade, p_obs: b.obs_admin });
+      if (r.error) { toast(r.error.message, true); return; }
+      toast(a === 'reativar' ? 'Barbearia reativada' : 'Barbearia desativada'); await carregar();
+    }
+    if (a === 'apagarPag') {
+      if (S.confirm !== 'p' + id) { S.confirm = 'p' + id; render(); return; }
+      S.confirm = null;
+      const r = await S.sb.rpc('admin_apagar_pagamento', { p_pagamento: id });
+      if (r.error) { toast(r.error.message, true); return; }
+      toast('Pagamento apagado. Ajuste o vencimento em Editar, se precisar.'); await carregar();
+    }
+  });
+
+  async function iniciar() {
+    const C = window.APP_CONFIG || {};
+    if (!window.supabase || !C.SUPABASE_URL || /COLE_AQUI/.test(C.SUPABASE_URL)) { view.innerHTML = '<div class="card"><span>Preencha o config.js primeiro.</span></div>'; return; }
+    let u = String(C.SUPABASE_URL).trim();
+    const painel = u.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+    if (painel) u = 'https://' + painel[1] + '.supabase.co';
+    u = u.replace(/\/(rest|auth|storage|realtime)\/v1.*$/i, '').replace(/\/+$/, '');
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    S.sb = window.supabase.createClient(u, String(C.SUPABASE_ANON_KEY).trim());
+    const s = await S.sb.auth.getSession();
+    if (s.data && s.data.session) { S.user = s.data.session.user; aposLogin(); }
+    else view.innerHTML = vLogin();
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>

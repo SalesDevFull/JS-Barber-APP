@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3B2617">
+<title>Agendar horário</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+/* Página pública: uma coluna estreita, clara, com a cor da barbearia nos destaques. */
+:root{
+  color-scheme: light;
+  --bg:#F6F5F2; --surface:#FFFFFF; --line:#E3E1DC; --fg:#141416; --muted:#5A5A62; --dim:#8A8A93;
+  --marca:#8B9BFF; --marca-ink:#141416; --ok:#1E7A44; --ok-soft:#E3F3E9; --bad:#B3261E;
+  --font:'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4}
+[hidden]{display:none!important}
+.wrap{max-width:520px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+.topo{display:flex;align-items:center;gap:12px}
+.logo{width:52px;height:52px;border-radius:14px;background:#141416;color:var(--marca);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0}
+h1{margin:0;font-size:22px;font-weight:700;text-wrap:balance}
+.sub{font-size:14px;color:var(--muted)}
+.tiny{font-size:12px;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.pick{min-height:60px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--fg);text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;font-family:inherit}
+.pick b{font-size:15px;font-weight:600}
+.pick span{font-size:13px;color:var(--muted)}
+.pick.on{border-color:#141416}
+.dia{min-width:64px;min-height:64px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.dia small{font-size:12px;font-weight:500}
+.dia b{font-size:19px}
+.dia.on{background:#141416;border-color:#141416;color:#fff}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;flex-shrink:0}
+.chip.on{background:#141416;border-color:#141416;color:#fff}
+.slot{min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums}
+.slot.on{background:var(--marca);border-color:#141416;color:var(--marca-ink);font-weight:700}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;color:var(--muted);font-weight:500}
+input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:16px;font-family:inherit;width:100%}
+.btn{min-height:54px;border-radius:14px;border:none;background:#141416;color:var(--marca);font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+.btn:disabled{background:#E3E1DC;color:#77777F;cursor:default}
+.btn.sec{background:transparent;border:1px solid var(--line);color:var(--fg);font-weight:600;font-size:15px;min-height:48px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.ok{background:var(--ok-soft);border-color:#B9DCC6}
+.linha{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.linha span:first-child{color:var(--muted)}
+.erro{color:var(--bad);font-size:14px;font-weight:500}
+.vazio{color:var(--muted);font-size:14px}
+:focus-visible{outline:3px solid var(--marca);outline-offset:2px}
+
+/* ===== Estilo couro e madeira (página do cliente) =====
+   Papel creme quente, faixa de madeira com o nome da barbearia, botões em couro escuro com letras em latão. */
+:root{
+  --bg:#F4ECDF; --surface:#FFFBF4; --line:#E0CFB6; --fg:#2A1B12; --muted:#6B5544; --dim:#8C7560;
+  --marca:#C9A35B; --marca-ink:#2A1B12; --couro:#2A1B12; --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11;
+  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+body{font-size:17px;background-image:radial-gradient(rgba(120,80,40,.05) 1px,transparent 1px);background-size:4px 4px}
+.topo{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.05) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3));color:#F3E9DA;border-radius:18px;padding:18px;border-bottom:3px solid var(--marca);box-shadow:0 8px 20px rgba(60,35,15,.25)}
+.topo h1{font-family:var(--display);font-size:26px;font-weight:700;color:#F3E9DA}
+.topo .sub{color:#D9C6AA}
+.logo{background:#1A120D;color:var(--marca);border:2px solid var(--marca);border-radius:999px;font-family:var(--display);box-shadow:inset 0 0 0 3px #1A120D,inset 0 0 0 4px rgba(201,163,91,.35)}
+h1{font-family:var(--display)}
+.lbl{color:var(--muted);letter-spacing:.1em}
+.pick{border-width:1px;padding:11px 13px}
+.pick.on{border:2px solid var(--couro);padding:10px 12px;background:#FBF3E6}
+.dia.on,.chip.on{background:var(--couro);border-color:var(--couro);color:#F3E9DA}
+.slot.on{background-color:var(--marca);background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.10));border-color:var(--couro);color:var(--marca-ink)}
+.btn{background:var(--couro);color:var(--marca);font-family:var(--display);font-size:19px;letter-spacing:.01em;box-shadow:0 4px 12px rgba(42,27,18,.25)}
+.btn:disabled{background:#E6D9C6;color:#7A6654;box-shadow:none}
+.card{position:relative}
+.card.ok{background:#EEF3E6;border-color:#C7D6B5}
+.card.ok::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(60,90,50,.35);border-radius:13px;pointer-events:none}
+.card.ok h1{color:#2E4A26}
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <p class="sub">Carregando…</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const brl = (n) => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pad = (n) => String(n).padStart(2, '0');
+  const dstr = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const parseD = (s) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return dstr(d); };
+  const toMin = (h) => { const p = String(h).split(':').map(Number); return p[0] * 60 + (p[1] || 0); };
+  const toHora = (m) => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+  const SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const SEML = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+  const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const hoje = () => dstr(new Date());
+  const agoraMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const diaLongo = (s) => { const d = parseD(s); return SEML[d.getDay()] + ', ' + d.getDate() + ' de ' + MES[d.getMonth()]; };
+
+  const app = document.getElementById('app');
+  const slug = new URLSearchParams(location.search).get('b') || '';
+  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, nome: '', tel: '' };
+  try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; } catch (e) { /* sem armazenamento */ }
+  let sb = null;
+
+  function msg(t) { app.innerHTML = '<div class="card"><p style="margin:0">' + t + '</p></div>'; }
+
+  function livres() {
+    const b = st.b; const s = b.servicos.find((x) => x.id === st.serv); if (!s) return [];
+    const dur = Number(s.dur) || 30; const step = Number(b.intervalo) || 30;
+    const ini = toMin(b.abre), fim = toMin(b.fecha); const passou = st.dia === hoje() ? agoraMin() : -1;
+    const oc = st.ocup[st.dia] || [];
+    const ids = st.barb === 'qualquer' ? b.barbeiros.map((x) => x.id) : [st.barb];
+    const out = [];
+    for (let m = ini; m + dur <= fim + 1; m += step) {
+      if (m <= passou) continue;
+      const algumLivre = ids.some((id) => !oc.some((o) => o.barbeiroId === id && toMin(o.hora) < m + dur && m < toMin(o.hora) + (Number(o.dur) || 30)));
+      if (algumLivre) out.push(m);
+    }
+    return out;
+  }
+
+  async function carregarDia(dia) {
+    if (st.ocup[dia]) return;
+    st.carregandoDia = true; render();
+    const r = await sb.rpc('horarios_ocupados', { p_slug: slug, p_dia: dia });
+    st.ocup[dia] = r.error ? [] : (r.data || []);
+    st.carregandoDia = false; render();
+  }
+
+  function render() {
+    const b = st.b;
+    if (st.feito) {
+      const f = st.feito;
+      app.innerHTML = topo() +
+        '<div class="card ok"><h1 style="font-size:24px">Horário marcado!</h1>' +
+        '<div class="linha"><span>Serviço</span><b>' + esc(f.servico) + '</b></div>' +
+        '<div class="linha"><span>Barbeiro</span><b>' + esc(f.barbeiro) + '</b></div>' +
+        '<div class="linha"><span>Quando</span><b>' + esc(diaLongo(f.dia)) + ' às ' + esc(f.hora) + '</b></div></div>' +
+        '<p class="sub">A barbearia já está vendo seu horário. Se precisar desmarcar, fale com eles pelo WhatsApp.</p>' +
+        '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
+      return;
+    }
+    const s = b.servicos.find((x) => x.id === st.serv);
+    let h = topo();
+    h += '<section><span class="lbl">Serviço</span><div class="grid2">' + b.servicos.map((x) =>
+      '<button type="button" class="pick' + (st.serv === x.id ? ' on' : '') + '" data-a="serv" data-v="' + esc(x.id) + '" aria-pressed="' + (st.serv === x.id) + '"><b>' + esc(x.nome) + '</b><span>' + brl(x.preco) + ' · ' + esc(x.dur) + ' min</span></button>').join('') + '</div></section>';
+    h += '<section><span class="lbl">Barbeiro</span><div class="chips">' +
+      '<button type="button" class="chip' + (st.barb === 'qualquer' ? ' on' : '') + '" data-a="barb" data-v="qualquer" aria-pressed="' + (st.barb === 'qualquer') + '">Qualquer um</button>' +
+      b.barbeiros.map((x) => '<button type="button" class="chip' + (st.barb === x.id ? ' on' : '') + '" data-a="barb" data-v="' + esc(x.id) + '" aria-pressed="' + (st.barb === x.id) + '">' + esc(x.nome) + '</button>').join('') + '</div></section>';
+    h += '<section><span class="lbl">Dia</span><div class="chips">';
+    for (let i = 0; i < 14; i++) {
+      const d = addDays(hoje(), i); const pd = parseD(d);
+      h += '<button type="button" class="dia' + (st.dia === d ? ' on' : '') + '" data-a="dia" data-v="' + d + '" aria-pressed="' + (st.dia === d) + '"><small>' + (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : SEM[pd.getDay()]) + '</small><b>' + pd.getDate() + '</b></button>';
+    }
+    h += '</div></section>';
+    h += '<section><span class="lbl">Horário</span>';
+    if (!s) h += '<span class="vazio">Escolha o serviço pra ver os horários livres.</span>';
+    else if (st.carregandoDia || !st.ocup[st.dia]) h += '<span class="vazio">Buscando horários…</span>';
+    else {
+      const ms = livres();
+      if (!ms.length) h += '<span class="vazio">Sem horário livre nesse dia. Tente outro dia ou outro barbeiro.</span>';
+      else h += '<div class="grid4">' + ms.map((m) => { const hh = toHora(m); return '<button type="button" class="slot' + (st.hora === hh ? ' on' : '') + '" data-a="hora" data-v="' + hh + '" aria-pressed="' + (st.hora === hh) + '">' + hh + '</button>'; }).join('') + '</div>';
+    }
+    h += '</section>';
+    h += '<section><span class="lbl">Seus dados</span>' +
+      '<div class="field"><label for="f-nome">Nome</label><input id="f-nome" autocomplete="name" value="' + esc(st.nome) + '"></div>' +
+      '<div class="field"><label for="f-tel">WhatsApp com DDD</label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" value="' + esc(st.tel) + '"></div></section>';
+    if (st.erro) h += '<p class="erro" role="alert">' + esc(st.erro) + '</p>';
+    const pronto = s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10;
+    h += '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + (st.enviando ? 'Marcando…' : (s && st.hora ? 'Confirmar ' + esc(s.nome.toLowerCase()) + ' às ' + st.hora : 'Confirmar horário')) + '</button>';
+    app.innerHTML = h;
+  }
+  function topo() {
+    const b = st.b;
+    return '<header class="topo"><div class="logo" aria-hidden="true">' + esc((b.nome.trim()[0] || 'B').toUpperCase()) + '</div><div><h1>' + esc(b.nome) + '</h1><span class="sub">Agende seu horário · ' + esc(b.abre) + ' às ' + esc(b.fecha) + '</span></div></header>';
+  }
+  function atualizarBotao() {
+    const btn = app.querySelector('[data-a="confirmar"]'); if (!btn) return;
+    const s = st.b.servicos.find((x) => x.id === st.serv);
+    btn.disabled = !(s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10) || st.enviando;
+  }
+
+  app.addEventListener('input', (e) => {
+    if (e.target.id === 'f-nome') st.nome = e.target.value;
+    if (e.target.id === 'f-tel') st.tel = e.target.value;
+    atualizarBotao();
+  });
+  app.addEventListener('click', async (e) => {
+    const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
+    const a = el.dataset.a, v = el.dataset.v; st.erro = '';
+    if (a === 'serv') { st.serv = v; st.hora = null; render(); carregarDia(st.dia); }
+    if (a === 'barb') { st.barb = v; st.hora = null; render(); }
+    if (a === 'dia') { st.dia = v; st.hora = null; render(); carregarDia(v); }
+    if (a === 'hora') { st.hora = v; render(); }
+    if (a === 'novo') { st.feito = null; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); }
+    if (a === 'confirmar') {
+      st.enviando = true; render();
+      const r = await sb.rpc('agendar_publico', { p_slug: slug, p_dia: st.dia, p_hora: st.hora, p_servico: st.serv, p_barbeiro: st.barb, p_nome: st.nome.trim(), p_tel: st.tel.trim() });
+      st.enviando = false;
+      if (r.error) { st.erro = r.error.message || 'Não deu pra marcar. Tente de novo.'; st.hora = null; delete st.ocup[st.dia]; render(); carregarDia(st.dia); return; }
+      try { localStorage.setItem('ag_nome', st.nome.trim()); localStorage.setItem('ag_tel', st.tel.trim()); } catch (er) { /* sem armazenamento */ }
+      st.feito = r.data; render(); window.scrollTo(0, 0);
+    }
+  });
+
+  async function iniciar() {
+    const C = window.APP_CONFIG || {};
+    if (!window.supabase || !C.SUPABASE_URL || /COLE_AQUI/.test(C.SUPABASE_URL)) { msg('Página em configuração. Volte daqui a pouco.'); return; }
+    if (!slug) { msg('Link incompleto. Peça o link de agendamento pra barbearia.'); return; }
+    let u = String(C.SUPABASE_URL || '').trim();
+    const painel = u.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+    if (painel) u = 'https://' + painel[1] + '.supabase.co';
+    u = u.replace(/\/(rest|auth|storage|realtime)\/v1.*$/i, '').replace(/\/+$/, '');
+    if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    sb = window.supabase.createClient(u, String(C.SUPABASE_ANON_KEY || '').trim());
+    const r = await sb.rpc('barbearia_publica', { p_slug: slug });
+    if (r.error || !r.data) { msg('Barbearia não encontrada. Confira o link com a barbearia.'); return; }
+    st.b = r.data; st.b.servicos = st.b.servicos || []; st.b.barbeiros = st.b.barbeiros || [];
+    document.title = 'Agendar · ' + st.b.nome;
+    const antigas = ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'];
+    document.documentElement.style.setProperty('--marca', !st.b.cor || antigas.indexOf(String(st.b.cor).toUpperCase()) >= 0 ? '#C9A35B' : st.b.cor);
+    if (!st.b.servicos.length || !st.b.barbeiros.length) { msg('Esta barbearia ainda não abriu a agenda online.'); return; }
+    render(); carregarDia(st.dia);
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>

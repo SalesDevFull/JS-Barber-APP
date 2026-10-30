@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3B2617">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JS Barber APP">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>JS Barber APP</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/icon-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: app de uma coluna (até 640px), cabeçalho fixo no topo, abas fixas embaixo. Visual escuro de oficina, um acento que vem da cor da barbearia. */
+:root{
+  color-scheme: dark;
+  --bg:#0E0E10; --surface:#17171A; --surface2:#111114; --line:#26262B; --line2:#2E2E35;
+  --fg:#F2F2F3; --muted:#A1A1AA; --dim:#8A8A93;
+  --accent:#8B9BFF; --accent-ink:#0E0E10; --accent-soft:#1E2033;
+  --ok:#5BD08A; --ok-soft:#12201A; --ok-line:#23402F;
+  --warn:#F0B44C; --warn-soft:#1C1A14; --warn-line:#5A4A26;
+  --bad:#F07C6C; --bad-line:#4A2A26;
+  --font:'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+*{box-sizing:border-box}
+button,input,select,textarea{font-family:inherit}
+#app{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-block:14px 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0}
+.top small{display:block;font-size:13px;color:var(--muted)}
+.top h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+main{flex:1;padding-block:16px calc(110px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--line);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-top:6px;padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+.tabs-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.tab{min-height:56px;border:none;background:transparent;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;cursor:pointer;border-radius:12px}
+.tab.on{color:var(--accent)}
+.tab svg{width:22px;height:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.tight{padding:14px;gap:8px;border-radius:14px}
+.card.warn{background:var(--warn-soft);border-color:var(--warn-line)}
+.card.ok{background:var(--ok-soft);border-color:var(--ok-line)}
+.card.alert{border-color:var(--warn-line)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:10px;min-width:0}
+.row.wrap{flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.lbl{font-size:13px;color:var(--muted);font-weight:500}
+.sub{font-size:13px;color:var(--muted)}
+.tiny{font-size:12px;color:var(--muted)}
+.h2{margin:0;font-size:17px;font-weight:600}
+.big{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.mid{font-size:19px;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.c-ok{color:var(--ok)} .c-bad{color:var(--bad)} .c-warn{color:var(--warn)} .c-acc{color:var(--accent)} .c-muted{color:var(--muted)}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--fg);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;text-align:center}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.warn{color:var(--warn);border-color:var(--warn-line)}
+.btn.bad{color:var(--bad);border-color:var(--bad-line)}
+.btn.ok{color:var(--ok);border-color:var(--ok-line)}
+.btn.full{width:100%}
+.btn.lg{min-height:52px;font-size:16px;border-radius:14px}
+.btn.sm{min-height:44px;padding:0 12px;font-size:13px}
+.btn:disabled{background:var(--line);border-color:var(--line);color:var(--dim);cursor:default}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--fg2);font-size:14px;font-weight:500;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip:disabled{color:var(--dim);text-decoration:line-through;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pick{min-height:56px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
+.pick.on{border:2px solid var(--accent);padding:9px 11px}
+.pick:disabled{opacity:.45;cursor:default}
+.pick b{font-size:14px;font-weight:600}
+.pick span{font-size:12px;color:var(--muted)}
+.slot{min-height:44px;border-radius:10px;border:1px solid var(--line2);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer}
+.slot.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface2);border:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+input,select,textarea{min-height:48px;width:100%;padding:0 14px;border-radius:12px;border:1px solid var(--line2);background:var(--surface2);color:var(--fg);font-size:16px}
+textarea{padding:12px 14px;min-height:90px;resize:vertical;line-height:1.4}
+input.small{min-height:44px;font-size:15px;padding:0 10px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.hora{font-size:16px;font-weight:700;width:52px;flex-shrink:0}
+.bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.msg{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.45;color:var(--fg2);user-select:text}
+.empty{text-align:center;color:var(--muted);padding:24px 12px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.sw{width:44px;height:44px;border-radius:999px;border:3px solid var(--bg);cursor:pointer}
+.sw.on{border-color:var(--fg)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:40;background:#F2F2F3;color:#0E0E10;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#toast.err{background:var(--bad);color:#140806}
+@media (max-width:380px){.grid4{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.qr{background:#fff;border-radius:12px;padding:10px;width:160px;height:160px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qr img,.qr canvas{width:140px!important;height:140px!important}
+.link{font-size:14px;color:var(--accent);font-weight:500;word-break:break-all;user-select:text}
+
+/* ===== Estilo couro e madeira =====
+   Fundo de couro escuro com textura fina, cabeçalho e abas em madeira com friso de latão,
+   costura pespontada nos cartões, títulos em serifa clássica e destaques dourados. */
+:root{
+  --bg:#1A120D; --surface:#271B13; --surface2:#1F160F; --line:#3B2B1F; --line2:#4E3929;
+  --fg:#F3E9DA; --fg2:#E6D8C3; --muted:#C4AF95; --dim:#A08A73;
+  --accent:#C9A35B; --accent-ink:#1A120D; --accent-soft:#3A2B1C;
+  --ok:#8CC79A; --ok-soft:#1C2418; --ok-line:#3A5236;
+  --warn:#E3AE57; --warn-soft:#2A1F12; --warn-line:#6B4E25;
+  --bad:#E48A72; --bad-line:#5E3326;
+  --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11;
+  --stitch:rgba(201,163,91,.30);
+  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+body{font-size:16px;background-color:var(--bg);background-image:radial-gradient(rgba(255,235,205,.03) 1px,transparent 1px),radial-gradient(rgba(0,0,0,.22) 1px,transparent 1px);background-size:3px 3px,5px 5px;background-position:0 0,1px 2px}
+body::before{background:var(--wood-2)}
+.top,.tabs{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.04) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3))}
+.top{border-bottom:2px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.tabs{border-top:2px solid var(--accent);box-shadow:0 -6px 18px rgba(0,0,0,.35)}
+.top h1{font-family:var(--display);font-size:25px;font-weight:700;letter-spacing:0}
+.top small{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.logo{width:46px;height:46px;border-radius:999px;background:var(--bg);color:var(--accent);border:2px solid var(--accent);font-family:var(--display);font-size:21px;box-shadow:inset 0 0 0 3px var(--bg),inset 0 0 0 4px var(--stitch)}
+.tab{color:var(--muted);font-size:12px;font-weight:600}
+.tab.on{color:var(--accent);background:rgba(0,0,0,.22)}
+.card{position:relative;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,235,205,.05),0 2px 10px rgba(0,0,0,.25)}
+.card::after{content:"";position:absolute;inset:5px;border:1px dashed var(--stitch);border-radius:10px;pointer-events:none}
+.card.tight::after{display:none}
+.card.tight{box-shadow:inset 0 1px 0 rgba(255,235,205,.04)}
+.h2{font-family:var(--display);font-size:20px;font-weight:700}
+.big{font-family:var(--display);font-weight:700;font-variant-numeric:lining-nums tabular-nums;letter-spacing:0}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.btn{border-radius:10px}
+.btn.pri,.chip.on,.slot.on{background-color:var(--accent);background-image:linear-gradient(180deg,rgba(255,255,255,.20),rgba(0,0,0,.14));border-color:var(--accent);color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.4)}
+.btn:disabled{background-image:none;box-shadow:none}
+.pick.on{border-color:var(--accent)}
+.badge{background:var(--accent-soft);border-color:var(--line2);color:var(--accent)}
+.msg{color:var(--fg2)}
+.sw{border-color:var(--bg)}
+#toast{background:var(--fg);color:var(--bg);border:1px solid var(--accent)}
+.empty{font-family:var(--font)}
+.abertura{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-block:28px 6px}
+.selo{width:88px;height:88px;border-radius:999px;border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;background-color:var(--wood-1);background-image:linear-gradient(180deg,var(--wood-2),var(--wood-3));box-shadow:inset 0 0 0 4px var(--wood-3),inset 0 0 0 5px var(--stitch),0 6px 18px rgba(0,0,0,.4)}
+.nome-app{font-family:var(--display);font-size:30px;font-weight:700;line-height:1.1;text-wrap:balance}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="logo" id="logo" aria-hidden="true">B</div>
+    <div class="grow">
+      <small id="topSub">Carregando…</small>
+      <h1 id="topTitle">Barbearia</h1>
+    </div>
+  </header>
+  <main id="view">
+    <div class="empty">Carregando os dados da barbearia…</div>
+  </main>
+  <nav class="tabs" aria-label="Navegação principal">
+    <div class="tabs-in" id="tabs">
+      <button type="button" class="tab" data-act="go" data-v="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+      <button type="button" class="tab" data-act="go" data-v="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
+      <button type="button" class="tab" data-act="go" data-v="caixa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Caixa</button>
+      <button type="button" class="tab" data-act="go" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>Clientes</button>
+      <button type="button" class="tab" data-act="go" data-v="gestao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Gestão</button>
+    </div>
+  </nav>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- utilidades ----------
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const brl = (n) => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const pad = (n) => String(n).padStart(2, '0');
+  const dstr = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const today = () => dstr(new Date());
+  const parseD = (s) => { const p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return dstr(d); };
+  const diffDays = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
+  const SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const fmtDia = (s) => { const d = parseD(s); return SEM[d.getDay()] + ', ' + d.getDate() + ' ' + MES[d.getMonth()]; };
+  const toMin = (h) => { const p = String(h || '0:0').split(':').map(Number); return p[0] * 60 + (p[1] || 0); };
+  const toHora = (m) => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+  const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const digits = (t) => String(t || '').replace(/\D/g, '');
+  const num = (v) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
+  const waLink = (tel, msg) => { let d = digits(tel); if (!d) return ''; if (d.length <= 11) d = '55' + d; return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg); };
+  const primeiroNome = (n) => String(n || '').trim().split(/\s+/)[0] || '';
+
+  const DEF = {
+    nome: 'Minha Barbearia', cor: '#C9A35B', abre: '09:00', fecha: '19:00', intervalo: 30, metaMes: 20000,
+    servicos: [
+      { id: 'corte', nome: 'Corte', preco: 45, dur: 40, custo: 3 },
+      { id: 'barba', nome: 'Barba', preco: 35, dur: 30, custo: 4 },
+      { id: 'combo', nome: 'Corte + barba', preco: 70, dur: 60, custo: 6 },
+      { id: 'sobr', nome: 'Sobrancelha', preco: 15, dur: 15, custo: 1 }
+    ],
+    barbeiros: []
+  };
+  const CORES = [['#C9A35B', 'Latão'], ['#C8814F', 'Cobre'], ['#D2A877', 'Couro claro'], ['#C0646B', 'Vinho'], ['#8FAF7A', 'Verde musgo'], ['#E8D9BE', 'Creme']];
+  // Cores do visual antigo viram o latão do novo visual.
+  const corMarca = (c) => (!c || ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'].indexOf(String(c).toUpperCase()) >= 0 ? '#C9A35B' : c);
+  const TABS = ['inicio', 'agenda', 'caixa', 'clientes', 'gestao', 'agendar', 'barbeiro'];
+  const TITULOS = { inicio: 'Resumo do dia', agenda: 'Agenda', caixa: 'Caixa e comanda', clientes: 'Clientes', gestao: 'Gestão', agendar: 'Novo agendamento', barbeiro: 'Modo barbeiro' };
+  const TAB_DA_VIEW = { agendar: 'agenda', barbeiro: 'inicio' };
+
+  // ---------- estado ----------
+  const S = {
+    db: null, sb: null, user: null, bid: null, slug: null, papel: null, convites: [], nMembros: 0,
+    status: 'loading', cfg: null,
+    produtos: [], ags: [], comandas: [], clientes: [], despesas: [], vales: [],
+    f: {}, dirty: false,
+    ui: {
+      tab: 'inicio', agDia: today(), agBarb: 'todos', comanda: null, avulsa: false,
+      cliFiltro: 'todos', cliAberto: null, gesTab: 'equipe', barbView: null, confirm: null,
+      bk: { serv: null, barb: 'qualquer', dia: today(), hora: null, feito: null }
+    }
+  };
+  const cfg = () => S.cfg || DEF;
+  const serv = (id) => (cfg().servicos || []).find((s) => s.id === id);
+  const barb = (id) => (cfg().barbeiros || []).find((b) => b.id === id);
+  const barbNome = (id) => (barb(id) || {}).nome || 'Sem barbeiro';
+  const fechadas = () => S.comandas.filter((c) => c.status === 'fechada');
+  const mesAtual = () => today().slice(0, 7);
+  const byHora = (a, b) => toMin(a.hora) - toMin(b.hora);
+  const fv = (k, d) => (S.f[k] !== undefined ? S.f[k] : (d === undefined ? '' : d));
+
+  // ---------- regras de negócio ----------
+  function ocupado(dia, barbId, ini, dur, ignoreId) {
+    return S.ags.some((a) => a.data === dia && a.barbeiroId === barbId && a.id !== ignoreId &&
+      ['agendado', 'cadeira', 'feito'].indexOf(a.status) >= 0 &&
+      toMin(a.hora) < ini + dur && ini < toMin(a.hora) + (Number(a.dur) || 30));
+  }
+  function slots() {
+    const c = cfg(); const out = []; const step = Number(c.intervalo) || 30;
+    for (let m = toMin(c.abre); m < toMin(c.fecha); m += step) out.push(m);
+    return out;
+  }
+  function livres(dia, barbId, dur) {
+    const passou = dia === today() ? nowMin() : -1;
+    const fim = toMin(cfg().fecha);
+    return slots().filter((m) => m > passou && m + dur <= fim + 1 && !ocupado(dia, barbId, m, dur));
+  }
+  function horariosLivresHoje() {
+    const out = [];
+    (cfg().barbeiros || []).forEach((b) => livres(today(), b.id, 30).forEach((m) => out.push({ m: m, b: b })));
+    return out.sort((x, y) => x.m - y.m);
+  }
+  function frequenciaCliente(cid) {
+    const datas = Array.from(new Set(fechadas().filter((c) => c.clienteId === cid).map((c) => c.data))).sort();
+    if (datas.length < 2) return null;
+    let soma = 0; for (let i = 1; i < datas.length; i++) soma += diffDays(datas[i - 1], datas[i]);
+    return Math.round(soma / (datas.length - 1));
+  }
+  function frequenciaMedia() {
+    const ids = Array.from(new Set(fechadas().map((c) => c.clienteId).filter(Boolean)));
+    const fs = ids.map(frequenciaCliente).filter((x) => x);
+    return fs.length ? Math.round(fs.reduce((a, b) => a + b, 0) / fs.length) : null;
+  }
+  function limiteVolta(cl) { const f = frequenciaCliente(cl.id); return f ? Math.max(21, Math.round(f * 1.5)) : 35; }
+  function sumido(cl) { return cl.ultimaVisita && diffDays(cl.ultimaVisita, today()) > limiteVolta(cl); }
+  function clientesSumidos() { return S.clientes.filter(sumido); }
+  function comissaoItem(i, b) { const p = num(i.preco); const pct = i.tipo === 'p' ? (b && b.comProd != null ? b.comProd : 10) : (b && b.com != null ? b.com : 40); return p * pct / 100; }
+  function resumoBarbeiro(bid, prefixo) {
+    const cs = fechadas().filter((c) => c.barbeiroId === bid && String(c.data || '').indexOf(prefixo) === 0);
+    let serv = 0, prod = 0, com = 0, gorj = 0;
+    cs.forEach((c) => { (c.itens || []).forEach((i) => { if (i.tipo === 'p') prod += num(i.preco); else serv += num(i.preco); }); com += num(c.comissao); gorj += num(c.gorjeta); });
+    const vales = S.vales.filter((v) => v.barbeiroId === bid && String(v.data || '').indexOf(prefixo) === 0).reduce((a, v) => a + num(v.valor), 0);
+    return { n: cs.length, serv: serv, prod: prod, com: com, gorj: gorj, vales: vales, receber: com + gorj - vales };
+  }
+
+  // ---------- gravação ----------
+  const col = (c) => S.db.collection(c);
+  let toastT = null;
+  function toast(msg, err) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = err ? 'err' : ''; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  async function W(fn, okMsg) {
+    if (!S.db) { toast('Sem conexão com o banco de dados.', true); return false; }
+    try { await fn(); if (okMsg) toast(okMsg); return true; }
+    catch (e) {
+      toast(e && e.amigavel ? e.amigavel : e && e.code === 'quota_exceeded' ?'Limite de registros atingido. Apague dados antigos em Gestão.' : 'Não deu pra salvar. Confira a conexão e tente de novo.', true);
+      return false;
+    }
+  }
+  async function salvarCfg(patch) {
+    const novo = Object.assign({}, cfg(), patch);
+    return W(() => S.db.doc('config/main').set(novo));
+  }
+  async function upsertCliente(nome, tel) {
+    const d = digits(tel); if (!d) return null;
+    const id = 'c' + d; const ex = S.clientes.find((c) => c.id === id);
+    if (ex) { if (nome && ex.nome !== nome) await col('clientes').doc(id).update({ nome: nome }); return id; }
+    await col('clientes').doc(id).set({ nome: nome || 'Cliente', telefone: tel, criadoEm: new Date().toISOString(), visitas: 0, ultimaVisita: null, ficha: '' });
+    return id;
+  }
+  async function abrirComanda(a) {
+    if (a.comandaId) { const ex = S.comandas.find((c) => c.id === a.comandaId && c.status === 'aberta'); if (ex) { S.ui.comanda = ex.id; go('caixa'); return; } }
+    const s = serv(a.servicoId); const id = newId();
+    const ok = await W(async () => {
+      await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: a.clienteId || null, clienteNome: a.clienteNome || 'Cliente', barbeiroId: a.barbeiroId || null, agendamentoId: a.id, itens: s ? [{ tipo: 's', id: s.id, nome: s.nome, preco: num(s.preco) }] : [], pagamento: 'Pix', gorjeta: 0, criadoEm: new Date().toISOString() });
+      await col('agendamentos').doc(a.id).update({ status: 'cadeira', comandaId: id });
+    });
+    if (ok) { S.ui.comanda = id; go('caixa'); }
+  }
+  async function fecharComanda(c) {
+    const itens = c.itens || [];
+    if (!itens.length) { toast('Adicione pelo menos um item.', true); return; }
+    const b = barb(c.barbeiroId);
+    const total = itens.reduce((a, i) => a + num(i.preco), 0);
+    const comissao = Math.round(itens.reduce((a, i) => a + comissaoItem(i, b), 0) * 100) / 100;
+    const ok = await W(async () => {
+      await col('comandas').doc(c.id).update({ status: 'fechada', total: total, comissao: comissao, data: today(), fechadaEm: new Date().toISOString() });
+      const cnt = {}; itens.filter((i) => i.tipo === 'p').forEach((i) => { cnt[i.id] = (cnt[i.id] || 0) + 1; });
+      for (const pid in cnt) { const p = S.produtos.find((x) => x.id === pid); if (p) await col('produtos').doc(pid).update({ qtd: Math.max(0, num(p.qtd) - cnt[pid]) }); }
+      if (c.agendamentoId && S.ags.find((a) => a.id === c.agendamentoId)) await col('agendamentos').doc(c.agendamentoId).update({ status: 'feito' });
+      if (c.clienteId) { const cl = S.clientes.find((x) => x.id === c.clienteId); if (cl) await col('clientes').doc(cl.id).update({ ultimaVisita: today(), visitas: num(cl.visitas) + 1 }); }
+    }, 'Comanda fechada: ' + brl(total));
+    if (ok) { S.ui.comanda = null; S.ui.ultima = { total: total, comissao: comissao, barb: b ? b.nome : '', cliente: c.clienteNome, pag: c.pagamento }; render(); }
+  }
+
+  // ---------- componentes ----------
+  const conf = (key, label) => (S.ui.confirm === key ? 'Toque de novo pra confirmar' : label);
+  function precisaConfirmar(key) { if (S.ui.confirm !== key) { S.ui.confirm = key; render(); return true; } S.ui.confirm = null; return false; }
+  const chip = (label, act, v, on, extra) => '<button type="button" class="chip' + (on ? ' on' : '') + '" data-act="' + act + '" data-v="' + esc(v) + '" aria-pressed="' + (on ? 'true' : 'false') + '" ' + (extra || '') + '>' + label + '</button>';
+  const barbChips = (act, atual, comTodos, labelTodos) => {
+    let h = comTodos ? chip(esc(labelTodos), act, comTodos, atual === comTodos) : '';
+    (cfg().barbeiros || []).forEach((b) => { h += chip(esc(b.nome), act, b.id, atual === b.id); });
+    return '<div class="chips">' + h + '</div>';
+  };
+  const STATUS = { agendado: ['Agendado', 'c-acc'], cadeira: ['Na cadeira', 'c-ok'], feito: ['Concluído', 'c-muted'], faltou: ['Faltou', 'c-bad'], cancelado: ['Cancelado', 'c-muted'] };
+  function lembreteTxt(a) {
+    const s = serv(a.servicoId);
+    return 'Oi, ' + primeiroNome(a.clienteNome) + '! Lembrete do seu horário na ' + cfg().nome + ': ' + fmtDia(a.data) + ' às ' + a.hora + ', ' + (s ? s.nome.toLowerCase() : 'atendimento') + ' com o ' + barbNome(a.barbeiroId) + '. Você confirma?';
+  }
+
+  // ---------- telas ----------
+  const slugify = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  const linkPublico = () => { const base = location.origin + location.pathname.replace(/[^/]*$/, ''); return base + 'agendar.html?b=' + encodeURIComponent(S.slug || ''); };
+
+  function abertura(sub) {
+    return '<div class="abertura"><div class="selo" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></div>' +
+      '<div class="nome-app">JS Barber APP</div><div class="sub">' + sub + '</div></div>';
+  }
+
+  function vLogin() {
+    const criar = S.ui.loginModo === 'criar';
+    return abertura('Agenda, caixa e clientes num lugar só') + '<div class="card"><p class="mid" style="margin:0">' + (criar ? 'Criar sua conta' : 'Entrar') + '</p>' +
+      '<p class="sub" style="margin:0">' + (criar ? 'Dono de barbearia ou barbeiro convidado: crie a conta com o seu e-mail.' : 'Use o e-mail e a senha da sua conta.') + '</p>' +
+      '<div class="field"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="email" data-f="lgEmail" value="' + esc(fv('lgEmail')) + '"></div>' +
+      '<div class="field"><label for="lg-senha">Senha' + (criar ? ' (mínimo 6 caracteres)' : '') + '</label><input id="lg-senha" type="password" autocomplete="' + (criar ? 'new-password' : 'current-password') + '" data-f="lgSenha" value=""></div>' +
+      '<button type="button" class="btn pri lg full" data-act="' + (criar ? 'cadastrar' : 'entrar') + '">' + (criar ? 'Criar conta' : 'Entrar') + '</button>' +
+      (S.ui.loginMsg ? '<span class="sub c-ok">' + esc(S.ui.loginMsg) + '</span>' : '') +
+      '<button type="button" class="btn" data-act="loginModo">' + (criar ? 'Já tenho conta' : 'Criar conta nova') + '</button>' +
+      (criar ? '' : '<button type="button" class="btn sm" data-act="esqueci" style="align-self:center;border:none;color:var(--muted)">Esqueci a senha</button>') + '</div>';
+  }
+
+  function vSetup() {
+    const nome = fv('stNome'); const slug = S.f.stSlug !== undefined ? S.f.stSlug : slugify(nome);
+    return abertura('Falta pouco pra sua agenda abrir') + '<div class="card"><span class="badge c-acc">Primeiro acesso</span><p class="mid" style="margin:0">Vamos criar sua barbearia</p><p class="sub" style="margin:0">Depois você ajusta serviços, preços e equipe em Gestão. Se você é barbeiro, peça pro dono te convidar pelo seu e-mail e entre de novo.</p>' +
+      '<div class="field"><label for="st-nome">Nome da barbearia</label><input id="st-nome" data-f="stNome" value="' + esc(nome) + '" placeholder="Ex.: Barbearia do João"></div>' +
+      '<div class="field"><label for="st-slug">Link de agendamento</label><input id="st-slug" data-f="stSlug" value="' + esc(slug) + '" placeholder="barbearia-do-joao"><span class="tiny">Só letras minúsculas, números e hífen. Não dá pra mudar depois.</span></div>' +
+      '<div class="field"><label for="st-dono">Seu nome (você entra como o primeiro barbeiro)</label><input id="st-dono" data-f="stDono" value="' + esc(fv('stDono')) + '" placeholder="Ex.: João"></div>' +
+      '<button type="button" class="btn pri lg full" data-act="criarBarbearia">Criar barbearia</button>' +
+      '<button type="button" class="btn" data-act="sair">Sair da conta</button></div>';
+  }
+
+  function vInicio() {
+    const t = today(), m = mesAtual();
+    const fh = fechadas().filter((c) => c.data === t);
+    const entrou = fh.reduce((a, c) => a + num(c.total) + num(c.gorjeta), 0);
+    const saiu = S.despesas.filter((d) => d.data === t).reduce((a, d) => a + num(d.valor), 0) + S.vales.filter((v) => v.data === t).reduce((a, v) => a + num(v.valor), 0);
+    const equipe = fh.reduce((a, c) => a + num(c.comissao) + num(c.gorjeta), 0);
+    const fm = fechadas().filter((c) => String(c.data || '').indexOf(m) === 0);
+    const fat = fm.reduce((a, c) => a + num(c.total), 0);
+    const d = new Date(); const dia = d.getDate(); const diasMes = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const proj = fat / dia * diasMes; const meta = num(cfg().metaMes); const pct = meta ? Math.min(100, Math.round(proj / meta * 100)) : 0;
+    const ticket = fm.length ? fat / fm.length : 0;
+    const freq = frequenciaMedia();
+    const atendidos = new Set(fm.map((c) => c.clienteId || c.clienteNome)).size;
+    const sum = clientesSumidos();
+    const prox = S.ags.filter((a) => a.data === t && a.status === 'agendado' && toMin(a.hora) + 20 >= nowMin()).sort(byHora).slice(0, 3);
+    const liv = horariosLivresHoje();
+
+    let h = '';
+    if (S.papel === 'dono' && S.venc) {
+      const dv = diffDays(t, S.venc); const dVenc = fmtDia(S.venc);
+      if (dv < 0) h += '<section class="card warn"><span class="lbl c-warn">Mensalidade vencida</span><span>Venceu em ' + esc(dVenc) + '. O acesso será bloqueado em ' + Math.max(0, 6 + dv) + ' dia' + (6 + dv === 1 ? '' : 's') + '. Fale com o suporte pra regularizar.</span></section>';
+      else if (dv <= 7) h += '<section class="card warn"><span class="lbl c-warn">Assinatura</span><span>Sua assinatura vence ' + (dv === 0 ? 'hoje' : dv === 1 ? 'amanhã' : 'em ' + dv + ' dias') + ' (' + esc(dVenc) + ').</span></section>';
+    }
+    h += '<div class="grid3">' +
+      '<button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button>' +
+      '<button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button>' +
+      '<button type="button" class="btn" data-act="go" data-v="barbeiro">Barbeiro</button></div>';
+
+    h += '<section class="card"><span class="lbl">Dinheiro de hoje</span><div class="grid3">' +
+      '<div><div class="tiny">Entrou</div><div class="mid num c-ok">' + brl(entrou) + '</div></div>' +
+      '<div><div class="tiny">Saiu</div><div class="mid num c-bad">' + brl(saiu) + '</div></div>' +
+      '<div><div class="tiny">Pra equipe</div><div class="mid num">' + brl(equipe) + '</div></div></div>' +
+      '<span class="tiny">' + fh.length + ' comanda' + (fh.length === 1 ? '' : 's') + ' fechada' + (fh.length === 1 ? '' : 's') + ' hoje. Saídas incluem despesas e vales do dia.</span></section>';
+
+    h += '<section class="card"><div class="row between"><span class="lbl">Projeção do mês</span><span class="tiny">' + (meta ? 'meta ' + brl(meta) : 'sem meta definida') + '</span></div>' +
+      '<span class="big num">' + brl(proj) + '</span>' +
+      (meta ? '<div class="bar" role="img" aria-label="' + pct + '% da meta"><i style="width:' + pct + '%"></i></div>' : '') +
+      '<span class="sub">' + brl(fat) + ' faturados em ' + dia + ' dia' + (dia === 1 ? '' : 's') + '. Projeção = média por dia × ' + diasMes + ' dias.</span></section>';
+
+    h += '<div class="grid3">' +
+      '<div class="card tight"><span class="tiny">Ticket médio</span><span class="mid num">' + brl(ticket) + '</span></div>' +
+      '<div class="card tight"><span class="tiny">Clientes no mês</span><span class="mid num">' + atendidos + '</span></div>' +
+      '<div class="card tight"><span class="tiny">Volta a cada</span><span class="mid num">' + (freq ? freq + ' dias' : '—') + '</span></div></div>';
+
+    h += '<section class="card"><div class="row between"><span class="lbl">Próximos de hoje</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Ver agenda</button></div>';
+    if (!prox.length) h += '<span class="sub">Ninguém mais agendado pra hoje.</span>';
+    prox.forEach((a) => { const s = serv(a.servicoId); h += '<div class="item"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div>' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : '') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div></div></div>'; });
+    h += '</section>';
+
+    if (liv.length) {
+      const p = liv[0];
+      const txt = 'Abriu um horário hoje às ' + toHora(p.m) + ' com o ' + p.b.nome + ' na ' + cfg().nome + '. Quer encaixar? Responde aqui que eu marco.';
+      h += '<section class="card warn"><span class="lbl c-warn">Hora do extra</span><span>' + liv.length + ' horário' + (liv.length === 1 ? '' : 's') + ' livre' + (liv.length === 1 ? '' : 's') + ' hoje. O próximo é às <b>' + toHora(p.m) + '</b> com o ' + esc(p.b.nome) + '.</span>' +
+        '<div class="msg">' + esc(txt) + '</div><div class="grid2"><button type="button" class="btn warn" data-act="copy" data-text="' + esc(txt) + '">Copiar mensagem</button><button type="button" class="btn" data-act="verSumidos">Pra quem mandar</button></div></section>';
+    }
+
+    h += '<section class="card"><span class="lbl">Quem parou de vir</span>' +
+      (sum.length ? '<span>' + sum.length + ' cliente' + (sum.length === 1 ? '' : 's') + ' passou do tempo normal de volta.</span><button type="button" class="btn" data-act="verSumidos">Ver lista</button>'
+        : '<span class="sub">Ninguém sumido por enquanto. O app avisa quando alguém passar do tempo normal de volta.</span>') + '</section>';
+    return h;
+  }
+
+  function vAgenda() {
+    const dia = S.ui.agDia, t = today();
+    let list = S.ags.filter((a) => a.data === dia && a.status !== 'cancelado');
+    if (S.ui.agBarb !== 'todos') list = list.filter((a) => a.barbeiroId === S.ui.agBarb);
+    list.sort(byHora);
+    let h = '<div class="row between"><button type="button" class="btn sm" data-act="agDia" data-v="-1" aria-label="Dia anterior">‹</button>' +
+      '<div style="text-align:center"><div class="mid">' + esc(fmtDia(dia)) + '</div><div class="tiny">' + (dia === t ? 'hoje' : (dia === addDays(t, 1) ? 'amanhã' : '&nbsp;')) + '</div></div>' +
+      '<button type="button" class="btn sm" data-act="agDia" data-v="1" aria-label="Próximo dia">›</button></div>';
+    if (dia !== t) h += '<button type="button" class="btn sm" data-act="agHoje">Voltar pra hoje</button>';
+    h += barbChips('agBarb', S.ui.agBarb, 'todos', 'Todos');
+    h += '<button type="button" class="btn pri full" data-act="agendarNoDia">+ Agendar nesse dia</button>';
+    if (!list.length) h += '<div class="empty"><span>Nenhum horário marcado nesse dia.</span></div>';
+    list.forEach((a) => {
+      const s = serv(a.servicoId); const st = STATUS[a.status] || STATUS.agendado;
+      h += '<div class="card tight"><div class="row"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : 'Serviço removido') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div></div><span class="tiny ' + st[1] + '" style="font-weight:600">' + st[0] + '</span></div>';
+      if (a.status === 'agendado') {
+        const wa = waLink(a.telefone, lembreteTxt(a));
+        h += '<div class="grid2"><button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">Abrir comanda</button>' +
+          (wa ? '<a class="btn sm ok" href="' + esc(wa) + '" target="_blank" rel="noopener">Lembrete WhatsApp</a>' : '<span class="btn sm" style="color:var(--dim)">Sem telefone</span>') +
+          '<button type="button" class="btn sm warn" data-act="faltou" data-id="' + esc(a.id) + '">' + conf('faltou' + a.id, 'Faltou') + '</button>' +
+          '<button type="button" class="btn sm bad" data-act="cancelarAg" data-id="' + esc(a.id) + '">' + conf('cancel' + a.id, 'Cancelar') + '</button></div>';
+      } else if (a.status === 'cadeira') {
+        h += '<button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">Ver comanda</button>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function vAgendar() {
+    const bk = S.ui.bk; const c = cfg();
+    if (!(c.barbeiros || []).length) return '<div class="empty"><span>Cadastre pelo menos um barbeiro em Gestão → Equipe.</span><button type="button" class="btn pri" data-act="gesTabGo" data-v="equipe">Ir pra equipe</button></div>';
+    if (bk.feito) {
+      const a = bk.feito; const s = serv(a.servicoId); const wa = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Seu horário na ' + c.nome + ' está marcado: ' + fmtDia(a.data) + ' às ' + a.hora + ', ' + (s ? s.nome.toLowerCase() : '') + ' com o ' + barbNome(a.barbeiroId) + '. Até lá!');
+      return '<div class="card ok"><span class="mid c-ok">Agendado!</span><span>' + esc(a.clienteNome) + ' · ' + esc(s ? s.nome : '') + '</span><span class="sub">' + esc(fmtDia(a.data)) + ' às ' + esc(a.hora) + ' com ' + esc(barbNome(a.barbeiroId)) + '</span></div>' +
+        (wa ? '<a class="btn ok full" href="' + esc(wa) + '" target="_blank" rel="noopener">Mandar confirmação no WhatsApp</a>' : '') +
+        '<div class="grid2"><button type="button" class="btn pri" data-act="bkNovo">Novo agendamento</button><button type="button" class="btn" data-act="bkVerAgenda">Ver na agenda</button></div>';
+    }
+    const s = serv(bk.serv); const dur = s ? Number(s.dur) || 30 : 30;
+    let h = '<section class="stack"><span class="lbl">Serviço</span><div class="grid2">';
+    (c.servicos || []).forEach((x) => { h += '<button type="button" class="pick' + (bk.serv === x.id ? ' on' : '') + '" data-act="bkServ" data-v="' + esc(x.id) + '" aria-pressed="' + (bk.serv === x.id) + '"><b>' + esc(x.nome) + '</b><span>' + brl(x.preco) + ' · ' + esc(x.dur) + ' min</span></button>'; });
+    h += '</div></section>';
+    h += '<section class="stack"><span class="lbl">Barbeiro</span>' + barbChips('bkBarb', bk.barb, 'qualquer', 'Qualquer um') + '</section>';
+    h += '<section class="stack"><span class="lbl">Dia</span><div class="chips">';
+    for (let i = 0; i < 7; i++) { const d = addDays(today(), i); const pd = parseD(d); h += chip((i === 0 ? 'Hoje' : (i === 1 ? 'Amanhã' : SEM[pd.getDay()])) + ' ' + pd.getDate(), 'bkDia', d, bk.dia === d); }
+    h += '</div></section>';
+    h += '<section class="stack"><span class="lbl">Horário</span>';
+    if (!s) h += '<span class="sub">Escolha o serviço pra ver os horários livres.</span>';
+    else {
+      const ids = bk.barb === 'qualquer' ? c.barbeiros.map((b) => b.id) : [bk.barb];
+      const set = new Set(); ids.forEach((id) => livres(bk.dia, id, dur).forEach((m) => set.add(m)));
+      const ms = Array.from(set).sort((a, b) => a - b);
+      if (!ms.length) h += '<span class="sub">Nenhum horário livre nesse dia. Tente outro dia ou outro barbeiro.</span>';
+      else { h += '<div class="grid4">'; ms.forEach((m) => { const hh = toHora(m); h += '<button type="button" class="slot num' + (bk.hora === hh ? ' on' : '') + '" data-act="bkHora" data-v="' + hh + '" aria-pressed="' + (bk.hora === hh) + '">' + hh + '</button>'; }); h += '</div>'; }
+    }
+    h += '</section>';
+    let dl = '<datalist id="cli-nomes">'; S.clientes.forEach((cl) => { dl += '<option value="' + esc(cl.nome) + '"></option>'; }); dl += '</datalist>';
+    h += '<section class="card"><span class="lbl">Cliente</span>' + dl +
+      '<div class="field"><label for="bk-nome">Nome</label><input id="bk-nome" list="cli-nomes" autocomplete="off" data-f="bkNome" data-chg="bkNome" value="' + esc(fv('bkNome')) + '" placeholder="Nome do cliente"></div>' +
+      '<div class="field"><label for="bk-tel">WhatsApp (com DDD)</label><input id="bk-tel" inputmode="tel" data-f="bkTel" value="' + esc(fv('bkTel')) + '" placeholder="(21) 99999-9999"></div>' +
+      '<span class="tiny">Com o telefone, o cliente ganha ficha, lembrete e entra na lista de quem parou de vir.</span></section>';
+    const pronto = s && bk.hora && String(fv('bkNome')).trim();
+    h += '<button type="button" class="btn pri lg full" data-act="bkSalvar"' + (pronto ? '' : ' disabled') + '>Confirmar agendamento</button>';
+    if (!pronto) h += '<span class="tiny" style="text-align:center">Escolha serviço, horário e nome do cliente.</span>';
+    return h;
+  }
+
+  function vCaixa() {
+    const c = cfg();
+    const atual = S.ui.comanda && S.comandas.find((x) => x.id === S.ui.comanda && x.status === 'aberta');
+    if (atual) return vComanda(atual);
+    let h = '';
+    if (S.ui.ultima) { const u = S.ui.ultima; h += '<div class="card ok"><span class="lbl c-ok">Última comanda fechada</span><span class="big num">' + brl(u.total) + '</span><span class="sub">' + esc(u.cliente) + ' pagou no ' + esc(u.pag) + '. Comissão de ' + brl(u.comissao) + (u.barb ? ' pro ' + esc(u.barb) : '') + '.</span></div>'; }
+    const abertas = S.comandas.filter((x) => x.status === 'aberta');
+    if (S.ui.avulsa) {
+      h += '<section class="card"><span class="h2">Nova comanda</span>' +
+        '<div class="field"><label for="av-nome">Cliente (opcional)</label><input id="av-nome" data-f="avNome" value="' + esc(fv('avNome')) + '" placeholder="Nome"></div>' +
+        '<div class="field"><label for="av-tel">WhatsApp (opcional)</label><input id="av-tel" inputmode="tel" data-f="avTel" value="' + esc(fv('avTel')) + '" placeholder="(21) 99999-9999"></div>' +
+        '<div class="field"><label for="av-barb">Barbeiro</label><select id="av-barb" data-f="avBarb">' + (c.barbeiros || []).map((b) => '<option value="' + esc(b.id) + '"' + (fv('avBarb', (c.barbeiros[0] || {}).id) === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div>' +
+        '<div class="grid2"><button type="button" class="btn" data-act="avulsaToggle">Voltar</button><button type="button" class="btn pri" data-act="avulsaCriar">Abrir comanda</button></div></section>';
+    } else h += '<button type="button" class="btn pri lg full" data-act="avulsaToggle">+ Nova comanda</button>';
+
+    h += '<section class="stack"><span class="lbl">Comandas abertas</span>';
+    if (!abertas.length) h += '<span class="sub">Nenhuma comanda aberta. Abra pela agenda ou crie uma nova.</span>';
+    abertas.forEach((x) => { const tot = (x.itens || []).reduce((a, i) => a + num(i.preco), 0); h += '<button type="button" class="pick" data-act="verComanda" data-id="' + esc(x.id) + '"><b>' + esc(x.clienteNome) + ' · ' + brl(tot) + '</b><span>' + esc(barbNome(x.barbeiroId)) + ' · ' + (x.itens || []).length + ' item(ns)</span></button>'; });
+    h += '</section>';
+
+    const fh = fechadas().filter((x) => x.data === today());
+    const porPag = {}; let gorj = 0, tot = 0;
+    fh.forEach((x) => { porPag[x.pagamento] = (porPag[x.pagamento] || 0) + num(x.total) + num(x.gorjeta); gorj += num(x.gorjeta); tot += num(x.total) + num(x.gorjeta); });
+    h += '<section class="card"><span class="h2">Fechamento de hoje</span><div class="grid3">' +
+      ['Pix', 'Cartão', 'Dinheiro'].map((p) => '<div><div class="tiny">' + p + '</div><div class="mid num">' + brl(porPag[p] || 0) + '</div></div>').join('') +
+      '</div><div class="row between"><span class="sub">Total com gorjetas (' + brl(gorj) + ')</span><span class="mid num">' + brl(tot) + '</span></div>';
+    fh.slice().sort((a, b) => String(b.fechadaEm).localeCompare(String(a.fechadaEm))).forEach((x) => {
+      h += '<div class="item"><div class="grow"><div>' + esc(x.clienteNome) + '</div><div class="tiny">' + esc(barbNome(x.barbeiroId)) + ' · ' + esc(x.pagamento) + (num(x.gorjeta) ? ' · gorjeta ' + brl(x.gorjeta) : '') + '</div></div><span class="num" style="font-weight:600">' + brl(x.total) + '</span></div>';
+    });
+    if (!fh.length) h += '<span class="sub">Nada fechado hoje ainda.</span>';
+    h += '</section>';
+    return h;
+  }
+
+  function vComanda(x) {
+    const c = cfg(); const b = barb(x.barbeiroId);
+    const itens = x.itens || [];
+    const total = itens.reduce((a, i) => a + num(i.preco), 0);
+    const com = itens.reduce((a, i) => a + comissaoItem(i, b), 0);
+    let h = '<button type="button" class="btn sm" data-act="sairComanda" style="align-self:flex-start">‹ Comandas</button>';
+    h += '<section class="card"><div class="row between"><span class="mid">' + esc(x.clienteNome) + '</span></div>' +
+      '<div class="field"><label for="cm-barb">Barbeiro</label><select id="cm-barb" data-chg="cmBarb" data-id="' + esc(x.id) + '">' + (c.barbeiros || []).map((bb) => '<option value="' + esc(bb.id) + '"' + (bb.id === x.barbeiroId ? ' selected' : '') + '>' + esc(bb.nome) + '</option>').join('') + '</select></div>';
+    if (!itens.length) h += '<span class="sub">Nenhum item ainda. Toque abaixo pra adicionar.</span>';
+    itens.forEach((i, idx) => { h += '<div class="item"><span class="grow">' + esc(i.nome) + (i.tipo === 'p' ? ' <span class="tiny">(produto)</span>' : '') + '</span><span class="num" style="font-weight:500">' + brl(i.preco) + '</span><button type="button" class="btn sm" data-act="cmRemover" data-id="' + esc(x.id) + '" data-v="' + idx + '" aria-label="Remover ' + esc(i.nome) + '">✕</button></div>'; });
+    h += '<div class="row between"><span class="sub">Total</span><span class="big num">' + brl(total) + '</span></div>' +
+      '<span class="tiny c-acc">Comissão do ' + esc(b ? b.nome : 'barbeiro') + ': ' + brl(com) + ' (' + (b ? b.com : 40) + '% em serviços, ' + (b && b.comProd != null ? b.comProd : 10) + '% em produtos)</span></section>';
+    h += '<section class="stack"><span class="lbl">Serviços</span><div class="grid2">';
+    (c.servicos || []).forEach((s) => { h += '<button type="button" class="pick" data-act="cmAdd" data-id="' + esc(x.id) + '" data-v="s:' + esc(s.id) + '"><b>' + esc(s.nome) + '</b><span>' + brl(s.preco) + '</span></button>'; });
+    h += '</div>';
+    if (S.produtos.length) {
+      h += '<span class="lbl">Produtos</span><div class="grid2">';
+      S.produtos.slice().sort((a, b2) => String(a.nome).localeCompare(String(b2.nome))).forEach((p) => { const sem = num(p.qtd) <= 0; h += '<button type="button" class="pick" data-act="cmAdd" data-id="' + esc(x.id) + '" data-v="p:' + esc(p.id) + '"' + (sem ? ' disabled' : '') + '><b>' + esc(p.nome) + '</b><span>' + brl(p.preco) + ' · ' + (sem ? 'sem estoque' : num(p.qtd) + ' em estoque') + '</span></button>'; });
+      h += '</div>';
+    }
+    h += '</section>';
+    h += '<section class="stack"><span class="lbl">Pagamento</span><div class="grid3">' + ['Pix', 'Cartão', 'Dinheiro'].map((p) => '<button type="button" class="chip' + (x.pagamento === p ? ' on' : '') + '" data-act="cmPag" data-id="' + esc(x.id) + '" data-v="' + p + '" aria-pressed="' + (x.pagamento === p) + '">' + p + '</button>').join('') + '</div>' +
+      '<div class="field"><label for="cm-gorj">Gorjeta pro barbeiro (R$)</label><input id="cm-gorj" inputmode="decimal" data-chg="cmGorj" data-id="' + esc(x.id) + '" value="' + (num(x.gorjeta) || '') + '" placeholder="0"></div></section>';
+    h += '<button type="button" class="btn pri lg full" data-act="cmFechar" data-id="' + esc(x.id) + '"' + (itens.length ? '' : ' disabled') + '>Fechar comanda · ' + brl(total + num(x.gorjeta)) + '</button>';
+    h += '<button type="button" class="btn bad full" data-act="cmCancelar" data-id="' + esc(x.id) + '">' + conf('cmc' + x.id, 'Cancelar comanda') + '</button>';
+    return h;
+  }
+
+  function vClientes() {
+    const t = today();
+    let list = S.clientes.slice();
+    if (S.ui.cliFiltro === 'sumidos') list = list.filter(sumido).sort((a, b) => String(a.ultimaVisita).localeCompare(String(b.ultimaVisita)));
+    else list.sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
+    const nSum = clientesSumidos().length;
+    let h = '<div class="chips">' + chip('Todos (' + S.clientes.length + ')', 'cliFiltro', 'todos', S.ui.cliFiltro === 'todos') + chip('Parou de vir (' + nSum + ')', 'cliFiltro', 'sumidos', S.ui.cliFiltro === 'sumidos') + '</div>';
+    h += '<div class="field"><label for="cli-busca" class="sr">Buscar cliente</label><input id="cli-busca" type="search" data-inp="busca" placeholder="Buscar por nome ou telefone" autocomplete="off"></div>';
+    if (!list.length) h += '<div class="empty"><span>' + (S.ui.cliFiltro === 'sumidos' ? 'Ninguém passou do tempo normal de volta.' : 'Nenhum cliente ainda. Eles entram sozinhos quando você agenda com telefone, ou cadastre abaixo.') + '</span></div>';
+    h += '<div class="stack" id="cli-lista">';
+    list.forEach((cl) => {
+      const dias = cl.ultimaVisita ? diffDays(cl.ultimaVisita, t) : null;
+      const sm = sumido(cl); const aberto = S.ui.cliAberto === cl.id;
+      const f = frequenciaCliente(cl.id);
+      h += '<div class="card tight' + (sm ? ' alert' : '') + '" data-busca="' + esc((cl.nome + ' ' + digits(cl.telefone)).toLowerCase()) + '">' +
+        '<button type="button" class="row" data-act="cliAbrir" data-id="' + esc(cl.id) + '" aria-expanded="' + aberto + '" style="background:none;border:none;color:inherit;padding:0;text-align:left;cursor:pointer;min-height:44px;width:100%"><div class="grow"><div style="font-weight:600">' + esc(cl.nome) + '</div><div class="tiny">' + (dias == null ? 'Ainda não veio' : 'Última visita há ' + dias + ' dia' + (dias === 1 ? '' : 's')) + ' · ' + num(cl.visitas) + ' visita' + (num(cl.visitas) === 1 ? '' : 's') + (f ? ' · volta a cada ' + f + ' dias' : '') + '</div></div>' + (sm ? '<span class="tiny c-warn" style="font-weight:600">Sumiu</span>' : '') + '</button>';
+      if (aberto) {
+        const msgVolta = 'Fala, ' + primeiroNome(cl.nome) + '! Faz um tempo que você não aparece na ' + cfg().nome + '. Bora marcar? Tenho horário essa semana.';
+        const wa = waLink(cl.telefone, sm ? msgVolta : 'Oi, ' + primeiroNome(cl.nome) + '! ');
+        h += '<div class="tiny">WhatsApp: <span style="user-select:text">' + esc(cl.telefone || 'não informado') + '</span></div>' +
+          '<div class="field"><label for="ficha-' + esc(cl.id) + '">Ficha (como gosta do corte, observações)</label><textarea id="ficha-' + esc(cl.id) + '" data-f="ficha_' + esc(cl.id) + '">' + esc(fv('ficha_' + cl.id, cl.ficha || '')) + '</textarea></div>' +
+          '<div class="grid2"><button type="button" class="btn" data-act="cliFicha" data-id="' + esc(cl.id) + '">Salvar ficha</button><button type="button" class="btn pri" data-act="cliAgendar" data-id="' + esc(cl.id) + '">Agendar</button></div>' +
+          (wa ? '<a class="btn ok full" href="' + esc(wa) + '" target="_blank" rel="noopener">' + (sm ? 'Chamar de volta no WhatsApp' : 'Mandar mensagem no WhatsApp') + '</a>' : '') +
+          '<button type="button" class="btn bad sm" data-act="cliApagar" data-id="' + esc(cl.id) + '">' + conf('cla' + cl.id, 'Apagar cliente') + '</button>';
+      }
+      h += '</div>';
+    });
+    h += '</div>';
+    h += '<section class="card"><span class="h2">Cadastrar cliente</span>' +
+      '<div class="field"><label for="nc-nome">Nome</label><input id="nc-nome" data-f="ncNome" value="' + esc(fv('ncNome')) + '"></div>' +
+      '<div class="field"><label for="nc-tel">WhatsApp (com DDD)</label><input id="nc-tel" inputmode="tel" data-f="ncTel" value="' + esc(fv('ncTel')) + '" placeholder="(21) 99999-9999"></div>' +
+      '<button type="button" class="btn pri" data-act="cliNovo">Cadastrar</button></section>';
+    return h;
+  }
+
+  function vGestao() {
+    const tabs = [['equipe', 'Equipe'], ['estoque', 'Estoque'], ['servicos', 'Serviços'], ['despesas', 'Despesas'], ['barbearia', 'Barbearia']];
+    let h = '<div class="chips">' + tabs.map((t) => chip(t[1], 'gesTab', t[0], S.ui.gesTab === t[0])).join('') + '</div>';
+    const g = S.ui.gesTab; const c = cfg(); const m = mesAtual();
+    if (g === 'equipe') {
+      h += '<span class="sub">' + MES[new Date().getMonth()] + ' · comissão calculada a cada comanda fechada</span>';
+      (c.barbeiros || []).forEach((b) => {
+        const r = resumoBarbeiro(b.id, m);
+        h += '<section class="card"><div class="row"><span class="logo" style="width:40px;height:40px;font-size:16px" aria-hidden="true">' + esc(String(b.nome)[0] || '?') + '</span><div class="grow"><div class="h2">' + esc(b.nome) + '</div><div class="tiny">' + r.n + ' atendimentos · ' + brl(r.serv + r.prod) + ' faturado</div></div><div style="text-align:right"><div class="tiny">a receber</div><div class="mid num c-acc">' + brl(r.receber) + '</div></div></div>' +
+          '<div class="tiny">Comissão ' + brl(r.com) + ' + gorjetas ' + brl(r.gorj) + ' − vales ' + brl(r.vales) + '</div>' +
+          '<div class="grid2"><div class="field"><label for="com-' + esc(b.id) + '">% em serviços</label><input class="small" id="com-' + esc(b.id) + '" inputmode="numeric" data-chg="barbCom" data-id="' + esc(b.id) + '" value="' + esc(b.com) + '"></div>' +
+          '<div class="field"><label for="comp-' + esc(b.id) + '">% em produtos</label><input class="small" id="comp-' + esc(b.id) + '" inputmode="numeric" data-chg="barbComProd" data-id="' + esc(b.id) + '" value="' + esc(b.comProd != null ? b.comProd : 10) + '"></div></div>' +
+          '<button type="button" class="btn bad sm" data-act="barbRemover" data-id="' + esc(b.id) + '">' + conf('br' + b.id, 'Remover da equipe') + '</button></section>';
+      });
+      if (S.papel === 'dono') {
+        h += '<section class="card"><span class="h2">Acesso ao app</span><span class="sub">Convide pelo e-mail. A pessoa cria a conta com esse mesmo e-mail e já entra na sua barbearia. ' + S.nMembros + ' pessoa' + (S.nMembros === 1 ? '' : 's') + ' com acesso hoje.</span>' +
+          '<div class="field"><label for="cv-email">E-mail</label><input id="cv-email" type="email" data-f="cvEmail" value="' + esc(fv('cvEmail')) + '" placeholder="barbeiro@email.com"></div>' +
+          '<div class="field"><label for="cv-papel">Permissão</label><select id="cv-papel" data-f="cvPapel"><option value="barbeiro"' + (fv('cvPapel', 'barbeiro') === 'barbeiro' ? ' selected' : '') + '>Barbeiro</option><option value="dono"' + (fv('cvPapel') === 'dono' ? ' selected' : '') + '>Sócio (mesmo acesso do dono)</option></select></div>' +
+          '<button type="button" class="btn pri" data-act="convidar">Convidar</button>';
+        S.convites.forEach((c) => { h += '<div class="item"><span class="grow">' + esc(c.email) + ' <span class="tiny">aguardando cadastro</span></span><button type="button" class="btn sm" data-act="desconvidar" data-v="' + esc(c.email) + '" aria-label="Cancelar convite">✕</button></div>'; });
+        h += '</section>';
+      }
+      h += '<section class="card"><span class="h2">Adicionar barbeiro</span><div class="field"><label for="nb-nome">Nome</label><input id="nb-nome" data-f="nbNome" value="' + esc(fv('nbNome')) + '"></div><div class="field"><label for="nb-com">% de comissão em serviços</label><input id="nb-com" inputmode="numeric" data-f="nbCom" value="' + esc(fv('nbCom', '40')) + '"></div><button type="button" class="btn pri" data-act="barbNovo">Adicionar</button></section>';
+      if ((c.barbeiros || []).length) {
+        h += '<section class="card"><span class="h2">Lançar vale (adiantamento)</span><div class="grid2"><div class="field"><label for="vl-barb">Barbeiro</label><select id="vl-barb" data-f="vlBarb">' + c.barbeiros.map((b) => '<option value="' + esc(b.id) + '"' + (fv('vlBarb', c.barbeiros[0].id) === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div><div class="field"><label for="vl-valor">Valor (R$)</label><input id="vl-valor" inputmode="decimal" data-f="vlValor" value="' + esc(fv('vlValor')) + '"></div></div><button type="button" class="btn" data-act="valeNovo">Lançar vale</button>';
+        S.vales.filter((v) => String(v.data).indexOf(m) === 0).sort((a, b) => String(b.data).localeCompare(String(a.data))).forEach((v) => { h += '<div class="item"><span class="grow">' + esc(barbNome(v.barbeiroId)) + ' <span class="tiny">' + esc(fmtDia(v.data)) + '</span></span><span class="num c-bad">− ' + brl(v.valor) + '</span><button type="button" class="btn sm" data-act="valeApagar" data-id="' + esc(v.id) + '" aria-label="Apagar vale">✕</button></div>'; });
+        h += '</section>';
+      }
+    }
+    if (g === 'estoque') {
+      const ps = S.produtos.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
+      if (!ps.length) h += '<div class="empty"><span>Nenhum produto cadastrado.</span></div>';
+      ps.forEach((p) => {
+        const baixo = num(p.qtd) < num(p.min); const marg = num(p.preco) ? Math.round((num(p.preco) - num(p.custo)) / num(p.preco) * 100) : 0;
+        h += '<section class="card tight' + (baixo ? ' alert' : '') + '"><div class="row"><div class="grow"><div style="font-weight:600">' + esc(p.nome) + '</div><div class="tiny ' + (baixo ? 'c-warn' : '') + '">' + (baixo ? 'Abaixo do mínimo (' + num(p.min) + ') · repor' : 'Mínimo ' + num(p.min)) + ' · ' + brl(p.preco) + ' · margem ' + marg + '%</div></div>' +
+          '<button type="button" class="btn sm" data-act="estMenos" data-id="' + esc(p.id) + '" aria-label="Tirar 1 de ' + esc(p.nome) + '">−</button><span class="mid num" style="min-width:32px;text-align:center">' + num(p.qtd) + '</span><button type="button" class="btn sm" data-act="estMais" data-id="' + esc(p.id) + '" aria-label="Somar 1 em ' + esc(p.nome) + '">+</button></div>' +
+          '<button type="button" class="btn bad sm" data-act="prodApagar" data-id="' + esc(p.id) + '">' + conf('pa' + p.id, 'Apagar produto') + '</button></section>';
+      });
+      h += '<section class="card"><span class="h2">Novo produto</span><div class="field"><label for="np-nome">Nome</label><input id="np-nome" data-f="npNome" value="' + esc(fv('npNome')) + '"></div>' +
+        '<div class="grid2"><div class="field"><label for="np-preco">Preço de venda</label><input id="np-preco" inputmode="decimal" data-f="npPreco" value="' + esc(fv('npPreco')) + '"></div><div class="field"><label for="np-custo">Custo</label><input id="np-custo" inputmode="decimal" data-f="npCusto" value="' + esc(fv('npCusto')) + '"></div>' +
+        '<div class="field"><label for="np-qtd">Quantidade</label><input id="np-qtd" inputmode="numeric" data-f="npQtd" value="' + esc(fv('npQtd')) + '"></div><div class="field"><label for="np-min">Mínimo</label><input id="np-min" inputmode="numeric" data-f="npMin" value="' + esc(fv('npMin', '3')) + '"></div></div>' +
+        '<button type="button" class="btn pri" data-act="prodNovo">Cadastrar produto</button></section>';
+    }
+    if (g === 'servicos') {
+      const bs = c.barbeiros || []; const comMedia = bs.length ? bs.reduce((a, b) => a + num(b.com), 0) / bs.length : 40;
+      h += '<span class="sub">Margem = preço − comissão média da equipe (' + Math.round(comMedia) + '%) − custo de insumos.</span>';
+      (c.servicos || []).forEach((s, i) => {
+        const sobra = num(s.preco) - num(s.preco) * comMedia / 100 - num(s.custo); const pct = num(s.preco) ? Math.round(sobra / num(s.preco) * 100) : 0;
+        h += '<section class="card tight"><div class="field"><label for="sv-n-' + i + '">Nome</label><input class="small" id="sv-n-' + i + '" data-chg="svEdit" data-id="' + i + '" data-v="nome" value="' + esc(s.nome) + '"></div>' +
+          '<div class="grid3"><div class="field"><label for="sv-p-' + i + '">Preço</label><input class="small" id="sv-p-' + i + '" inputmode="decimal" data-chg="svEdit" data-id="' + i + '" data-v="preco" value="' + esc(s.preco) + '"></div><div class="field"><label for="sv-d-' + i + '">Minutos</label><input class="small" id="sv-d-' + i + '" inputmode="numeric" data-chg="svEdit" data-id="' + i + '" data-v="dur" value="' + esc(s.dur) + '"></div><div class="field"><label for="sv-c-' + i + '">Insumos</label><input class="small" id="sv-c-' + i + '" inputmode="decimal" data-chg="svEdit" data-id="' + i + '" data-v="custo" value="' + esc(s.custo || 0) + '"></div></div>' +
+          '<div class="row between"><span class="tiny">Sobra ' + brl(sobra) + ' por atendimento</span><span class="' + (pct >= 40 ? 'c-ok' : 'c-warn') + '" style="font-weight:700">' + pct + '%</span></div><div class="bar"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%;background:' + (pct >= 40 ? 'var(--ok)' : 'var(--warn)') + '"></i></div>' +
+          '<button type="button" class="btn bad sm" data-act="svApagar" data-id="' + i + '">' + conf('sv' + s.id, 'Remover serviço') + '</button></section>';
+      });
+      h += '<section class="card"><span class="h2">Novo serviço</span><div class="field"><label for="ns-nome">Nome</label><input id="ns-nome" data-f="nsNome" value="' + esc(fv('nsNome')) + '"></div><div class="grid2"><div class="field"><label for="ns-preco">Preço</label><input id="ns-preco" inputmode="decimal" data-f="nsPreco" value="' + esc(fv('nsPreco')) + '"></div><div class="field"><label for="ns-dur">Minutos</label><input id="ns-dur" inputmode="numeric" data-f="nsDur" value="' + esc(fv('nsDur', '30')) + '"></div></div><button type="button" class="btn pri" data-act="svNovo">Adicionar serviço</button></section>';
+    }
+    if (g === 'despesas') {
+      const fm = fechadas().filter((x) => String(x.data || '').indexOf(m) === 0);
+      const fat = fm.reduce((a, x) => a + num(x.total), 0); const com = fm.reduce((a, x) => a + num(x.comissao), 0);
+      const ds = S.despesas.filter((d) => String(d.data).indexOf(m) === 0).sort((a, b) => String(b.data).localeCompare(String(a.data)));
+      const desp = ds.reduce((a, d) => a + num(d.valor), 0); const sobra = fat - com - desp;
+      h += '<section class="card"><span class="lbl">Quanto sobrou no mês</span><span class="big num ' + (sobra >= 0 ? 'c-ok' : 'c-bad') + '">' + brl(sobra) + '</span>' +
+        '<div class="item"><span class="grow">Faturado</span><span class="num">' + brl(fat) + '</span></div><div class="item"><span class="grow">Comissões</span><span class="num c-bad">− ' + brl(com) + '</span></div><div class="item"><span class="grow">Despesas</span><span class="num c-bad">− ' + brl(desp) + '</span></div></section>';
+      h += '<section class="card"><span class="h2">Lançar despesa</span><div class="field"><label for="dp-desc">Descrição</label><input id="dp-desc" data-f="dpDesc" value="' + esc(fv('dpDesc')) + '" placeholder="Aluguel, luz, produtos…"></div><div class="field"><label for="dp-valor">Valor (R$)</label><input id="dp-valor" inputmode="decimal" data-f="dpValor" value="' + esc(fv('dpValor')) + '"></div><button type="button" class="btn pri" data-act="despNova">Lançar</button>';
+      ds.forEach((d) => { h += '<div class="item"><div class="grow"><div>' + esc(d.descricao) + '</div><div class="tiny">' + esc(fmtDia(d.data)) + '</div></div><span class="num c-bad">− ' + brl(d.valor) + '</span><button type="button" class="btn sm" data-act="despApagar" data-id="' + esc(d.id) + '" aria-label="Apagar despesa">✕</button></div>'; });
+      h += '</section>';
+    }
+    if (g === 'barbearia') {
+      h += '<section class="card"><div class="field"><label for="bb-nome">Nome da barbearia</label><input id="bb-nome" data-f="bbNome" value="' + esc(fv('bbNome', c.nome)) + '"></div>' +
+        '<span class="lbl">Cor da marca</span><div class="chips">' + CORES.map((k) => '<button type="button" class="sw' + (fv('bbCor', corMarca(c.cor)) === k[0] ? ' on' : '') + '" style="background:' + k[0] + '" data-act="bbCor" data-v="' + k[0] + '" aria-label="Cor ' + k[1] + '" aria-pressed="' + (fv('bbCor', corMarca(c.cor)) === k[0]) + '"></button>').join('') + '</div>' +
+        '<div class="grid3"><div class="field"><label for="bb-abre">Abre</label><input id="bb-abre" type="time" data-f="bbAbre" value="' + esc(fv('bbAbre', c.abre)) + '"></div><div class="field"><label for="bb-fecha">Fecha</label><input id="bb-fecha" type="time" data-f="bbFecha" value="' + esc(fv('bbFecha', c.fecha)) + '"></div>' +
+        '<div class="field"><label for="bb-int">Intervalo</label><select id="bb-int" data-f="bbInt">' + [15, 20, 30, 40, 60].map((n) => '<option value="' + n + '"' + (String(fv('bbInt', c.intervalo)) === String(n) ? ' selected' : '') + '>' + n + ' min</option>').join('') + '</select></div></div>' +
+        '<div class="field"><label for="bb-meta">Meta de faturamento do mês (R$)</label><input id="bb-meta" inputmode="numeric" data-f="bbMeta" value="' + esc(fv('bbMeta', c.metaMes)) + '"></div>' +
+        '<button type="button" class="btn pri" data-act="bbSalvar">Salvar</button></section>';
+      h += '<section class="card"><span class="h2">Link de agendamento do cliente</span><span class="sub">Coloque na bio do Instagram, mande no WhatsApp e imprima o QR pro balcão. O cliente agenda sem precisar de conta.</span>' +
+        '<div class="row wrap" style="align-items:flex-start"><div class="qr" id="qr-box" role="img" aria-label="QR code do link de agendamento"></div><div class="stack grow"><span class="link">' + esc(linkPublico()) + '</span>' +
+        '<button type="button" class="btn pri" data-act="copiarLink">Copiar link</button><a class="btn" href="' + esc(linkPublico()) + '" target="_blank" rel="noopener">Abrir página</a><span class="tiny">Pra imprimir o QR: toque e segure (ou clique com o botão direito) e salve a imagem.</span></div></div></section>';
+      h += '<section class="card"><span class="h2">Sua conta</span><span class="sub">' + esc(S.user ? S.user.email : '') + ' · ' + (S.papel === 'dono' ? 'dono' : 'barbeiro') + '</span><button type="button" class="btn" data-act="sair">Sair da conta</button></section>';
+      if (S.papel === 'dono') h += '<section class="card"><span class="h2">Recomeçar do zero</span><span class="sub">Apaga agenda, comandas, clientes, despesas e vales. Serviços, equipe e produtos continuam.</span><button type="button" class="btn bad" data-act="zerar">' + conf('zerar', 'Apagar movimento') + '</button></section>';
+    }
+    return h;
+  }
+
+  function vBarbeiro() {
+    const bs = cfg().barbeiros || [];
+    if (!bs.length) return '<div class="empty"><span>Cadastre a equipe em Gestão.</span></div>';
+    if (!S.ui.barbView || !barb(S.ui.barbView)) S.ui.barbView = bs[0].id;
+    const b = barb(S.ui.barbView); const t = today();
+    const rh = resumoBarbeiro(b.id, t); const rm = resumoBarbeiro(b.id, mesAtual());
+    let h = '<span class="lbl">Quem está usando?</span>' + barbChips('barbView', b.id);
+    h += '<section class="card"><span class="lbl">' + esc(primeiroNome(b.nome)) + ', você ganhou hoje</span><span class="big num">' + brl(rh.com + rh.gorj) + '</span><span class="sub">Comissão ' + brl(rh.com) + ' · gorjetas ' + brl(rh.gorj) + ' · ' + rh.n + ' atendido' + (rh.n === 1 ? '' : 's') + '</span></section>';
+    const ags = S.ags.filter((a) => a.data === t && a.barbeiroId === b.id && a.status !== 'cancelado').sort(byHora);
+    h += '<span class="lbl">Sua agenda de hoje</span>';
+    if (!ags.length) h += '<span class="sub">Nada marcado pra você hoje.</span>';
+    ags.forEach((a) => {
+      const s = serv(a.servicoId); const cl = S.clientes.find((x) => x.id === a.clienteId); const st = STATUS[a.status] || STATUS.agendado;
+      const dias = cl && cl.ultimaVisita ? diffDays(cl.ultimaVisita, t) : null;
+      h += '<div class="card tight"><div class="row"><span class="hora num">' + esc(a.hora) + '</span><span class="grow" style="font-weight:600">' + esc(a.clienteNome) + '</span><span class="tiny ' + st[1] + '" style="font-weight:600">' + st[0] + '</span></div><span class="tiny">' + esc(s ? s.nome : '') + '</span>' +
+        '<div class="msg"><div class="tiny" style="font-weight:600;letter-spacing:.04em">FICHA DO CLIENTE</div>' + esc(cl && cl.ficha ? cl.ficha : 'Sem anotações ainda.') + '<div class="tiny">' + (dias == null ? 'Primeira visita' : 'Última visita há ' + dias + ' dias') + '</div></div>' +
+        (a.status === 'agendado' || a.status === 'cadeira' ? '<button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">' + (a.status === 'cadeira' ? 'Ver comanda' : 'Chamar pra cadeira') + '</button>' : '') + '</div>';
+    });
+    h += '<section class="card"><span class="h2">Meus ganhos no mês</span>' +
+      '<div class="item"><span class="grow">Comissão em serviços e produtos</span><span class="num">' + brl(rm.com) + '</span></div>' +
+      '<div class="item"><span class="grow">Gorjetas</span><span class="num c-ok">+ ' + brl(rm.gorj) + '</span></div>' +
+      '<div class="item"><span class="grow">Vales</span><span class="num c-bad">− ' + brl(rm.vales) + '</span></div>' +
+      '<div class="row between"><span class="sub">A receber</span><span class="mid num c-acc">' + brl(rm.receber) + '</span></div></section>';
+    return h;
+  }
+
+  // ---------- render ----------
+  function applyTheme() {
+    const c = cfg();
+    document.documentElement.style.setProperty('--accent', corMarca(c.cor));
+    document.getElementById('logo').textContent = (String(c.nome || 'B').trim()[0] || 'B').toUpperCase();
+  }
+  function render() {
+    const v = document.getElementById('view');
+    const tab = S.ui.tab;
+    document.getElementById('topSub').textContent = (S.cfg ? S.cfg.nome + ' · ' : '') + fmtDia(today());
+    document.getElementById('topTitle').textContent = TITULOS[tab] || 'Barbearia';
+    const ativa = TAB_DA_VIEW[tab] || tab;
+    document.querySelectorAll('#tabs .tab').forEach((b) => { const on = b.dataset.v === ativa; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    let h;
+    document.querySelector('.tabs').hidden = S.status !== 'ok';
+    document.querySelector('.top').hidden = S.status !== 'ok';
+    if (S.status === 'loading') h = '<div class="empty">Carregando os dados da barbearia…</div>';
+    else if (S.status === 'semconfig') h = '<div class="card warn"><span class="mid c-warn">Falta conectar o banco de dados</span><span>Abra o arquivo <b>config.js</b> e cole a URL e a chave pública (anon key) do seu projeto Supabase. O passo a passo está no README.</span></div>';
+    else if (S.status === 'login') h = vLogin();
+    else if (S.status === 'novaSenha') h = '<div class="card"><p class="mid" style="margin:0">Criar senha nova</p><div class="field"><label for="ns-senha">Nova senha (mínimo 6 caracteres)</label><input id="ns-senha" type="password" autocomplete="new-password" data-f="novaSenha" value=""></div><button type="button" class="btn pri lg full" data-act="salvarSenha">Salvar senha</button></div>';
+    else if (S.status === 'setup') h = vSetup();
+    else if (S.status === 'inativa') h = '<div class="empty"><span class="mid">Acesso suspenso</span><span>A mensalidade venceu ou a conta foi desativada. Fale com o suporte pra regularizar e o acesso volta na hora.</span><button type="button" class="btn" data-act="sair">Sair da conta</button></div>';
+    else if (!S.cfg) h = '<div class="empty">Carregando os dados da barbearia…</div>';
+    else h =({ inicio: vInicio, agenda: vAgenda, agendar: vAgendar, caixa: vCaixa, clientes: vClientes, gestao: vGestao, barbeiro: vBarbeiro }[tab] || vInicio)();
+    v.innerHTML = h;
+    const busca = document.getElementById('cli-busca'); if (busca && S.f.busca) { busca.value = S.f.busca; filtrarBusca(S.f.busca); }
+    const qrBox = document.getElementById('qr-box');
+    if (qrBox && window.QRCode) { try { new window.QRCode(qrBox, { text: linkPublico(), width: 140, height: 140, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) { qrBox.textContent = 'QR indisponível'; } }
+  }
+  function scheduleRender() {
+    const a = document.activeElement;
+    if (a && a.closest && a.closest('#view') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { S.dirty = true; return; }
+    render();
+  }
+  function go(tab) {
+    if (location.hash === '#' + tab) { S.ui.tab = tab; render(); window.scrollTo(0, 0); }
+    else location.hash = tab;
+  }
+  function fromHash() {
+    const t = (location.hash || '').replace('#', '');
+    S.ui.tab = TABS.indexOf(t) >= 0 ? t : 'inicio';
+    S.ui.confirm = null; render(); window.scrollTo(0, 0);
+  }
+  function filtrarBusca(q) {
+    q = String(q || '').toLowerCase().trim(); const qd = digits(q);
+    document.querySelectorAll('#cli-lista [data-busca]').forEach((el) => { const s = el.getAttribute('data-busca'); el.hidden = q && !(s.indexOf(q) >= 0 || (qd && s.indexOf(qd) >= 0)); });
+  }
+
+  // ---------- ações ----------
+  const A = {
+    go: (el) => go(el.dataset.v),
+    copy: async (el) => {
+      const txt = el.dataset.text;
+      try { await navigator.clipboard.writeText(txt); toast('Mensagem copiada'); }
+      catch (e) { toast('Não deu pra copiar. Selecione o texto e copie.', true); }
+    },
+    verSumidos: () => { S.ui.cliFiltro = 'sumidos'; go('clientes'); },
+    novaComandaAtalho: () => { S.ui.avulsa = true; S.ui.comanda = null; go('caixa'); },
+    criarBarbearia: async () => {
+      const nome = String(fv('stNome')).trim(); const dono = String(fv('stDono')).trim();
+      const slug = slugify(S.f.stSlug !== undefined ? S.f.stSlug : nome);
+      if (!nome || !dono) { toast('Preencha o nome da barbearia e o seu nome.', true); return; }
+      if (slug.length < 3) { toast('O link precisa ter pelo menos 3 letras.', true); return; }
+      const novo = Object.assign({}, DEF, { nome: nome, barbeiros: [{ id: newId(), nome: dono, com: 50, comProd: 10 }] });
+      const r = await S.sb.rpc('criar_barbearia', { p_nome: nome, p_slug: slug, p_config: novo });
+      if (r.error) { toast(r.error.message, true); return; }
+      toast('Barbearia criada'); await carregarBarbearia();
+    },
+    entrar: async () => {
+      const email = String(fv('lgEmail')).trim(); const senha = String(fv('lgSenha'));
+      if (!email || !senha) { toast('Preencha e-mail e senha.', true); return; }
+      const r = await S.sb.auth.signInWithPassword({ email: email, password: senha });
+      if (r.error) toast(/confirm/i.test(r.error.message) ? 'Confirme seu e-mail pelo link que enviamos e tente de novo.' : 'E-mail ou senha incorretos.', true);
+    },
+    cadastrar: async () => {
+      const email = String(fv('lgEmail')).trim(); const senha = String(fv('lgSenha'));
+      if (!email || senha.length < 6) { toast('Informe o e-mail e uma senha com pelo menos 6 caracteres.', true); return; }
+      const r = await S.sb.auth.signUp({ email: email, password: senha, options: { emailRedirectTo: location.origin + location.pathname } });
+      if (r.error) { toast(r.error.message, true); return; }
+      if (!r.data.session) { S.ui.loginMsg = 'Enviamos um link de confirmação pro seu e-mail. Clique nele e depois entre aqui.'; S.ui.loginModo = 'entrar'; render(); }
+    },
+    loginModo: () => { S.ui.loginModo = S.ui.loginModo === 'criar' ? 'entrar' : 'criar'; S.ui.loginMsg = ''; render(); },
+    esqueci: async () => {
+      const email = String(fv('lgEmail')).trim(); if (!email) { toast('Digite seu e-mail primeiro.', true); return; }
+      const r = await S.sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+      if (r.error) toast(r.error.message, true); else { S.ui.loginMsg = 'Enviamos um link pra você criar uma senha nova.'; render(); }
+    },
+    salvarSenha: async () => {
+      const s = String(fv('novaSenha')); if (s.length < 6) { toast('A senha precisa ter pelo menos 6 caracteres.', true); return; }
+      const r = await S.sb.auth.updateUser({ password: s });
+      if (r.error) { toast(r.error.message, true); return; }
+      toast('Senha atualizada'); S.user = r.data.user; await carregarBarbearia();
+    },
+    sair: async () => { await S.sb.auth.signOut(); location.hash = ''; location.reload(); },
+    copiarLink: async () => { try { await navigator.clipboard.writeText(linkPublico()); toast('Link copiado'); } catch (e) { toast('Não deu pra copiar. Selecione o link e copie.', true); } },
+    convidar: async () => {
+      const email = String(fv('cvEmail')).trim().toLowerCase();
+      if (!/^\S+@\S+\.\S+$/.test(email)) { toast('Digite um e-mail válido.', true); return; }
+      const r = await S.sb.from('convites').upsert({ barbearia_id: S.bid, email: email, papel: fv('cvPapel', 'barbeiro') });
+      if (r.error) { toast('Não deu pra convidar: ' + r.error.message, true); return; }
+      S.f.cvEmail = ''; toast('Convite criado. Peça pra ' + email + ' criar a conta com esse e-mail.'); await carregarAcessos();
+    },
+    desconvidar: async (el) => { await S.sb.from('convites').delete().eq('barbearia_id', S.bid).eq('email', el.dataset.v); await carregarAcessos(); },
+    // agenda
+    agDia: (el) => { S.ui.agDia = addDays(S.ui.agDia, Number(el.dataset.v)); render(); },
+    agHoje: () => { S.ui.agDia = today(); render(); },
+    agBarb: (el) => { S.ui.agBarb = el.dataset.v; render(); },
+    agendarNoDia: () => { S.ui.bk = { serv: null, barb: S.ui.agBarb !== 'todos' ? S.ui.agBarb : 'qualquer', dia: S.ui.agDia < today() ? today() : S.ui.agDia, hora: null, feito: null }; S.f.bkNome = ''; S.f.bkTel = ''; go('agendar'); },
+    abrirComanda: (el) => { const a = S.ags.find((x) => x.id === el.dataset.id); if (a) abrirComanda(a); },
+    faltou: async (el) => { if (precisaConfirmar('faltou' + el.dataset.id)) return; await W(() => col('agendamentos').doc(el.dataset.id).update({ status: 'faltou' }), 'Marcado como falta'); },
+    cancelarAg: async (el) => { if (precisaConfirmar('cancel' + el.dataset.id)) return; await W(() => col('agendamentos').doc(el.dataset.id).update({ status: 'cancelado' }), 'Horário cancelado'); },
+    // agendar
+    bkServ: (el) => { S.ui.bk.serv = el.dataset.v; S.ui.bk.hora = null; render(); },
+    bkBarb: (el) => { S.ui.bk.barb = el.dataset.v; S.ui.bk.hora = null; render(); },
+    bkDia: (el) => { S.ui.bk.dia = el.dataset.v; S.ui.bk.hora = null; render(); },
+    bkHora: (el) => { S.ui.bk.hora = el.dataset.v; render(); },
+    bkNovo: () => { S.ui.bk = { serv: null, barb: 'qualquer', dia: today(), hora: null, feito: null }; S.f.bkNome = ''; S.f.bkTel = ''; render(); },
+    bkVerAgenda: () => { S.ui.agDia = S.ui.bk.feito.data; S.ui.bk.feito = null; go('agenda'); },
+    bkSalvar: async () => {
+      const bk = S.ui.bk; const s = serv(bk.serv); const nome = String(fv('bkNome')).trim(); const tel = String(fv('bkTel')).trim();
+      if (!s || !bk.hora || !nome) return;
+      const dur = Number(s.dur) || 30; const ini = toMin(bk.hora);
+      let bid = bk.barb;
+      if (bid === 'qualquer') { const livre = cfg().barbeiros.find((b) => !ocupado(bk.dia, b.id, ini, dur)); bid = livre ? livre.id : null; }
+      if (!bid || ocupado(bk.dia, bid, ini, dur)) { toast('Esse horário acabou de ser ocupado. Escolha outro.', true); bk.hora = null; render(); return; }
+      const id = newId(); let doc = null;
+      const ok = await W(async () => {
+        const cid = await upsertCliente(nome, tel);
+        doc = { data: bk.dia, hora: bk.hora, dur: dur, servicoId: s.id, barbeiroId: bid, clienteId: cid, clienteNome: nome, telefone: tel, status: 'agendado', criadoEm: new Date().toISOString() };
+        await col('agendamentos').doc(id).set(doc);
+      });
+      if (ok) { S.ui.bk.feito = Object.assign({ id: id }, doc); S.f.bkNome = ''; S.f.bkTel = ''; render(); window.scrollTo(0, 0); }
+    },
+    // caixa
+    avulsaToggle: () => { S.ui.avulsa = !S.ui.avulsa; render(); },
+    avulsaCriar: async () => {
+      const c = cfg(); const nome = String(fv('avNome')).trim() || 'Cliente avulso'; const tel = String(fv('avTel')).trim();
+      const bid = fv('avBarb', (c.barbeiros[0] || {}).id) || null; const id = newId();
+      const ok = await W(async () => {
+        const cid = await upsertCliente(nome, tel);
+        await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: cid, clienteNome: nome, barbeiroId: bid, agendamentoId: null, itens: [], pagamento: 'Pix', gorjeta: 0, criadoEm: new Date().toISOString() });
+      });
+      if (ok) { S.ui.avulsa = false; S.ui.comanda = id; S.f.avNome = ''; S.f.avTel = ''; render(); }
+    },
+    verComanda: (el) => { S.ui.comanda = el.dataset.id; S.ui.ultima = null; render(); window.scrollTo(0, 0); },
+    sairComanda: () => { S.ui.comanda = null; render(); },
+    cmAdd: async (el) => {
+      const x = S.comandas.find((c) => c.id === el.dataset.id); if (!x) return;
+      const parts = el.dataset.v.split(':'); let item = null;
+      if (parts[0] === 's') { const s = serv(parts[1]); if (s) item = { tipo: 's', id: s.id, nome: s.nome, preco: num(s.preco) }; }
+      else { const p = S.produtos.find((q) => q.id === parts[1]); if (p) item = { tipo: 'p', id: p.id, nome: p.nome, preco: num(p.preco) }; }
+      if (item) await W(() => col('comandas').doc(x.id).update({ itens: (x.itens || []).concat([item]) }));
+    },
+    cmRemover: async (el) => { const x = S.comandas.find((c) => c.id === el.dataset.id); if (!x) return; const n = (x.itens || []).slice(); n.splice(Number(el.dataset.v), 1); await W(() => col('comandas').doc(x.id).update({ itens: n })); },
+    cmPag: async (el) => { await W(() => col('comandas').doc(el.dataset.id).update({ pagamento: el.dataset.v })); },
+    cmFechar: async (el) => { const x = S.comandas.find((c) => c.id === el.dataset.id); if (x) await fecharComanda(x); },
+    cmCancelar: async (el) => {
+      if (precisaConfirmar('cmc' + el.dataset.id)) return;
+      const x = S.comandas.find((c) => c.id === el.dataset.id); if (!x) return;
+      const ok = await W(async () => { await col('comandas').doc(x.id).delete(); if (x.agendamentoId && S.ags.find((a) => a.id === x.agendamentoId)) await col('agendamentos').doc(x.agendamentoId).update({ status: 'agendado', comandaId: null }); }, 'Comanda cancelada');
+      if (ok) { S.ui.comanda = null; render(); }
+    },
+    // clientes
+    cliFiltro: (el) => { S.ui.cliFiltro = el.dataset.v; render(); },
+    cliAbrir: (el) => { S.ui.cliAberto = S.ui.cliAberto === el.dataset.id ? null : el.dataset.id; render(); },
+    cliFicha: async (el) => { const id = el.dataset.id; const cl = S.clientes.find((c) => c.id === id); await W(() => col('clientes').doc(id).update({ ficha: fv('ficha_' + id, cl ? cl.ficha : '') }), 'Ficha salva'); },
+    cliAgendar: (el) => { const cl = S.clientes.find((c) => c.id === el.dataset.id); if (!cl) return; S.ui.bk = { serv: null, barb: 'qualquer', dia: today(), hora: null, feito: null }; S.f.bkNome = cl.nome; S.f.bkTel = cl.telefone || ''; go('agendar'); },
+    cliApagar: async (el) => { if (precisaConfirmar('cla' + el.dataset.id)) return; const ok = await W(() => col('clientes').doc(el.dataset.id).delete(), 'Cliente apagado'); if (ok) S.ui.cliAberto = null; },
+    cliNovo: async () => {
+      const nome = String(fv('ncNome')).trim(); const tel = String(fv('ncTel')).trim();
+      if (!nome || digits(tel).length < 10) { toast('Informe o nome e o WhatsApp com DDD.', true); return; }
+      const ok = await W(() => upsertCliente(nome, tel), 'Cliente cadastrado'); if (ok) { S.f.ncNome = ''; S.f.ncTel = ''; render(); }
+    },
+    // gestão
+    gesTab: (el) => { S.ui.gesTab = el.dataset.v; render(); },
+    gesTabGo: (el) => { S.ui.gesTab = el.dataset.v; go('gestao'); },
+    barbNovo: async () => {
+      const nome = String(fv('nbNome')).trim(); if (!nome) { toast('Informe o nome do barbeiro.', true); return; }
+      const ok = await salvarCfg({ barbeiros: (cfg().barbeiros || []).concat([{ id: newId(), nome: nome, com: num(fv('nbCom', '40')) || 40, comProd: 10 }]) });
+      if (ok) { toast(nome + ' entrou na equipe'); S.f.nbNome = ''; }
+    },
+    barbRemover: async (el) => { if (precisaConfirmar('br' + el.dataset.id)) return; await salvarCfg({ barbeiros: cfg().barbeiros.filter((b) => b.id !== el.dataset.id) }); },
+    valeNovo: async () => {
+      const c = cfg(); const v = num(fv('vlValor')); const bid = fv('vlBarb', (c.barbeiros[0] || {}).id);
+      if (!v || !bid) { toast('Informe o valor do vale.', true); return; }
+      const ok = await W(() => col('vales').doc(newId()).set({ data: today(), barbeiroId: bid, valor: v }), 'Vale lançado'); if (ok) { S.f.vlValor = ''; render(); }
+    },
+    valeApagar: async (el) => { await W(() => col('vales').doc(el.dataset.id).delete(), 'Vale apagado'); },
+    estMais: async (el) => { const p = S.produtos.find((x) => x.id === el.dataset.id); if (p) await W(() => col('produtos').doc(p.id).update({ qtd: num(p.qtd) + 1 })); },
+    estMenos: async (el) => { const p = S.produtos.find((x) => x.id === el.dataset.id); if (p && num(p.qtd) > 0) await W(() => col('produtos').doc(p.id).update({ qtd: num(p.qtd) - 1 })); },
+    prodApagar: async (el) => { if (precisaConfirmar('pa' + el.dataset.id)) return; await W(() => col('produtos').doc(el.dataset.id).delete(), 'Produto apagado'); },
+    prodNovo: async () => {
+      const nome = String(fv('npNome')).trim(); if (!nome) { toast('Informe o nome do produto.', true); return; }
+      const ok = await W(() => col('produtos').doc(newId()).set({ nome: nome, preco: num(fv('npPreco')), custo: num(fv('npCusto')), qtd: num(fv('npQtd')), min: num(fv('npMin', '3')) }), 'Produto cadastrado');
+      if (ok) { ['npNome', 'npPreco', 'npCusto', 'npQtd'].forEach((k) => { S.f[k] = ''; }); render(); }
+    },
+    svApagar: async (el) => { const i = Number(el.dataset.id); const s = cfg().servicos[i]; if (!s || precisaConfirmar('sv' + s.id)) return; const n = cfg().servicos.slice(); n.splice(i, 1); await salvarCfg({ servicos: n }); },
+    svNovo: async () => {
+      const nome = String(fv('nsNome')).trim(); const preco = num(fv('nsPreco'));
+      if (!nome || !preco) { toast('Informe nome e preço do serviço.', true); return; }
+      const ok = await salvarCfg({ servicos: (cfg().servicos || []).concat([{ id: newId(), nome: nome, preco: preco, dur: num(fv('nsDur', '30')) || 30, custo: 0 }]) });
+      if (ok) { S.f.nsNome = ''; S.f.nsPreco = ''; toast('Serviço adicionado'); }
+    },
+    despNova: async () => {
+      const d = String(fv('dpDesc')).trim(); const v = num(fv('dpValor'));
+      if (!d || !v) { toast('Informe descrição e valor.', true); return; }
+      const ok = await W(() => col('despesas').doc(newId()).set({ data: today(), descricao: d, valor: v }), 'Despesa lançada'); if (ok) { S.f.dpDesc = ''; S.f.dpValor = ''; render(); }
+    },
+    despApagar: async (el) => { await W(() => col('despesas').doc(el.dataset.id).delete(), 'Despesa apagada'); },
+    bbCor: (el) => { S.f.bbCor = el.dataset.v; render(); },
+    bbSalvar: async () => {
+      const c = cfg();
+      const ok = await salvarCfg({ nome: String(fv('bbNome', c.nome)).trim() || c.nome, cor: fv('bbCor', corMarca(c.cor)), abre: fv('bbAbre', c.abre), fecha: fv('bbFecha', c.fecha), intervalo: num(fv('bbInt', c.intervalo)) || 30, metaMes: num(fv('bbMeta', c.metaMes)) });
+      if (ok) { ['bbNome', 'bbCor', 'bbAbre', 'bbFecha', 'bbInt', 'bbMeta'].forEach((k) => { delete S.f[k]; }); toast('Barbearia atualizada'); }
+    },
+    zerar: async () => {
+      if (precisaConfirmar('zerar')) return;
+      await W(async () => {
+        const r = await S.sb.from('registros').delete().eq('barbearia_id', S.bid).in('colecao', ['agendamentos', 'comandas', 'clientes', 'despesas', 'vales']);
+        if (r.error) throw r.error;
+        S.ags = []; S.comandas = []; S.clientes = []; S.despesas = []; S.vales = []; render();
+      }, 'Movimento apagado');
+      S.ui.comanda = null; S.ui.ultima = null;
+    },
+    // barbeiro
+    barbView: (el) => { S.ui.barbView = el.dataset.v; render(); }
+  };
+  const C = {
+    bkNome: (el) => { const cl = S.clientes.find((c) => c.nome === el.value); if (cl && !String(fv('bkTel')).trim()) { S.f.bkTel = cl.telefone || ''; const t = document.getElementById('bk-tel'); if (t) t.value = S.f.bkTel; } S.dirty = true; },
+    cmBarb: (el) => { W(() => col('comandas').doc(el.dataset.id).update({ barbeiroId: el.value })); },
+    cmGorj: (el) => { W(() => col('comandas').doc(el.dataset.id).update({ gorjeta: num(el.value) })); },
+    barbCom: (el) => { salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { com: num(el.value) }) : b)) }); },
+    barbComProd: (el) => { salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { comProd: num(el.value) }) : b)) }); },
+    svEdit: (el) => {
+      const i = Number(el.dataset.id); const k = el.dataset.v; const n = cfg().servicos.slice();
+      if (!n[i]) return; const o = Object.assign({}, n[i]); o[k] = k === 'nome' ? (el.value.trim() || o.nome) : num(el.value); n[i] = o;
+      salvarCfg({ servicos: n });
+    }
+  };
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-act]'); if (!el || el.tagName === 'A' || el.disabled) return;
+    e.preventDefault();
+    const fn = A[el.dataset.act]; if (fn) Promise.resolve(fn(el)).catch(() => toast('Algo deu errado. Tente de novo.', true));
+  });
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.dataset.f) S.f[el.dataset.f] = el.value;
+    if (el.dataset.inp === 'busca') { S.f.busca = el.value; filtrarBusca(el.value); }
+    if (el.id === 'st-nome' && S.f.stSlug === undefined) { const sl = document.getElementById('st-slug'); if (sl) sl.value = slugify(el.value); }
+    if (el.id === 'bk-nome') { const btn = document.querySelector('[data-act="bkSalvar"]'); if (btn) btn.disabled = !(serv(S.ui.bk.serv) && S.ui.bk.hora && el.value.trim()); }
+  });
+  document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.chg && C[el.dataset.chg]) C[el.dataset.chg](el); });
+  document.addEventListener('focusout', () => { setTimeout(() => { if (S.dirty) { const a = document.activeElement; if (!(a && a.closest && a.closest('#view') && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) { S.dirty = false; render(); } } }, 0); });
+  window.addEventListener('hashchange', fromHash);
+
+  // ---------- inicialização ----------
+  // Ponte entre as telas e o Supabase: cada registro é uma linha da tabela "registros".
+  const KEY = { produtos: 'produtos', agendamentos: 'ags', comandas: 'comandas', clientes: 'clientes', despesas: 'despesas', vales: 'vales' };
+  function localSet(c, id, data) {
+    const k = KEY[c]; if (!k) return;
+    const arr = S[k].slice(); const i = arr.findIndex((x) => x.id === id); const row = Object.assign({}, data, { id: id });
+    if (i >= 0) arr[i] = row; else arr.push(row);
+    S[k] = arr; scheduleRender();
+  }
+  function localDel(c, id) { const k = KEY[c]; if (!k) return; S[k] = S[k].filter((x) => x.id !== id); scheduleRender(); }
+  const semId = (o) => { const c = Object.assign({}, o); delete c.id; return c; };
+  function docRef(c, id) {
+    return {
+      set: async (data) => {
+        const r = await S.sb.from('registros').upsert({ barbearia_id: S.bid, colecao: c, id: id, dados: data });
+        if (r.error) throw r.error; localSet(c, id, data);
+      },
+      update: async (patch) => {
+        const atual = (S[KEY[c]] || []).find((x) => x.id === id);
+        const data = Object.assign({}, atual ? semId(atual) : {}, patch);
+        const r = await S.sb.from('registros').upsert({ barbearia_id: S.bid, colecao: c, id: id, dados: data });
+        if (r.error) throw r.error; localSet(c, id, data);
+      },
+      delete: async () => {
+        const r = await S.sb.from('registros').delete().eq('barbearia_id', S.bid).eq('colecao', c).eq('id', id);
+        if (r.error) throw r.error; localDel(c, id);
+      }
+    };
+  }
+  const DB = {
+    doc: (path) => {
+      const p = path.split('/');
+      if (p[0] === 'config') return {
+        set: async (novo) => {
+          const r = await S.sb.from('barbearias').update({ nome: novo.nome, config: novo }).eq('id', S.bid).select('id');
+          if (r.error) throw r.error;
+          if (!r.data || !r.data.length) throw { amigavel: 'Só o dono pode mudar as configurações da barbearia.' };
+          S.cfg = novo; applyTheme(); scheduleRender();
+        }
+      };
+      return docRef(p[0], p[1]);
+    },
+    collection: (c) => ({ doc: (id) => docRef(c, id) })
+  };
+
+  async function carregarRegistros() {
+    let tudo = [], de = 0;
+    for (;;) {
+      const r = await S.sb.from('registros').select('colecao,id,dados').eq('barbearia_id', S.bid).range(de, de + 999);
+      if (r.error) throw r.error;
+      tudo = tudo.concat(r.data || []); if (!r.data || r.data.length < 1000) break; de += 1000;
+    }
+    const novo = { produtos: [], ags: [], comandas: [], clientes: [], despesas: [], vales: [] };
+    tudo.forEach((x) => { const k = KEY[x.colecao]; if (k) novo[k].push(Object.assign({}, x.dados, { id: x.id })); });
+    Object.assign(S, novo);
+  }
+  async function carregarAcessos() {
+    if (S.papel !== 'dono') return;
+    const cv = await S.sb.from('convites').select('email,papel').eq('barbearia_id', S.bid);
+    S.convites = cv.data || [];
+    const mb = await S.sb.from('membros').select('user_id', { count: 'exact', head: true }).eq('barbearia_id', S.bid);
+    S.nMembros = mb.count || 0; scheduleRender();
+  }
+  async function carregarBarbearia() {
+    S.status = 'loading'; render();
+    try {
+      await S.sb.rpc('entrar_por_convite');
+      const m = await S.sb.from('membros').select('barbearia_id,papel').eq('user_id', S.user.id);
+      if (m.error) throw m.error;
+      if (!m.data || !m.data.length) { S.status = 'setup'; render(); return; }
+      S.bid = m.data[0].barbearia_id; S.papel = m.data[0].papel;
+      const b = await S.sb.from('barbearias').select('id,slug,nome,config,vencimento').eq('id', S.bid).maybeSingle();
+      if (b.error) throw b.error;
+      if (!b.data) { S.status = 'inativa'; render(); return; }
+      S.slug = b.data.slug; S.venc = b.data.vencimento || null; S.cfg = Object.assign({}, DEF, b.data.config || {}, { nome: b.data.nome });
+      applyTheme();
+      await carregarRegistros();
+      S.sb.channel('barbearia-' + S.bid)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'registros', filter: 'barbearia_id=eq.' + S.bid }, (p) => {
+          if (p.eventType === 'DELETE') { if (p.old && p.old.id) localDel(p.old.colecao, p.old.id); }
+          else if (p.new) localSet(p.new.colecao, p.new.id, p.new.dados || {});
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'barbearias', filter: 'id=eq.' + S.bid }, (p) => {
+          if (p.new && p.new.config) { S.cfg = Object.assign({}, DEF, p.new.config, { nome: p.new.nome }); applyTheme(); scheduleRender(); }
+        })
+        .subscribe();
+      S.status = 'ok'; render();
+      carregarAcessos();
+    } catch (e) {
+      S.status = 'login'; render(); toast('Não deu pra carregar a barbearia. Confira a internet e entre de novo.', true);
+    }
+  }
+  async function sincronizar() {
+    if (S.status !== 'ok' || document.hidden) return;
+    try { await carregarRegistros(); scheduleRender(); } catch (e) { /* tenta de novo no próximo ciclo */ }
+  }
+
+  // Aceita a URL colada com sobras: barra no final, /rest/v1, ou o endereço do painel do Supabase.
+  function urlSupabase(u) {
+    u = String(u || '').trim();
+    const painel = u.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+    if (painel) u = 'https://' + painel[1] + '.supabase.co';
+    u = u.replace(/\/(rest|auth|storage|realtime)\/v1.*$/i, '').replace(/\/+$/, '');
+    if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+
+  async function boot() {
+    const t = (location.hash || '').replace('#', ''); if (TABS.indexOf(t) >= 0) S.ui.tab = t;
+    render();
+    const C = window.APP_CONFIG || {};
+    if (!window.supabase || !C.SUPABASE_URL || !C.SUPABASE_ANON_KEY || /COLE_AQUI/.test(C.SUPABASE_URL + C.SUPABASE_ANON_KEY)) { S.status = 'semconfig'; render(); return; }
+    S.sb = window.supabase.createClient(urlSupabase(C.SUPABASE_URL), String(C.SUPABASE_ANON_KEY).trim());
+    S.db = DB;
+    S.sb.auth.onAuthStateChange((ev, session) => {
+      if (ev === 'PASSWORD_RECOVERY') { S.user = session && session.user; S.status = 'novaSenha'; render(); return; }
+      if (ev === 'SIGNED_IN' && session && !S.user) { S.user = session.user; setTimeout(carregarBarbearia, 0); }
+    });
+    const sess = await S.sb.auth.getSession();
+    if (S.status === 'novaSenha') return;
+    if (sess.data && sess.data.session) { S.user = sess.data.session.user; await carregarBarbearia(); }
+    else { S.status = 'login'; render(); }
+    setInterval(sincronizar, 60000);
+    document.addEventListener('visibilitychange', sincronizar);
+    setInterval(() => { if (S.status === 'ok' && (S.ui.tab === 'inicio' || S.ui.tab === 'agenda')) scheduleRender(); }, 60000);
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
