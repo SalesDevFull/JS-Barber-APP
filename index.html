@@ -221,6 +221,21 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
 @keyframes aba{0%{transform:translateY(0)}40%{transform:translateY(-4px)}100%{transform:translateY(0)}}
 #toast:not([hidden]){animation:toast .28s cubic-bezier(.2,.8,.3,1)}
 @keyframes toast{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+.tab{position:relative}
+.badge-n{position:absolute;top:4px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bad);color:#1A0A06;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+#aviso{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:45;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));animation:descer .35s cubic-bezier(.2,.8,.3,1)}
+.aviso-in{max-width:620px;margin:0 auto;display:flex;align-items:center;gap:10px;background:#2C1E15;border:2px solid var(--accent);border-radius:16px;padding:10px 12px;box-shadow:0 12px 30px rgba(0,0,0,.55)}
+.aviso-in b{display:block;font-family:var(--display);font-size:18px}
+.aviso-in span{font-size:14px;color:var(--fg2)}
+.aviso-in .stack{gap:6px}
+.m-aviso{width:52px;height:57px}
+@keyframes descer{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.dia-linha{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.dia-linha b{font-size:16px}
+.semana{gap:6px}
+.mini-chip{min-height:40px;padding:0 10px;font-size:13px}
+.dia-info{font-size:13px;line-height:1.5}
+.acesso{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -240,13 +255,14 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   <nav class="tabs" aria-label="Navegação principal">
     <div class="tabs-in" id="tabs">
       <button type="button" class="tab" data-act="go" data-v="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
-      <button type="button" class="tab" data-act="go" data-v="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
+      <button type="button" class="tab" data-act="go" data-v="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda<span class="badge-n" id="badge-agenda" hidden></span></button>
       <button type="button" class="tab" data-act="go" data-v="caixa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Caixa</button>
       <button type="button" class="tab" data-act="go" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>Clientes</button>
-      <button type="button" class="tab" data-act="go" data-v="gestao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Gestão</button>
+      <button type="button" class="tab" data-act="go" data-v="gestao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="tab-gestao-l">Gestão</span></button>
     </div>
   </nav>
   <div id="toast" role="status" aria-live="polite" hidden></div>
+  <div id="aviso" role="alert" hidden></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -303,11 +319,12 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   const corMarca = (c) => (!c || ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'].indexOf(String(c).toUpperCase()) >= 0 ? '#C9A35B' : c);
   const TABS = ['inicio', 'agenda', 'caixa', 'clientes', 'gestao', 'agendar', 'barbeiro'];
   const TITULOS = { inicio: 'Resumo do dia', agenda: 'Agenda', caixa: 'Caixa e comanda', clientes: 'Clientes', gestao: 'Gestão', agendar: 'Novo agendamento', barbeiro: 'Modo barbeiro' };
+  const titulo = (tab) => (tab === 'gestao' && S.papel === 'barbeiro' ? 'Sua conta' : TITULOS[tab]);
   const TAB_DA_VIEW = { agendar: 'agenda', barbeiro: 'inicio' };
 
   // ---------- estado ----------
   const S = {
-    db: null, sb: null, user: null, bid: null, slug: null, papel: null, convites: [], nMembros: 0,
+    db: null, sb: null, user: null, bid: null, slug: null, papel: null, meuBarb: null, convites: [], nMembros: 0, acessos: [], novos: 0, knownAg: null,
     status: 'loading', cfg: null,
     produtos: [], ags: [], comandas: [], clientes: [], despesas: [], vales: [],
     f: {}, dirty: false,
@@ -333,16 +350,37 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       segura(a) &&
       toMin(a.hora) < ini + dur && ini < toMin(a.hora) + (Number(a.dur) || 30));
   }
-  function slots() {
-    const c = cfg(); const out = []; const step = Number(c.intervalo) || 30;
-    for (let m = toMin(c.abre); m < toMin(c.fecha); m += step) out.push(m);
+  // Horário de funcionamento do dia (null = fechado). Sem "semana" configurada, vale o horário único antigo.
+  function expediente(dia) {
+    const c = cfg();
+    if (c.semana) { const e = c.semana[String(parseD(dia).getDay())]; return e && e.abre ? e : null; }
+    return { abre: c.abre || '09:00', fecha: c.fecha || '19:00' };
+  }
+  const folgaNoDia = (b, dia) => !!b && (b.folgas || []).indexOf(parseD(dia).getDay()) >= 0;
+  function bloqueiosDoDia(dia) { return (cfg().bloqueios || []).filter((x) => x.data === dia); }
+  // Pode atender? (aberto, fora do almoço, sem folga e sem bloqueio)
+  function permitido(dia, barbId, ini, dur) {
+    const e = expediente(dia); if (!e) return false;
+    if (ini < toMin(e.abre) || ini + dur > toMin(e.fecha)) return false;
+    const al = cfg().almoco; if (al && al.ini && al.fim && ini < toMin(al.fim) && toMin(al.ini) < ini + dur) return false;
+    if (folgaNoDia(barb(barbId), dia)) return false;
+    return !bloqueiosDoDia(dia).some((x) => (!x.barbeiroId || x.barbeiroId === barbId) && (!x.ini || (ini < toMin(x.fim) && toMin(x.ini) < ini + dur)));
+  }
+  function slots(dia) {
+    const e = expediente(dia); const out = []; if (!e) return out;
+    const step = Number(cfg().intervalo) || 30;
+    for (let m = toMin(e.abre); m < toMin(e.fecha); m += step) out.push(m);
     return out;
   }
   function livres(dia, barbId, dur) {
     const passou = dia === today() ? nowMin() : -1;
-    const fim = toMin(cfg().fecha);
-    return slots().filter((m) => m > passou && m + dur <= fim + 1 && !ocupado(dia, barbId, m, dur));
+    return slots(dia).filter((m) => m > passou && permitido(dia, barbId, m, dur) && !ocupado(dia, barbId, m, dur));
   }
+  const souBarbeiro = () => S.papel === 'barbeiro';
+  // Uma data qualquer com o dia da semana pedido (só pra checar folga).
+  const dstrDow = (d) => { const x = new Date(2026, 0, 4 + d); return dstr(x); };
+  const prefSom = () => { try { return localStorage.getItem('jsb_som') !== '0'; } catch (e) { return true; } };
+  const meuItem = (a) => !souBarbeiro() || (S.meuBarb && a.barbeiroId === S.meuBarb);
   function horariosLivresHoje() {
     const out = [];
     (cfg().barbeiros || []).forEach((b) => livres(today(), b.id, 30).forEach((m) => out.push({ m: m, b: b })));
@@ -473,6 +511,13 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   }
 
   function vInicio() {
+    if (souBarbeiro()) {
+      const b = barb(S.meuBarb); const t0 = today();
+      const minha = S.ags.filter((a) => a.data === t0 && a.barbeiroId === S.meuBarb && segura(a) && a.status !== 'feito');
+      const fala = !b ? 'Peça pro dono ligar sua conta a um barbeiro.' : (minha.length ? 'Você tem ' + minha.length + ' cliente' + (minha.length === 1 ? '' : 's') + ' na agenda hoje.' : 'Sua agenda de hoje está livre.');
+      return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do JS Barber APP') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
+        '<div class="grid2"><button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button><button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button></div>' + vBarbeiro();
+    }
     const t = today(), m = mesAtual(), c = cfg();
     const fh = fechadas().filter((x) => x.data === t);
     const entrou = fh.reduce((a, x) => a + num(x.total) + num(x.gorjeta), 0);
@@ -561,12 +606,21 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       '<button type="button" class="btn sm" data-act="agDia" data-v="1" aria-label="Próximo dia">›</button></div>';
     if (dia !== t) h += '<button type="button" class="btn sm" data-act="agHoje">Voltar pra hoje</button>';
     h += barbChips('agBarb', S.ui.agBarb, 'todos', 'Todos');
+    const exp = expediente(dia); const avisos = [];
+    if (!exp) avisos.push('Barbearia fechada nesse dia.');
+    else {
+      avisos.push('Aberto das ' + exp.abre + ' às ' + exp.fecha + (cfg().almoco && cfg().almoco.ini ? ' · almoço ' + cfg().almoco.ini + '–' + cfg().almoco.fim : '') + '.');
+      (cfg().barbeiros || []).filter((b) => folgaNoDia(b, dia)).forEach((b) => avisos.push(b.nome + ' de folga.'));
+      bloqueiosDoDia(dia).forEach((x) => avisos.push((x.barbeiroId ? barbNome(x.barbeiroId) : 'Todos') + ' bloqueado ' + (x.ini ? 'das ' + x.ini + ' às ' + x.fim : 'o dia inteiro') + (x.motivo ? ' (' + x.motivo + ')' : '') + '.'));
+    }
+    h += '<div class="msg dia-info">' + avisos.map(esc).join('<br>') + '</div>';
     h += '<button type="button" class="btn pri full" data-act="agendarNoDia">+ Agendar nesse dia</button>';
     if (!list.length) h += '<div class="empty">' + mascote('m-peq') + '<span>Nenhum horário marcado nesse dia.</span></div>';
     list.forEach((a) => {
-      const s = serv(a.servicoId); const st = stAg(a);
+      const s = serv(a.servicoId); const st = stAg(a); const meu = meuItem(a);
       h += '<div class="card tight"><div class="row"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : 'Serviço removido') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div></div><span class="tiny ' + st[1] + '" style="font-weight:600">' + st[0] + '</span></div>';
-      if (a.status === 'aguardando_sinal') {
+      if (!meu) { /* barbeiro vê o horário do colega, mas não mexe */ }
+      else if (a.status === 'aguardando_sinal') {
         const exp = sinalExpirado(a);
         const waS = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Vi sua reserva na ' + cfg().nome + ' pra ' + fmtDia(a.data) + ' às ' + a.hora + '. Já fez o Pix do sinal de ' + brl(a.sinalValor) + '?');
         h += '<div class="msg">' + (exp ? 'O prazo do sinal de ' + brl(a.sinalValor) + ' acabou às ' + horaDe(a.sinalExpira) + '. O horário voltou a ficar livre pra outros clientes.' : 'Sinal de <b>' + brl(a.sinalValor) + '</b> no Pix. Horário reservado até <b>' + horaDe(a.sinalExpira) + '</b>. Confira no app do banco antes de confirmar.') + '</div>' +
@@ -601,7 +655,8 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     let h = '<section class="stack"><span class="lbl">Serviço</span><div class="grid2">';
     (c.servicos || []).forEach((x) => { h += '<button type="button" class="pick' + (bk.serv === x.id ? ' on' : '') + '" data-act="bkServ" data-v="' + esc(x.id) + '" aria-pressed="' + (bk.serv === x.id) + '"><b>' + esc(x.nome) + '</b><span>' + brl(x.preco) + ' · ' + esc(x.dur) + ' min</span></button>'; });
     h += '</div></section>';
-    h += '<section class="stack"><span class="lbl">Barbeiro</span>' + barbChips('bkBarb', bk.barb, 'qualquer', 'Qualquer um') + '</section>';
+    if (souBarbeiro() && S.meuBarb) bk.barb = S.meuBarb;
+    h += souBarbeiro() && S.meuBarb ? '' : '<section class="stack"><span class="lbl">Barbeiro</span>' + barbChips('bkBarb', bk.barb, 'qualquer', 'Qualquer um') + '</section>';
     h += '<section class="stack"><span class="lbl">Dia</span><div class="chips">';
     for (let i = 0; i < 7; i++) { const d = addDays(today(), i); const pd = parseD(d); h += chip((i === 0 ? 'Hoje' : (i === 1 ? 'Amanhã' : SEM[pd.getDay()])) + ' ' + pd.getDate(), 'bkDia', d, bk.dia === d); }
     h += '</div></section>';
@@ -609,6 +664,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     if (!s) h += '<span class="sub">Escolha o serviço pra ver os horários livres.</span>';
     else {
       const ids = bk.barb === 'qualquer' ? c.barbeiros.map((b) => b.id) : [bk.barb];
+      if (!expediente(bk.dia)) h += '<span class="sub">A barbearia não abre nesse dia.</span>';
       const set = new Set(); ids.forEach((id) => livres(bk.dia, id, dur).forEach((m) => set.add(m)));
       const ms = Array.from(set).sort((a, b) => a - b);
       if (!ms.length) h += '<span class="sub">Nenhum horário livre nesse dia. Tente outro dia ou outro barbeiro.</span>';
@@ -642,7 +698,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       h += '<section class="card"><span class="h2">Nova comanda</span>' +
         '<div class="field"><label for="av-nome">Cliente (opcional)</label><input id="av-nome" data-f="avNome" value="' + esc(fv('avNome')) + '" placeholder="Nome"></div>' +
         '<div class="field"><label for="av-tel">WhatsApp (opcional)</label><input id="av-tel" inputmode="tel" data-f="avTel" value="' + esc(fv('avTel')) + '" placeholder="(21) 99999-9999"></div>' +
-        '<div class="field"><label for="av-barb">Barbeiro</label><select id="av-barb" data-f="avBarb">' + (c.barbeiros || []).map((b) => '<option value="' + esc(b.id) + '"' + (fv('avBarb', (c.barbeiros[0] || {}).id) === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label for="av-barb">Barbeiro</label><select id="av-barb" data-f="avBarb">' + (c.barbeiros || []).filter((b) => !souBarbeiro() || b.id === S.meuBarb).map((b) => '<option value="' + esc(b.id) + '"' + (fv('avBarb', (c.barbeiros[0] || {}).id) === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div>' +
         '<div class="grid2"><button type="button" class="btn" data-act="avulsaToggle">Voltar</button><button type="button" class="btn pri" data-act="avulsaCriar">Abrir comanda</button></div></section>';
     } else h += '<button type="button" class="btn pri lg full" data-act="avulsaToggle">+ Nova comanda</button>';
 
@@ -659,7 +715,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       if (sn) porPag.Pix = (porPag.Pix || 0) + sn;
       gorj += num(x.gorjeta); tot += num(x.total) + num(x.gorjeta);
     });
-    h += '<section class="card"><span class="h2">Fechamento de hoje</span><div class="grid3">' +
+    h += '<section class="card"><span class="h2">' + (souBarbeiro() ? 'Seu fechamento de hoje' : 'Fechamento de hoje') + '</span><div class="grid3">' +
       FORMAS.map((p) => '<div><div class="tiny">' + p + '</div><div class="mid num">' + brl(porPag[p] || 0) + '</div></div>').join('') +
       '</div><div class="row between"><span class="sub">Total com gorjetas (' + brl(gorj) + ')</span><span class="mid num">' + brl(tot) + '</span></div>';
     fh.slice().sort((a, b) => String(b.fechadaEm).localeCompare(String(a.fechadaEm))).forEach((x) => {
@@ -678,7 +734,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     const sinal = num(x.sinal); const falta = Math.max(0, total - sinal);
     let h = '<button type="button" class="btn sm" data-act="sairComanda" style="align-self:flex-start">‹ Comandas</button>';
     h += '<section class="card"><div class="row between"><span class="mid">' + esc(x.clienteNome) + '</span></div>' +
-      '<div class="field"><label for="cm-barb">Barbeiro</label><select id="cm-barb" data-chg="cmBarb" data-id="' + esc(x.id) + '">' + (c.barbeiros || []).map((bb) => '<option value="' + esc(bb.id) + '"' + (bb.id === x.barbeiroId ? ' selected' : '') + '>' + esc(bb.nome) + '</option>').join('') + '</select></div>';
+      '<div class="field"><label for="cm-barb">Barbeiro</label><select id="cm-barb" data-chg="cmBarb" data-id="' + esc(x.id) + '"' + (souBarbeiro() ? ' disabled' : '') + '>' + (c.barbeiros || []).map((bb) => '<option value="' + esc(bb.id) + '"' + (bb.id === x.barbeiroId ? ' selected' : '') + '>' + esc(bb.nome) + '</option>').join('') + '</select></div>';
     if (!itens.length) h += '<span class="sub">Nenhum item ainda. Toque abaixo pra adicionar.</span>';
     itens.forEach((i, idx) => { h += '<div class="item"><span class="grow">' + esc(i.nome) + (i.tipo === 'p' ? ' <span class="tiny">(produto)</span>' : '') + '</span><span class="num" style="font-weight:500">' + brl(i.preco) + '</span><button type="button" class="btn sm" data-act="cmRemover" data-id="' + esc(x.id) + '" data-v="' + idx + '" aria-label="Remover ' + esc(i.nome) + '">✕</button></div>'; });
     h += '<div class="row between"><span class="sub">Total</span><span class="big num">' + brl(total) + '</span></div>' +
@@ -723,7 +779,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
           '<div class="field"><label for="ficha-' + esc(cl.id) + '">Ficha (como gosta do corte, observações)</label><textarea id="ficha-' + esc(cl.id) + '" data-f="ficha_' + esc(cl.id) + '">' + esc(fv('ficha_' + cl.id, cl.ficha || '')) + '</textarea></div>' +
           '<div class="grid2"><button type="button" class="btn" data-act="cliFicha" data-id="' + esc(cl.id) + '">Salvar ficha</button><button type="button" class="btn pri" data-act="cliAgendar" data-id="' + esc(cl.id) + '">Agendar</button></div>' +
           (wa ? '<a class="btn ok full" href="' + esc(wa) + '" target="_blank" rel="noopener">' + (sm ? 'Chamar de volta no WhatsApp' : 'Mandar mensagem no WhatsApp') + '</a>' : '') +
-          '<button type="button" class="btn bad sm" data-act="cliApagar" data-id="' + esc(cl.id) + '">' + conf('cla' + cl.id, 'Apagar cliente') + '</button>';
+          (souBarbeiro() ? '' : '<button type="button" class="btn bad sm" data-act="cliApagar" data-id="' + esc(cl.id) + '">' + conf('cla' + cl.id, 'Apagar cliente') + '</button>');
       }
       h += '</div>';
     });
@@ -735,10 +791,75 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     return h;
   }
 
+  function cardAvisos() {
+    const somOn = prefSom(); const perm = ('Notification' in window) ? Notification.permission : 'indisponivel';
+    return '<section class="card"><span class="h2">Avisos de agendamento</span><span class="sub">Quando um cliente marca pelo link, o app toca um som, vibra e mostra o aviso na tela.</span>' +
+      '<div class="chips">' + chip('Som ligado', 'somPref', '1', somOn) + chip('Som desligado', 'somPref', '0', !somOn) + '</div>' +
+      (perm === 'granted' ? '<span class="tiny c-ok">Notificações do celular ativadas neste aparelho.</span>'
+        : perm === 'denied' ? '<span class="tiny c-warn">As notificações foram bloqueadas neste aparelho. Libere nas configurações do navegador.</span>'
+        : perm === 'indisponivel' ? '<span class="tiny">Este navegador não mostra notificações. No iPhone, adicione o app à tela de início primeiro.</span>'
+        : '<button type="button" class="btn" data-act="pedirNotif">Ativar notificação neste aparelho</button>') +
+      '<button type="button" class="btn sm" data-act="testarAviso">Testar o aviso</button>' +
+      '<span class="tiny">Os avisos chegam com o app aberto (ou em segundo plano). Com o app totalmente fechado, ainda não.</span></section>';
+  }
+
+  function vConta() {
+    const b = barb(S.meuBarb);
+    let h = '<section class="card"><span class="h2">Sua conta</span><span class="sub">' + esc(S.user ? S.user.email : '') + (b ? ' · ' + esc(b.nome) : '') + '</span>' +
+      (b ? '' : '<span class="tiny c-warn">Sua conta ainda não está ligada a um barbeiro da agenda. Peça pro dono ligar em Gestão → Equipe → Acesso ao app.</span>') +
+      '<button type="button" class="btn" data-act="sair">Sair da conta</button></section>';
+    h += cardAvisos();
+    h += '<section class="card"><span class="h2">Link de agendamento</span><span class="link">' + esc(linkPublico()) + '</span><button type="button" class="btn pri" data-act="copiarLink">Copiar link</button></section>';
+    return h;
+  }
+
+  function vHorarios() {
+    const c = cfg();
+    if (!S.ui.hr) {
+      const base = c.semana || {}; const sem = {};
+      for (let d = 0; d < 7; d++) { const e = c.semana ? base[String(d)] : { abre: c.abre || '09:00', fecha: c.fecha || '19:00' }; sem[d] = e && e.abre ? { abre: e.abre, fecha: e.fecha } : null; }
+      S.ui.hr = { semana: sem, almoco: c.almoco && c.almoco.ini ? { ini: c.almoco.ini, fim: c.almoco.fim } : null, intervalo: Number(c.intervalo) || 30 };
+    }
+    const hr = S.ui.hr; const NOMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    let h = '<section class="card"><span class="h2">Dias e horários</span><span class="sub">O cliente só consegue marcar dentro desses horários.</span>';
+    [1, 2, 3, 4, 5, 6, 0].forEach((d) => {
+      const e = hr.semana[d];
+      h += '<div class="dia-linha"><b>' + NOMES[d] + '</b><div class="chips">' + chip('Aberto', 'hrDia', d + ':1', !!e) + chip('Fechado', 'hrDia', d + ':0', !e) + '</div>' +
+        (e ? '<div class="grid2"><div class="field"><label for="hr-a-' + d + '">Abre</label><input id="hr-a-' + d + '" type="time" data-chg="hrHora" data-id="' + d + '" data-v="abre" value="' + esc(e.abre) + '"></div><div class="field"><label for="hr-f-' + d + '">Fecha</label><input id="hr-f-' + d + '" type="time" data-chg="hrHora" data-id="' + d + '" data-v="fecha" value="' + esc(e.fecha) + '"></div></div>' : '') + '</div>';
+    });
+    h += '<button type="button" class="btn sm" data-act="hrCopiar">Copiar o horário de segunda pros outros dias abertos</button>';
+    h += '<span class="lbl">Almoço</span><div class="chips">' + chip('Sem pausa', 'hrAlmoco', '0', !hr.almoco) + chip('Pausa pro almoço', 'hrAlmoco', '1', !!hr.almoco) + '</div>' +
+      (hr.almoco ? '<div class="grid2"><div class="field"><label for="hr-al-i">De</label><input id="hr-al-i" type="time" data-chg="hrAlm" data-v="ini" value="' + esc(hr.almoco.ini) + '"></div><div class="field"><label for="hr-al-f">Até</label><input id="hr-al-f" type="time" data-chg="hrAlm" data-v="fim" value="' + esc(hr.almoco.fim) + '"></div></div>' : '') +
+      '<div class="field"><label for="hr-int">Os horários começam a cada</label><select id="hr-int" data-chg="hrInt">' + [15, 20, 30, 40, 60].map((n) => '<option value="' + n + '"' + (hr.intervalo === n ? ' selected' : '') + '>' + n + ' minutos</option>').join('') + '</select></div>' +
+      '<button type="button" class="btn pri" data-act="hrSalvar">Salvar horários</button></section>';
+
+    h += '<section class="card"><span class="h2">Folga da semana</span><span class="sub">Toque nos dias em que cada barbeiro não trabalha. Salva na hora.</span>';
+    (c.barbeiros || []).forEach((b) => {
+      h += '<div class="stack"><b>' + esc(b.nome) + '</b><div class="chips semana">' + [1, 2, 3, 4, 5, 6, 0].map((d) => '<button type="button" class="chip mini-chip' + (folgaNoDia(b, dstrDow(d)) ? ' on' : '') + '" data-act="folga" data-id="' + esc(b.id) + '" data-v="' + d + '" aria-pressed="' + ((b.folgas || []).indexOf(d) >= 0) + '" aria-label="' + NOMES[d] + '">' + NOMES[d].slice(0, 3) + '</button>').join('') + '</div></div>';
+    });
+    h += '</section>';
+
+    const periodo = fv('blPer', 'dia');
+    h += '<section class="card"><span class="h2">Bloquear dia ou horário</span><span class="sub">Feriado, médico, compromisso. Ninguém consegue marcar no período bloqueado.</span>' +
+      '<div class="grid2"><div class="field"><label for="bl-data">Dia</label><input id="bl-data" type="date" data-f="blData" min="' + today() + '" value="' + esc(fv('blData', today())) + '"></div>' +
+      '<div class="field"><label for="bl-quem">Quem</label><select id="bl-quem" data-f="blQuem"><option value="">Barbearia toda</option>' + (c.barbeiros || []).map((b) => '<option value="' + esc(b.id) + '"' + (fv('blQuem') === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('') + '</select></div></div>' +
+      '<div class="chips">' + chip('Dia inteiro', 'blPer', 'dia', periodo === 'dia') + chip('Só um período', 'blPer', 'parte', periodo === 'parte') + '</div>' +
+      (periodo === 'parte' ? '<div class="grid2"><div class="field"><label for="bl-ini">Das</label><input id="bl-ini" type="time" data-f="blIni" value="' + esc(fv('blIni', '14:00')) + '"></div><div class="field"><label for="bl-fim">Às</label><input id="bl-fim" type="time" data-f="blFim" value="' + esc(fv('blFim', '16:00')) + '"></div></div>' : '') +
+      '<div class="field"><label for="bl-mot">Motivo (só a equipe vê)</label><input id="bl-mot" data-f="blMot" maxlength="60" value="' + esc(fv('blMot')) + '" placeholder="Ex.: feriado, médico"></div>' +
+      '<button type="button" class="btn pri" data-act="blAdd">Bloquear</button>';
+    const prox = (c.bloqueios || []).filter((x) => x.data >= today()).sort((a, b) => (a.data + (a.ini || '')).localeCompare(b.data + (b.ini || '')));
+    if (prox.length) h += '<span class="lbl">Próximos bloqueios</span>';
+    prox.forEach((x) => { h += '<div class="item"><div class="grow"><div>' + esc(fmtDia(x.data)) + ' · ' + esc(x.ini ? x.ini + '–' + x.fim : 'dia inteiro') + '</div><div class="tiny">' + esc(x.barbeiroId ? barbNome(x.barbeiroId) : 'Barbearia toda') + (x.motivo ? ' · ' + esc(x.motivo) : '') + '</div></div><button type="button" class="btn sm" data-act="blDel" data-id="' + esc(x.id) + '" aria-label="Remover bloqueio">✕</button></div>'; });
+    h += '</section>';
+    return h;
+  }
+
   function vGestao() {
-    const tabs = [['barbearia', 'Barbearia'], ['pagamentos', 'Pagamentos'], ['equipe', 'Equipe'], ['servicos', 'Serviços'], ['estoque', 'Estoque'], ['despesas', 'Despesas']];
+    if (souBarbeiro()) return vConta();
+    const tabs = [['barbearia', 'Barbearia'], ['horarios', 'Horários'], ['pagamentos', 'Pagamentos'], ['equipe', 'Equipe'], ['servicos', 'Serviços'], ['estoque', 'Estoque'], ['despesas', 'Despesas']];
     let h = '<div class="chips">' + tabs.map((t) => chip(t[1], 'gesTab', t[0], S.ui.gesTab === t[0])).join('') + '</div>';
     const g = S.ui.gesTab; const c = cfg(); const m = mesAtual();
+    if (g === 'horarios') h += vHorarios();
     if (g === 'equipe') {
       const sEx = (c.servicos || [])[0];
       h += '<span class="sub">A comissão é a porcentagem que o barbeiro ganha em cima do valor cheio de cada serviço. Sem descontos. Os valores abaixo são de ' + MES[new Date().getMonth()] + '.</span>';
@@ -752,12 +873,22 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
           '<button type="button" class="btn bad sm" data-act="barbRemover" data-id="' + esc(b.id) + '">' + conf('br' + b.id, 'Remover da equipe') + '</button></section>';
       });
       if (S.papel === 'dono') {
-        h += '<section class="card"><span class="h2">Acesso ao app</span><span class="sub">Convide pelo e-mail. A pessoa cria a conta com esse mesmo e-mail e já entra na sua barbearia. ' + S.nMembros + ' pessoa' + (S.nMembros === 1 ? '' : 's') + ' com acesso hoje.</span>' +
+        const opBarb = (sel) => '<option value="">Não atende (sócio/recepção)</option>' + (c.barbeiros || []).map((b) => '<option value="' + esc(b.id) + '"' + (sel === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('');
+        h += '<section class="card"><span class="h2">Acesso ao app</span><span class="sub">Cada pessoa entra com o próprio e-mail. O barbeiro vê a agenda, os clientes e só os próprios ganhos e comandas. O caixa da barbearia, as despesas e os ganhos dos colegas ficam com você.</span>';
+        S.acessos.forEach((a) => {
+          h += '<div class="acesso"><div class="grow"><b>' + esc(a.email) + (a.eu ? ' (você)' : '') + '</b></div>' +
+            (a.eu ? '<span class="tiny">Dono</span>' :
+            '<div class="grid2"><div class="field"><label for="ac-p-' + esc(a.user_id) + '">Permissão</label><select id="ac-p-' + esc(a.user_id) + '" data-chg="acessoAjustar" data-id="' + esc(a.user_id) + '"><option value="barbeiro"' + (a.papel === 'barbeiro' ? ' selected' : '') + '>Barbeiro</option><option value="dono"' + (a.papel === 'dono' ? ' selected' : '') + '>Sócio (acesso total)</option></select></div>' +
+            '<div class="field"><label for="ac-b-' + esc(a.user_id) + '">Na agenda é</label><select id="ac-b-' + esc(a.user_id) + '" data-chg="acessoAjustar" data-id="' + esc(a.user_id) + '">' + opBarb(a.barbeiro_id || '') + '</select></div></div>' +
+            '<button type="button" class="btn bad sm" data-act="acessoRemover" data-id="' + esc(a.user_id) + '">' + conf('acr' + a.user_id, 'Tirar acesso') + '</button>') + '</div>';
+        });
+        S.convites.forEach((cv) => { h += '<div class="item"><span class="grow">' + esc(cv.email) + ' <span class="tiny">convidado · ' + esc(cv.barbeiro_id ? barbNome(cv.barbeiro_id) : (cv.papel === 'dono' ? 'sócio' : 'sem barbeiro')) + ' · aguardando cadastro</span></span><button type="button" class="btn sm" data-act="desconvidar" data-v="' + esc(cv.email) + '" aria-label="Cancelar convite">✕</button></div>'; });
+        h += '<span class="lbl">Convidar alguém</span>' +
           '<div class="field"><label for="cv-email">E-mail</label><input id="cv-email" type="email" data-f="cvEmail" value="' + esc(fv('cvEmail')) + '" placeholder="barbeiro@email.com"></div>' +
-          '<div class="field"><label for="cv-papel">Permissão</label><select id="cv-papel" data-f="cvPapel"><option value="barbeiro"' + (fv('cvPapel', 'barbeiro') === 'barbeiro' ? ' selected' : '') + '>Barbeiro</option><option value="dono"' + (fv('cvPapel') === 'dono' ? ' selected' : '') + '>Sócio (mesmo acesso do dono)</option></select></div>' +
-          '<button type="button" class="btn pri" data-act="convidar">Convidar</button>';
-        S.convites.forEach((c) => { h += '<div class="item"><span class="grow">' + esc(c.email) + ' <span class="tiny">aguardando cadastro</span></span><button type="button" class="btn sm" data-act="desconvidar" data-v="' + esc(c.email) + '" aria-label="Cancelar convite">✕</button></div>'; });
-        h += '</section>';
+          '<div class="grid2"><div class="field"><label for="cv-barb">Na agenda é</label><select id="cv-barb" data-f="cvBarb">' + opBarb(fv('cvBarb', ((c.barbeiros || [])[1] || (c.barbeiros || [])[0] || {}).id || '')) + '</select></div>' +
+          '<div class="field"><label for="cv-papel">Permissão</label><select id="cv-papel" data-f="cvPapel"><option value="barbeiro"' + (fv('cvPapel', 'barbeiro') === 'barbeiro' ? ' selected' : '') + '>Barbeiro</option><option value="dono"' + (fv('cvPapel') === 'dono' ? ' selected' : '') + '>Sócio (acesso total)</option></select></div></div>' +
+          '<button type="button" class="btn pri" data-act="convidar">Convidar</button></section>';
+        h += cardAvisos();
       }
       h += '<section class="card"><span class="h2">Adicionar barbeiro</span><div class="field"><label for="nb-nome">Nome</label><input id="nb-nome" data-f="nbNome" value="' + esc(fv('nbNome')) + '"></div><div class="field"><label for="nb-com">Comissão nos serviços (%)</label><input id="nb-com" inputmode="numeric" data-f="nbCom" value="' + esc(fv('nbCom', '40')) + '"></div><button type="button" class="btn pri" data-act="barbNovo">Adicionar</button></section>';
       if ((c.barbeiros || []).length) {
@@ -844,8 +975,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
         '<div class="field"><label for="bb-end">Endereço</label><input id="bb-end" data-f="bbEnd" value="' + esc(fv('bbEnd', c.endereco || '')) + '" placeholder="Rua, número, bairro"></div>' +
         '<div class="grid2"><div class="field"><label for="bb-insta">Instagram</label><input id="bb-insta" data-f="bbInsta" value="' + esc(fv('bbInsta', c.instagram ? '@' + c.instagram : '')) + '" placeholder="@suabarbearia"></div>' +
         '<div class="field"><label for="bb-zap">WhatsApp da barbearia</label><input id="bb-zap" inputmode="tel" data-f="bbZap" value="' + esc(fv('bbZap', c.whatsapp || '')) + '" placeholder="(21) 99999-9999"></div></div>' +
-        '<div class="grid3"><div class="field"><label for="bb-abre">Abre</label><input id="bb-abre" type="time" data-f="bbAbre" value="' + esc(fv('bbAbre', c.abre)) + '"></div><div class="field"><label for="bb-fecha">Fecha</label><input id="bb-fecha" type="time" data-f="bbFecha" value="' + esc(fv('bbFecha', c.fecha)) + '"></div>' +
-        '<div class="field"><label for="bb-int">Intervalo</label><select id="bb-int" data-f="bbInt">' + [15, 20, 30, 40, 60].map((n) => '<option value="' + n + '"' + (String(fv('bbInt', c.intervalo)) === String(n) ? ' selected' : '') + '>' + n + ' min</option>').join('') + '</select></div></div>' +
+        '<span class="tiny">Dias e horários de funcionamento ficam na aba Horários.</span>' +
         '<div class="field"><label for="bb-meta">Meta de faturamento do mês (R$)</label><input id="bb-meta" inputmode="numeric" data-f="bbMeta" value="' + esc(fv('bbMeta', c.metaMes)) + '"></div>' +
         '<button type="button" class="btn pri" data-act="bbSalvar">Salvar</button></section>';
       h += '<section class="card"><span class="h2">Link de agendamento do cliente</span><span class="sub">Coloque na bio do Instagram, mande no WhatsApp e imprima o QR pro balcão. O cliente agenda sem precisar de conta.</span>' +
@@ -860,10 +990,14 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   function vBarbeiro() {
     const bs = cfg().barbeiros || [];
     if (!bs.length) return '<div class="empty"><span>Cadastre a equipe em Gestão.</span></div>';
+    if (souBarbeiro()) {
+      if (!barb(S.meuBarb)) return '<div class="card warn"><span class="lbl c-warn">Conta sem barbeiro</span><span>Sua conta ainda não está ligada a um barbeiro da agenda. Peça pro dono ligar em Gestão → Equipe → Acesso ao app.</span></div>';
+      S.ui.barbView = S.meuBarb;
+    }
     if (!S.ui.barbView || !barb(S.ui.barbView)) S.ui.barbView = bs[0].id;
     const b = barb(S.ui.barbView); const t = today();
     const rh = resumoBarbeiro(b.id, t); const rm = resumoBarbeiro(b.id, mesAtual());
-    let h = '<span class="lbl">Quem está usando?</span>' + barbChips('barbView', b.id);
+    let h = souBarbeiro() ? '' : '<span class="lbl">Quem está usando?</span>' + barbChips('barbView', b.id);
     h += '<section class="card"><span class="lbl">' + esc(primeiroNome(b.nome)) + ', você ganhou hoje</span><span class="big num">' + brl(rh.com + rh.gorj) + '</span><span class="sub">Comissão ' + brl(rh.com) + ' · gorjetas ' + brl(rh.gorj) + ' · ' + rh.n + ' atendido' + (rh.n === 1 ? '' : 's') + '</span></section>';
     const ags = S.ags.filter((a) => a.data === t && a.barbeiroId === b.id && a.status !== 'cancelado').sort(byHora);
     h += '<span class="lbl">Sua agenda de hoje</span>';
@@ -895,8 +1029,11 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     const v = document.getElementById('view');
     const tab = S.ui.tab;
     document.getElementById('topSub').textContent = (tab === 'inicio' ? saudacao() + ' · ' : (S.cfg ? S.cfg.nome + ' · ' : '')) + fmtDia(today());
-    document.getElementById('topTitle').textContent = tab === 'inicio' && S.cfg ? S.cfg.nome : (TITULOS[tab] || 'Barbearia');
+    document.getElementById('topTitle').textContent = tab === 'inicio' && S.cfg ? S.cfg.nome : (titulo(tab) || 'Barbearia');
     const ativa = TAB_DA_VIEW[tab] || tab;
+    if (tab === 'agenda' && S.novos) { S.novos = 0; }
+    const bg = document.getElementById('badge-agenda'); bg.hidden = !S.novos; bg.textContent = S.novos > 9 ? '9+' : String(S.novos || '');
+    document.getElementById('tab-gestao-l').textContent = souBarbeiro() ? 'Conta' : 'Gestão';
     document.querySelectorAll('#tabs .tab').forEach((b) => { const on = b.dataset.v === ativa; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     let h;
     document.querySelector('.tabs').hidden = S.status !== 'ok';
@@ -985,12 +1122,65 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     sair: async () => { await S.sb.auth.signOut(); location.hash = ''; location.reload(); },
     copiarLink: async () => { try { await navigator.clipboard.writeText(linkPublico()); toast('Link copiado'); } catch (e) { toast('Não deu pra copiar. Selecione o link e copie.', true); } },
     convidar: async () => {
-      const email = String(fv('cvEmail')).trim().toLowerCase();
+      const email = campo('cv-email', 'cvEmail').trim().toLowerCase();
       if (!/^\S+@\S+\.\S+$/.test(email)) { toast('Digite um e-mail válido.', true); return; }
-      const r = await S.sb.from('convites').upsert({ barbearia_id: S.bid, email: email, papel: fv('cvPapel', 'barbeiro') });
+      const bsel = document.getElementById('cv-barb'); const barbId = bsel ? bsel.value : fv('cvBarb', '');
+      const psel = document.getElementById('cv-papel'); const papel = psel ? psel.value : fv('cvPapel', 'barbeiro');
+      if (papel === 'barbeiro' && !barbId) { toast('Escolha qual barbeiro da agenda é essa pessoa.', true); return; }
+      const r = await S.sb.from('convites').upsert({ barbearia_id: S.bid, email: email, papel: papel, barbeiro_id: barbId || null });
       if (r.error) { toast('Não deu pra convidar: ' + r.error.message, true); return; }
       S.f.cvEmail = ''; toast('Convite criado. Peça pra ' + email + ' criar a conta com esse e-mail.'); await carregarAcessos();
     },
+    acessoRemover: async (el) => {
+      if (precisaConfirmar('acr' + el.dataset.id)) return;
+      const r = await S.sb.from('membros').delete().eq('barbearia_id', S.bid).eq('user_id', el.dataset.id);
+      if (r.error) { toast('Não deu pra tirar o acesso: ' + r.error.message, true); return; }
+      toast('Acesso removido'); await carregarAcessos();
+    },
+    pedirNotif: async () => {
+      if (!('Notification' in window)) { toast('Este navegador não mostra notificações.', true); return; }
+      try { const r = await Notification.requestPermission(); toast(r === 'granted' ? 'Notificações ativadas neste aparelho' : 'Notificações não foram liberadas', r !== 'granted'); } catch (e) { toast('Não deu pra ativar aqui.', true); }
+      render();
+    },
+    somPref: (el) => { try { localStorage.setItem('jsb_som', el.dataset.v); } catch (e) { /* sem armazenamento */ } render(); },
+    testarAviso: () => { avisar([{ id: 'teste', clienteNome: 'Cliente de teste', servicoId: ((cfg().servicos || [])[0] || {}).id, data: today(), hora: toHora(Math.min(1380, nowMin() + 60 - (nowMin() % 30))), barbeiroId: S.meuBarb || ((cfg().barbeiros || [])[0] || {}).id, origem: 'link', status: 'agendado' }], true); },
+    hrDia: (el) => { const [d, on] = el.dataset.v.split(':'); const hr = S.ui.hr; if (on === '1') { const ref = hr.semana[1] || hr.semana[d] || { abre: '09:00', fecha: '19:00' }; hr.semana[d] = hr.semana[d] || { abre: ref.abre, fecha: ref.fecha }; } else hr.semana[d] = null; render(); },
+    hrCopiar: () => { const hr = S.ui.hr; const ref = hr.semana[1]; if (!ref) { toast('Abra a segunda primeiro.', true); return; } for (let d = 0; d < 7; d++) if (hr.semana[d]) hr.semana[d] = { abre: ref.abre, fecha: ref.fecha }; render(); toast('Horário copiado. Toque em Salvar horários.'); },
+    hrAlmoco: (el) => { S.ui.hr.almoco = el.dataset.v === '1' ? (S.ui.hr.almoco || { ini: '12:00', fim: '13:00' }) : null; render(); },
+    hrSalvar: async () => {
+      const hr = S.ui.hr; const sem = {}; let minA = null, maxF = null;
+      for (let d = 0; d < 7; d++) {
+        const e = hr.semana[d];
+        if (e) {
+          if (!e.abre || !e.fecha || toMin(e.fecha) <= toMin(e.abre)) { toast('Confira o horário de ' + ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'][d] + ': o fechamento tem que ser depois da abertura.', true); return; }
+          sem[String(d)] = { abre: e.abre, fecha: e.fecha };
+          if (!minA || e.abre < minA) minA = e.abre; if (!maxF || e.fecha > maxF) maxF = e.fecha;
+        } else sem[String(d)] = null;
+      }
+      if (!minA) { toast('Deixe pelo menos um dia aberto.', true); return; }
+      if (hr.almoco && (!hr.almoco.ini || !hr.almoco.fim || toMin(hr.almoco.fim) <= toMin(hr.almoco.ini))) { toast('Confira o horário do almoço.', true); return; }
+      if (await salvarCfg({ semana: sem, almoco: hr.almoco, intervalo: hr.intervalo, abre: minA, fecha: maxF })) { S.ui.hr = null; toast('Horários salvos. A página do cliente já segue esses horários.'); }
+    },
+    folga: async (el) => {
+      const d = Number(el.dataset.v);
+      const bs = cfg().barbeiros.map((b) => { if (b.id !== el.dataset.id) return b; const f = (b.folgas || []).slice(); const i = f.indexOf(d); if (i >= 0) f.splice(i, 1); else f.push(d); return Object.assign({}, b, { folgas: f.sort() }); });
+      if (await salvarCfg({ barbeiros: bs })) toast('Folga salva');
+    },
+    blPer: (el) => { S.f.blPer = el.dataset.v; render(); },
+    blAdd: async () => {
+      const data = campo('bl-data', 'blData') || today(); const quem = campo('bl-quem', 'blQuem'); const parte = fv('blPer', 'dia') === 'parte';
+      const ini = parte ? campo('bl-ini', 'blIni') : null; const fim = parte ? campo('bl-fim', 'blFim') : null;
+      if (data < today()) { toast('Escolha hoje ou um dia futuro.', true); return; }
+      if (parte && (!ini || !fim || toMin(fim) <= toMin(ini))) { toast('Confira o período: o fim tem que ser depois do início.', true); return; }
+      const conflito = S.ags.filter((a) => a.data === data && segura(a) && a.status !== 'feito' && (!quem || a.barbeiroId === quem) && (!parte || (toMin(a.hora) < toMin(fim) && toMin(ini) < toMin(a.hora) + (Number(a.dur) || 30))));
+      const lista = (cfg().bloqueios || []).filter((x) => x.data >= today()).concat([{ id: newId(), data: data, barbeiroId: quem || null, ini: ini, fim: fim, motivo: campo('bl-mot', 'blMot').trim() }]);
+      if (await salvarCfg({ bloqueios: lista })) {
+        ['blMot', 'blIni', 'blFim'].forEach((k) => { delete S.f[k]; });
+        toast(conflito.length ? 'Bloqueado. Atenção: ' + conflito.length + ' cliente' + (conflito.length === 1 ? ' já estava marcado' : 's já estavam marcados') + ' nesse período. Veja na agenda.' : 'Bloqueado');
+        render();
+      }
+    },
+    blDel: async (el) => { if (await salvarCfg({ bloqueios: (cfg().bloqueios || []).filter((x) => x.id !== el.dataset.id && x.data >= today()) })) toast('Bloqueio removido'); },
     desconvidar: async (el) => { await S.sb.from('convites').delete().eq('barbearia_id', S.bid).eq('email', el.dataset.v); await carregarAcessos(); },
     // agenda
     agDia: (el) => { S.ui.agDia = addDays(S.ui.agDia, Number(el.dataset.v)); render(); },
@@ -1026,7 +1216,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     avulsaToggle: () => { S.ui.avulsa = !S.ui.avulsa; render(); },
     avulsaCriar: async () => {
       const c = cfg(); const nome = String(fv('avNome')).trim() || 'Cliente avulso'; const tel = String(fv('avTel')).trim();
-      const bid = fv('avBarb', (c.barbeiros[0] || {}).id) || null; const id = newId();
+      const bid = souBarbeiro() ? S.meuBarb : (fv('avBarb', (c.barbeiros[0] || {}).id) || null); const id = newId();
       const ok = await W(async () => {
         const cid = await upsertCliente(nome, tel);
         await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: cid, clienteNome: nome, barbeiroId: bid, agendamentoId: null, itens: [], pagamento: formas()[0], gorjeta: 0, criadoEm: new Date().toISOString() });
@@ -1063,7 +1253,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       const ok = await W(() => upsertCliente(nome, tel), 'Cliente cadastrado'); if (ok) { S.f.ncNome = ''; S.f.ncTel = ''; render(); }
     },
     // gestão
-    gesTab: (el) => { S.ui.gesTab = el.dataset.v; render(); },
+    gesTab: (el) => { S.ui.gesTab = el.dataset.v; S.ui.hr = null; render(); },
     gesTabGo: (el) => { S.ui.gesTab = el.dataset.v; go('gestao'); },
     barbNovo: async () => {
       const nome = String(fv('nbNome')).trim(); if (!nome) { toast('Informe o nome do barbeiro.', true); return; }
@@ -1099,6 +1289,8 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     },
     despApagar: async (el) => { await W(() => col('despesas').doc(el.dataset.id).delete(), 'Despesa apagada'); },
     bbCor: (el) => { S.f.bbCor = el.dataset.v; render(); },
+    avisoVer: (el) => { document.getElementById('aviso').hidden = true; S.ui.agDia = el.dataset.v; S.ui.agBarb = souBarbeiro() && S.meuBarb ? S.meuBarb : 'todos'; go('agenda'); },
+    avisoFechar: () => { document.getElementById('aviso').hidden = true; },
     bbTema: (el) => { S.f.bbTema = el.dataset.v; render(); },
     logoRemover: async () => { if (precisaConfirmar('logo')) return; if (await salvarCfg({ logo: null })) toast('Logo removida'); },
     verPendentes: () => { const p = S.ags.filter((a) => a.status === 'aguardando_sinal' && !sinalExpirado(a)).sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora))[0]; if (p) { S.ui.agDia = p.data; S.ui.agBarb = 'todos'; } go('agenda'); },
@@ -1129,7 +1321,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       const insta = String(fv('bbInsta', c.instagram || '')).trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[/?#].*$/, '');
       const ok = await salvarCfg({ nome: String(fv('bbNome', c.nome)).trim() || c.nome, cor: fv('bbCor', corMarca(c.cor)), tema: fv('bbTema', c.tema || 'claro'),
         mensagem: String(fv('bbMsg', c.mensagem || '')).trim().slice(0, 240), endereco: String(fv('bbEnd', c.endereco || '')).trim(), instagram: insta, whatsapp: String(fv('bbZap', c.whatsapp || '')).trim(),
-        abre: fv('bbAbre', c.abre), fecha: fv('bbFecha', c.fecha), intervalo: num(fv('bbInt', c.intervalo)) || 30, metaMes: num(fv('bbMeta', c.metaMes)) });
+        metaMes: num(fv('bbMeta', c.metaMes)) });
       if (ok) { ['bbNome', 'bbCor', 'bbTema', 'bbMsg', 'bbEnd', 'bbInsta', 'bbZap', 'bbAbre', 'bbFecha', 'bbInt', 'bbMeta'].forEach((k) => { delete S.f[k]; }); toast('Barbearia atualizada'); }
     },
     zerar: async () => {
@@ -1156,6 +1348,15 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
       const v = Math.max(0, Math.min(100, num(el.value))); const b0 = barb(el.dataset.id);
       if (await salvarCfg({ barbeiros: cfg().barbeiros.map((b) => (b.id === el.dataset.id ? Object.assign({}, b, { comProd: v }) : b)) })) toast('Comissão do ' + primeiroNome(b0 ? b0.nome : '') + ' salva: ' + v + '% nos produtos');
     },
+    hrHora: (el) => { const e = S.ui.hr && S.ui.hr.semana[el.dataset.id]; if (e) e[el.dataset.v] = el.value; },
+    hrAlm: (el) => { if (S.ui.hr && S.ui.hr.almoco) S.ui.hr.almoco[el.dataset.v] = el.value; },
+    hrInt: (el) => { if (S.ui.hr) S.ui.hr.intervalo = Number(el.value) || 30; },
+    acessoAjustar: async (el) => {
+      const uid = el.dataset.id; const papel = document.getElementById('ac-p-' + uid).value; const bId = document.getElementById('ac-b-' + uid).value;
+      const r = await S.sb.rpc('equipe_ajustar', { p_b: S.bid, p_user: uid, p_papel: papel, p_barbeiro: bId || null });
+      if (r.error) { toast(r.error.message, true); await carregarAcessos(); return; }
+      toast('Acesso atualizado'); await carregarAcessos();
+    },
     svEdit: (el) => {
       const i = Number(el.dataset.id); const k = el.dataset.v; const n = cfg().servicos.slice();
       if (!n[i]) return; const o = Object.assign({}, n[i]); o[k] = k === 'nome' ? (el.value.trim() || o.nome) : num(el.value); n[i] = o;
@@ -1176,6 +1377,51 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     if (el.id === 'bk-nome') { const btn = document.querySelector('[data-act="bkSalvar"]'); if (btn) btn.disabled = !(serv(S.ui.bk.serv) && S.ui.bk.hora && el.value.trim()); }
   });
   document.addEventListener('change', (e) => { const el = e.target; if (el.dataset.chg && C[el.dataset.chg]) C[el.dataset.chg](el); });
+  // ---------- aviso de agendamento novo ----------
+  let audioCtx = null;
+  document.addEventListener('pointerdown', () => {
+    try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) { audioCtx = null; }
+  }, { passive: true });
+  function tocarSom() {
+    if (!audioCtx || !prefSom()) return;
+    try {
+      const t0 = audioCtx.currentTime;
+      [[880, 0], [1320, 0.16]].forEach(([f, d]) => {
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.5);
+        o.start(t0 + d); o.stop(t0 + d + 0.55);
+      });
+    } catch (e) { /* sem som */ }
+  }
+  function checarNovos() {
+    if (!S.knownAg) return;
+    const novos = [];
+    S.ags.forEach((a) => { if (!S.knownAg.has(a.id)) { S.knownAg.add(a.id); if (a.origem === 'link' && (!souBarbeiro() || a.barbeiroId === S.meuBarb)) novos.push(a); } });
+    if (novos.length) avisar(novos);
+  }
+  let avisoT = null;
+  function avisar(lista, teste) {
+    const a = lista[lista.length - 1]; const s = serv(a.servicoId);
+    const quando = (a.data === today() ? 'hoje' : fmtDia(a.data)) + ' às ' + a.hora;
+    const txt = primeiroNome(a.clienteNome) + ' marcou ' + (s ? s.nome.toLowerCase() : 'um horário') + ' ' + quando + ' com ' + barbNome(a.barbeiroId) + (a.status === 'aguardando_sinal' ? '. Esperando o Pix do sinal.' : '.');
+    if (!teste) S.novos = (S.novos || 0) + lista.length;
+    const el = document.getElementById('aviso');
+    el.innerHTML = '<div class="aviso-in">' + mascote('m-festa m-aviso') + '<div class="grow"><b>' + (lista.length > 1 ? lista.length + ' agendamentos novos!' : 'Agendamento novo!') + '</b><span>' + esc(txt) + '</span></div>' +
+      '<div class="stack"><button type="button" class="btn sm pri" data-act="avisoVer" data-v="' + esc(a.data) + '">Ver</button><button type="button" class="btn sm" data-act="avisoFechar" aria-label="Fechar aviso">✕</button></div></div>';
+    el.hidden = false; clearTimeout(avisoT); avisoT = setTimeout(() => { el.hidden = true; }, 12000);
+    const bg = document.getElementById('badge-agenda'); if (bg && S.novos) { bg.hidden = false; bg.textContent = S.novos > 9 ? '9+' : String(S.novos); }
+    tocarSom();
+    try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch (e) { /* sem vibração */ }
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const n = new Notification(lista.length > 1 ? lista.length + ' agendamentos novos' : 'Agendamento novo', { body: txt, icon: 'icon-192.png?v=3', tag: 'agendamento-' + a.id });
+        n.onclick = () => { window.focus(); S.ui.agDia = a.data; go('agenda'); n.close(); };
+      }
+    } catch (e) { /* sem notificação */ }
+    if (S.ui.tab === 'inicio' || S.ui.tab === 'agenda') scheduleRender();
+  }
+
   // Logo: reduz a imagem no próprio celular antes de salvar (fica leve e carrega rápido).
   async function processarLogo(file) {
     if (!file || !/^image\//.test(file.type)) { toast('Escolha uma imagem (PNG ou JPG).', true); return; }
@@ -1221,7 +1467,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
     const k = KEY[c]; if (!k) return;
     const arr = S[k].slice(); const i = arr.findIndex((x) => x.id === id); const row = Object.assign({}, data, { id: id });
     if (i >= 0) arr[i] = row; else arr.push(row);
-    S[k] = arr; scheduleRender();
+    S[k] = arr; if (c === 'agendamentos') checarNovos(); scheduleRender();
   }
   function localDel(c, id) { const k = KEY[c]; if (!k) return; S[k] = S[k].filter((x) => x.id !== id); scheduleRender(); }
   const semId = (o) => { const c = Object.assign({}, o); delete c.id; return c; };
@@ -1272,25 +1518,27 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   }
   async function carregarAcessos() {
     if (S.papel !== 'dono') return;
-    const cv = await S.sb.from('convites').select('email,papel').eq('barbearia_id', S.bid);
+    const cv = await S.sb.from('convites').select('email,papel,barbeiro_id').eq('barbearia_id', S.bid);
     S.convites = cv.data || [];
-    const mb = await S.sb.from('membros').select('user_id', { count: 'exact', head: true }).eq('barbearia_id', S.bid);
-    S.nMembros = mb.count || 0; scheduleRender();
+    const ac = await S.sb.rpc('equipe_acessos', { p_b: S.bid });
+    S.acessos = Array.isArray(ac.data) ? ac.data : []; S.nMembros = S.acessos.length; scheduleRender();
   }
   async function carregarBarbearia() {
     S.status = 'loading'; render();
     try {
       await S.sb.rpc('entrar_por_convite');
-      const m = await S.sb.from('membros').select('barbearia_id,papel').eq('user_id', S.user.id);
+      const m = await S.sb.from('membros').select('barbearia_id,papel,barbeiro_id').eq('user_id', S.user.id);
       if (m.error) throw m.error;
       if (!m.data || !m.data.length) { S.status = 'setup'; render(); return; }
-      S.bid = m.data[0].barbearia_id; S.papel = m.data[0].papel;
+      S.bid = m.data[0].barbearia_id; S.papel = m.data[0].papel; S.meuBarb = m.data[0].barbeiro_id || null;
+      if (S.papel === 'barbeiro') { S.ui.agBarb = S.meuBarb || 'todos'; S.ui.barbView = S.meuBarb; }
       const b = await S.sb.from('barbearias').select('id,slug,nome,config,vencimento').eq('id', S.bid).maybeSingle();
       if (b.error) throw b.error;
       if (!b.data) { S.status = 'inativa'; render(); return; }
       S.slug = b.data.slug; S.venc = b.data.vencimento || null; S.cfg = Object.assign({}, DEF, b.data.config || {}, { nome: b.data.nome });
       applyTheme();
       await carregarRegistros();
+      S.knownAg = new Set(S.ags.map((a) => a.id));
       S.sb.channel('barbearia-' + S.bid)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'registros', filter: 'barbearia_id=eq.' + S.bid }, (p) => {
           if (p.eventType === 'DELETE') { if (p.old && p.old.id) localDel(p.old.colecao, p.old.id); }
@@ -1308,7 +1556,7 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
   }
   async function sincronizar() {
     if (S.status !== 'ok' || document.hidden) return;
-    try { await carregarRegistros(); scheduleRender(); } catch (e) { /* tenta de novo no próximo ciclo */ }
+    try { await carregarRegistros(); checarNovos(); scheduleRender(); } catch (e) { /* tenta de novo no próximo ciclo */ }
   }
 
   // Aceita a URL colada com sobras: barra no final, /rest/v1, ou o endereço do painel do Supabase.

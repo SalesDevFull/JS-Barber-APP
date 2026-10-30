@@ -72,9 +72,14 @@ Sem isso, os links de confirmação de e-mail e de "esqueci a senha" levam pro l
 2. Preencha o nome da barbearia, o link (ex.: `barbearia-do-joao`) e o seu nome.
 3. Em **Gestão**:
    - **Barbearia**: logo, cor, estilo da página do cliente (claro ou escuro), mensagem de boas-vindas, endereço, Instagram, WhatsApp, horário de funcionamento, meta do mês e o **link de agendamento com QR code**.
+   - **Horários**: dias abertos e horário de cada dia, pausa pro almoço, folga semanal de cada barbeiro e bloqueio de dias ou períodos (feriado, médico). O painel e a página do cliente só oferecem horários dentro dessas regras, e o servidor confere de novo na hora de marcar.
    - **Pagamentos**: formas aceitas, chave Pix e o **sinal pra agendar** (veja abaixo).
    - **Serviços**: preços e duração.
-   - **Equipe**: barbeiros (aparecem na agenda) e **Acesso ao app** (convite por e-mail pra quem vai usar o painel).
+   - **Equipe**: barbeiros (aparecem na agenda) e **Acesso ao app**: convide pelo e-mail e diga qual barbeiro da agenda a pessoa é.
+     - **Barbeiro** vê a agenda (mexe só nos horários dele), os clientes e só as próprias comandas e ganhos. Não vê o caixa da barbearia, as despesas nem os ganhos dos colegas. Isso é travado no banco, não só escondido na tela.
+     - **Sócio** tem o mesmo acesso do dono.
+     - Quem já tinha acesso antes desta versão aparece na lista sem barbeiro ligado: escolha em "Na agenda é".
+   - **Avisos de agendamento** (em Equipe, ou em Conta pro barbeiro): som, vibração e notificação quando um cliente marca pelo link. Toque em "Ativar notificação neste aparelho" em cada celular. Funciona com o app aberto ou em segundo plano; com o app totalmente fechado, ainda não.
 4. Abra o link de agendamento no celular e marque um horário de teste. Ele aparece na hora na agenda do painel.
 
 ### Sinal pra agendar (Pix com confirmação manual)
@@ -131,7 +136,7 @@ No **Table Editor**: `barbearias` (cadastro e assinatura), `pagamentos` (histór
 - **Lembrete automático no WhatsApp**: hoje o app abre o WhatsApp com a mensagem pronta e a pessoa aperta enviar. O automático exige a API oficial do WhatsApp Business por um parceiro (BSP) e uma função no servidor.
 - **Pix e cartão com confirmação automática** (sinal e assinatura dos clientes, e cobrança das barbearias): integração com Asaas, Pagar.me ou Mercado Pago.
 - **Nota fiscal (NFS-e)**: integração com NFE.io, Focus NFe ou similar.
-- **Permissões finas**: hoje o barbeiro convidado vê tudo da barbearia (inclusive o caixa). Dá pra restringir depois.
+- **Aviso com o app fechado** (push de verdade, inclusive no iPhone): exige um servidor de notificações (Web Push) e uma função no Supabase.
 - **Domínio próprio** (ex.: `agenda.suamarca.com.br`): compre o domínio (registro.br) e aponte no Netlify/Vercel em **Domains**.
 
 ## Segurança — o que já está protegido

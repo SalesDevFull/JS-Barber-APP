@@ -58,6 +58,8 @@ section{display:flex;flex-direction:column;gap:10px}
 .dia small{font-size:13px;font-weight:500}
 .dia b{font-size:19px}
 .chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;flex-shrink:0}
+.dia.fechado{opacity:.45;cursor:default;background:transparent}
+.dia.fechado small{font-size:11px}
 .dia.on,.chip.on{background:var(--couro);border-color:var(--couro);color:var(--couro-fg)}
 .slot{min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-variant-numeric:tabular-nums}
 .slot.on{background-color:var(--marca);background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.10));border-color:var(--couro);color:var(--marca-ink);font-weight:700}
@@ -159,19 +161,36 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
   function msg(t) { app.innerHTML = '<div class="card centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><p style="margin:0">' + t + '</p></div>'; }
   function animar(nome) { if (st.tela !== nome) { st.tela = nome; app.classList.remove('entra'); void app.offsetWidth; app.classList.add('entra'); setTimeout(() => app.classList.remove('entra'), 800); } }
 
+  // Mesmas regras do painel e do servidor: dia aberto, almoço, folga e bloqueios.
+  function expediente(dia) {
+    const b = st.b;
+    if (b.semana) { const e = b.semana[String(parseD(dia).getDay())]; return e && e.abre ? e : null; }
+    return { abre: b.abre, fecha: b.fecha };
+  }
+  function permitido(dia, barbId, ini, dur) {
+    const b = st.b; const e = expediente(dia); if (!e) return false;
+    if (ini < toMin(e.abre) || ini + dur > toMin(e.fecha)) return false;
+    if (b.almoco && b.almoco.ini && b.almoco.fim && ini < toMin(b.almoco.fim) && toMin(b.almoco.ini) < ini + dur) return false;
+    const bb = b.barbeiros.find((x) => x.id === barbId);
+    if (bb && (bb.folgas || []).indexOf(parseD(dia).getDay()) >= 0) return false;
+    return !(b.bloqueios || []).some((x) => x.data === dia && (!x.barbeiroId || x.barbeiroId === barbId) && (!x.ini || (ini < toMin(x.fim) && toMin(x.ini) < ini + dur)));
+  }
+  const diaFechado = (dia) => !expediente(dia) || !(st.b.bloqueios || []).every((x) => !(x.data === dia && !x.barbeiroId && !x.ini));
   function livres() {
     const b = st.b; const s = b.servicos.find((x) => x.id === st.serv); if (!s) return [];
+    const e = expediente(st.dia); if (!e) return [];
     const dur = Number(s.dur) || 30; const step = Number(b.intervalo) || 30;
-    const ini = toMin(b.abre), fim = toMin(b.fecha); const passou = st.dia === hoje() ? agoraMin() : -1;
+    const passou = st.dia === hoje() ? agoraMin() : -1;
     const oc = st.ocup[st.dia] || [];
     const ids = st.barb === 'qualquer' ? b.barbeiros.map((x) => x.id) : [st.barb];
     const out = [];
-    for (let m = ini; m + dur <= fim + 1; m += step) {
+    for (let m = toMin(e.abre); m + dur <= toMin(e.fecha); m += step) {
       if (m <= passou) continue;
-      if (ids.some((id) => !oc.some((o) => o.barbeiroId === id && toMin(o.hora) < m + dur && m < toMin(o.hora) + (Number(o.dur) || 30)))) out.push(m);
+      if (ids.some((id) => permitido(st.dia, id, m, dur) && !oc.some((o) => o.barbeiroId === id && toMin(o.hora) < m + dur && m < toMin(o.hora) + (Number(o.dur) || 30)))) out.push(m);
     }
     return out;
   }
+  function primeiroDiaAberto() { for (let i = 0; i < 14; i++) { const d = addDays(hoje(), i); if (!diaFechado(d)) return d; } return hoje(); }
   async function carregarDia(dia) {
     if (st.ocup[dia]) return;
     st.carregandoDia = true; render();
@@ -183,9 +202,10 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
   function topo() {
     const b = st.b;
     return '<header class="topo"><div class="topo-in"><div class="logo"' + (b.logo ? '' : ' aria-hidden="true"') + '>' + (b.logo ? '<img src="' + esc(b.logo) + '" alt="Logo da ' + esc(b.nome) + '">' : MASCOTE.replace('viewBox="0 0 200 220"', 'viewBox="30 8 140 150"')) + '</div>' +
-      '<div><h1>' + esc(b.nome) + '</h1><span class="sub">Agende seu horário · ' + esc(b.abre) + ' às ' + esc(b.fecha) + '</span></div></div>' +
+      '<div><h1>' + esc(b.nome) + '</h1><span class="sub">' + esc(horarioHoje()) + '</span></div></div>' +
       (b.mensagem ? '<div class="recado">' + esc(b.mensagem) + '</div>' : '') + '</header>';
   }
+  function horarioHoje() { const e = expediente(hoje()); return e && !diaFechado(hoje()) ? 'Hoje: ' + e.abre + ' às ' + e.fecha : 'Hoje: fechado · agende pros próximos dias'; }
   function infos() {
     const b = st.b; let h = '';
     if (b.endereco) h += '<div class="row">' + ICON.pin + '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(b.endereco) + '" target="_blank" rel="noopener">' + esc(b.endereco) + '</a></div>';
@@ -223,7 +243,8 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     h += '<section><span class="lbl">Dia</span><div class="chips">';
     for (let i = 0; i < 14; i++) {
       const d = addDays(hoje(), i); const pd = parseD(d);
-      h += '<button type="button" class="dia' + (st.dia === d ? ' on' : '') + '" data-a="dia" data-v="' + d + '" aria-pressed="' + (st.dia === d) + '"><small>' + (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : SEM[pd.getDay()]) + '</small><b>' + pd.getDate() + '</b></button>';
+      const fech = diaFechado(d);
+      h += '<button type="button" class="dia' + (st.dia === d ? ' on' : '') + (fech ? ' fechado' : '') + '" data-a="dia" data-v="' + d + '" aria-pressed="' + (st.dia === d) + '"' + (fech ? ' disabled aria-label="' + (i === 0 ? 'Hoje' : SEM[pd.getDay()]) + ' ' + pd.getDate() + ', fechado"' : '') + '><small>' + (fech ? 'Fechado' : (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : SEM[pd.getDay()])) + '</small><b>' + pd.getDate() + '</b></button>';
     }
     h += '</div></section>';
     h += '<section><span class="lbl">Horário</span>';
@@ -231,7 +252,7 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     else if (st.carregandoDia || !st.ocup[st.dia]) h += '<span class="vazio">Buscando horários…</span>';
     else {
       const ms = livres();
-      if (!ms.length) h += '<span class="vazio">Sem horário livre nesse dia. Tente outro dia ou outro barbeiro.</span>';
+      if (!ms.length) h += '<span class="vazio">' + (st.barb !== 'qualquer' && (() => { const bb = b.barbeiros.find((x) => x.id === st.barb); return bb && (bb.folgas || []).indexOf(parseD(st.dia).getDay()) >= 0; })() ? 'Esse barbeiro está de folga nesse dia. Escolha outro dia ou outro barbeiro.' : 'Sem horário livre nesse dia. Tente outro dia ou outro barbeiro.') + '</span>';
       else h += '<div class="grid4">' + ms.map((m) => { const hh = toHora(m); return '<button type="button" class="slot' + (st.hora === hh ? ' on' : '') + '" data-a="hora" data-v="' + hh + '" aria-pressed="' + (st.hora === hh) + '">' + hh + '</button>'; }).join('') + '</div>';
     }
     h += '</section>';
@@ -366,6 +387,7 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     const p = ler(KEY);
     if (p && p.id && p.sinal && new Date(p.sinal.expira) > new Date()) { st.pend = p; render(); acompanhar(); conferir(); return; }
     guardar(KEY, null);
+    st.dia = primeiroDiaAberto();
     render(); carregarDia(st.dia);
   }
   iniciar();
