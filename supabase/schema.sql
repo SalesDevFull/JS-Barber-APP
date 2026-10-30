@@ -295,6 +295,52 @@ language sql immutable as $$
   select coalesce(c -> 'sinal' ->> 'ativo', 'false') = 'true' and coalesce(c -> 'pix' ->> 'chave', '') <> '';
 $$;
 
+-- ---------- Mercado Pago (cada barbearia conecta a própria conta) ----------
+-- As chaves da conta ficam nesta tabela, que ninguém do navegador consegue ler.
+-- Só as funções do servidor (Edge Functions, com a chave service_role) usam.
+create table if not exists public.mp_contas (
+  barbearia_id uuid primary key references public.barbearias(id) on delete cascade,
+  mp_user_id text,
+  access_token text not null,
+  refresh_token text,
+  public_key text,
+  expira_em timestamptz,
+  live_mode boolean,
+  conectado_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+alter table public.mp_contas enable row level security;
+revoke all on public.mp_contas from anon, authenticated;
+
+-- Código de uso único que liga a volta do Mercado Pago à barbearia certa.
+create table if not exists public.mp_estados (
+  estado text primary key,
+  barbearia_id uuid not null references public.barbearias(id) on delete cascade,
+  user_id uuid not null,
+  criado_em timestamptz not null default now()
+);
+alter table public.mp_estados enable row level security;
+revoke all on public.mp_estados from anon, authenticated;
+
+-- O que a página do cliente pode usar do Mercado Pago (só a chave pública e as opções).
+create or replace function public.mp_online(p_b uuid, c jsonb)
+returns json language sql stable security definer set search_path = public as $$
+  select case when coalesce(c -> 'mp' ->> 'cartao', 'true') = 'true' or coalesce(c -> 'mp' ->> 'pix', 'true') = 'true' then
+    json_build_object(
+      'publicKey', m.public_key,
+      'cartao', coalesce(c -> 'mp' ->> 'cartao', 'true') = 'true' and m.public_key is not null,
+      'pix', coalesce(c -> 'mp' ->> 'pix', 'true') = 'true',
+      'parcelas', greatest(1, least(12, coalesce((c -> 'mp' ->> 'parcelas')::int, 1)))) end
+  from mp_contas m where m.barbearia_id = p_b;
+$$;
+
+-- Sinal ligado: o dono ligou a opção e tem como receber (chave Pix ou Mercado Pago conectado).
+create or replace function public.sinal_ligado(p_b uuid, c jsonb)
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(c -> 'sinal' ->> 'ativo', 'false') = 'true'
+     and (coalesce(c -> 'pix' ->> 'chave', '') <> '' or mp_online(p_b, c) is not null);
+$$;
+
 -- Dados que a página de agendamento precisa. Não mostra comissão nem custos.
 create or replace function public.barbearia_publica(p_slug text)
 returns json language sql stable security definer set search_path = public as $$
@@ -311,9 +357,11 @@ returns json language sql stable security definer set search_path = public as $$
     'instagram', b.config ->> 'instagram',
     'whatsapp', b.config ->> 'whatsapp',
     'formas', coalesce(b.config -> 'formas', '["Pix","Cartão","Dinheiro"]'::jsonb),
-    'sinal', case when sinal_ativo(b.config) then json_build_object(
+    'sinal', case when sinal_ligado(b.id, b.config) then json_build_object(
                 'pct', coalesce((b.config -> 'sinal' ->> 'pct')::numeric, 50),
-                'prazo', coalesce((b.config -> 'sinal' ->> 'prazo')::int, 30)) end,
+                'prazo', coalesce((b.config -> 'sinal' ->> 'prazo')::int, 30),
+                'pixManual', coalesce(b.config -> 'pix' ->> 'chave', '') <> '',
+                'online', mp_online(b.id, b.config)) end,
     'servicos', coalesce((select json_agg(json_build_object('id', s ->> 'id', 'nome', s ->> 'nome', 'preco', (s ->> 'preco')::numeric, 'dur', (s ->> 'dur')::int))
                           from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s), '[]'::json),
     'barbeiros', coalesce((select json_agg(json_build_object('id', x ->> 'id', 'nome', x ->> 'nome', 'folgas', coalesce(x -> 'folgas', '[]'::jsonb)))
@@ -384,7 +432,7 @@ begin
   -- Uma marcação por vez por barbearia e dia, pra dois clientes não pegarem o mesmo horário.
   perform pg_advisory_xact_lock(hashtext(b.id::text || p_dia));
 
-  v_sinal := sinal_ativo(b.config);
+  v_sinal := sinal_ligado(b.id, b.config);
   if v_sinal and exists (
     select 1 from registros r where r.barbearia_id = b.id and r.colecao = 'agendamentos'
       and r.dados ->> 'status' = 'aguardando_sinal'
@@ -429,6 +477,7 @@ begin
     'status', case when v_sinal then 'aguardando_sinal' else 'agendado' end,
     'sinalValor', case when v_sinal then v_valor end,
     'sinalExpira', case when v_sinal then v_expira end,
+    'pagOnline', case when v_sinal and mp_online(b.id, b.config) is not null then true end,
     'origem', 'link', 'criadoEm', now()));
 
   return json_build_object('ok', true, 'id', v_id, 'dia', p_dia, 'hora', p_hora, 'servico', v_serv ->> 'nome',
@@ -437,7 +486,8 @@ begin
     'status', case when v_sinal then 'aguardando_sinal' else 'agendado' end,
     'sinal', case when v_sinal then json_build_object('valor', v_valor, 'expira', v_expira,
       'tipo', b.config -> 'pix' ->> 'tipo', 'chave', b.config -> 'pix' ->> 'chave',
-      'nome', b.config -> 'pix' ->> 'nome', 'cidade', b.config -> 'pix' ->> 'cidade') end);
+      'nome', b.config -> 'pix' ->> 'nome', 'cidade', b.config -> 'pix' ->> 'cidade',
+      'online', mp_online(b.id, b.config)) end);
 end $$;
 
 -- O cliente acompanha se a barbearia já confirmou o sinal (o id é longo e aleatório).
@@ -460,6 +510,149 @@ begin
   where b.id = r.barbearia_id and b.slug = p_slug and r.colecao = 'agendamentos' and r.id = p_id
     and char_length(p_id) >= 20 and r.dados ->> 'status' = 'aguardando_sinal';
   return found;
+end $$;
+
+-- ---------- Mercado Pago: funções do dono ----------
+
+-- Mostra no painel se a conta está conectada (nunca devolve as chaves).
+create or replace function public.mp_status(p_b uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not eh_dono(p_b) then raise exception 'Só o dono vê isso.'; end if;
+  return coalesce((select json_build_object('conectado', true, 'conta', m.mp_user_id, 'desde', m.conectado_em,
+                                            'teste', coalesce(m.live_mode, true) = false, 'cartao', m.public_key is not null)
+                   from mp_contas m where m.barbearia_id = p_b), json_build_object('conectado', false));
+end $$;
+
+create or replace function public.mp_desconectar(p_b uuid)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  if not eh_dono(p_b) then raise exception 'Só o dono pode desconectar.'; end if;
+  delete from mp_contas where barbearia_id = p_b;
+  return found;
+end $$;
+
+-- ---------- Mercado Pago: funções só do servidor (Edge Functions) ----------
+
+create or replace function public.mp_criar_estado(p_b uuid, p_user uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare v text;
+begin
+  if not exists (select 1 from membros where barbearia_id = p_b and user_id = p_user and papel = 'dono') then
+    raise exception 'Só o dono pode conectar o Mercado Pago.';
+  end if;
+  delete from mp_estados where criado_em < now() - interval '30 minutes';
+  v := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
+  insert into mp_estados (estado, barbearia_id, user_id) values (v, p_b, p_user);
+  return v;
+end $$;
+
+-- Usa o código uma vez só e devolve de qual barbearia ele é.
+create or replace function public.mp_usar_estado(p_estado text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare v uuid;
+begin
+  delete from mp_estados where estado = p_estado and criado_em > now() - interval '30 minutes' returning barbearia_id into v;
+  return v;
+end $$;
+
+create or replace function public.mp_salvar_conta(p_b uuid, p_user text, p_access text, p_refresh text, p_public text, p_expira timestamptz, p_live boolean)
+returns void language sql security definer set search_path = public as $$
+  insert into mp_contas (barbearia_id, mp_user_id, access_token, refresh_token, public_key, expira_em, live_mode)
+  values (p_b, p_user, p_access, p_refresh, p_public, p_expira, p_live)
+  on conflict (barbearia_id) do update set mp_user_id = coalesce(excluded.mp_user_id, mp_contas.mp_user_id),
+    access_token = excluded.access_token, refresh_token = coalesce(excluded.refresh_token, mp_contas.refresh_token),
+    public_key = coalesce(excluded.public_key, mp_contas.public_key), expira_em = excluded.expira_em,
+    live_mode = coalesce(excluded.live_mode, mp_contas.live_mode), atualizado_em = now();
+$$;
+
+create or replace function public.mp_conta(p_b uuid)
+returns json language sql stable security definer set search_path = public as $$
+  select json_build_object('access_token', access_token, 'refresh_token', refresh_token, 'expira_em', expira_em)
+  from mp_contas where barbearia_id = p_b;
+$$;
+
+-- Tudo que o servidor precisa pra cobrar uma reserva. O valor vem daqui, nunca do navegador.
+create or replace function public.mp_cobranca(p_slug text, p_id text)
+returns json language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'b', b.id, 'barbearia', b.nome, 'status', r.dados ->> 'status',
+    'valor', (r.dados ->> 'sinalValor')::numeric, 'expira', r.dados ->> 'sinalExpira',
+    'servico', (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1),
+    'dia', r.dados ->> 'data', 'hora', r.dados ->> 'hora',
+    'mp', r.dados -> 'mp', 'online', mp_online(b.id, b.config),
+    'conta', mp_conta(b.id))
+  from registros r join barbearias b on b.id = r.barbearia_id
+  where b.slug = p_slug and barbearia_liberada(b.ativa, b.vencimento)
+    and r.colecao = 'agendamentos' and r.id = p_id and char_length(p_id) >= 20;
+$$;
+
+-- Guarda o Pix gerado na reserva e estica a reserva até o Pix vencer.
+create or replace function public.mp_registrar(p_b uuid, p_id text, p_mp jsonb, p_expira timestamptz)
+returns void language sql security definer set search_path = public as $$
+  update registros set dados = dados || jsonb_build_object('mp', coalesce(dados -> 'mp', '{}'::jsonb) || p_mp)
+      || case when p_expira is not null and dados ->> 'status' = 'aguardando_sinal'
+              then jsonb_build_object('sinalExpira', greatest(coalesce((dados ->> 'sinalExpira')::timestamptz, p_expira), p_expira))
+              else '{}'::jsonb end
+  where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+$$;
+
+-- Pagamento aprovado no Mercado Pago: confirma o horário sozinho.
+-- Se a reserva já tinha sido cancelada ou o horário foi pego, marca pra barbearia devolver.
+create or replace function public.mp_confirmar(p_b uuid, p_id text, p_valor numeric, p_pagamento text, p_metodo text)
+returns text language plpgsql security definer set search_path = public as $$
+declare r registros%rowtype; v_ini int; v_dur int; v_choque boolean;
+begin
+  select * into r from registros where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+  if not found then return 'nao_achou'; end if;
+  perform pg_advisory_xact_lock(hashtext(p_b::text || (r.dados ->> 'data')));
+  select * into r from registros where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id for update;
+  if r.dados ->> 'mpPagamento' = p_pagamento then return 'ja_confirmado'; end if;
+  if p_valor + 0.01 < coalesce((r.dados ->> 'sinalValor')::numeric, 0) then return 'valor_menor'; end if;
+
+  if r.dados ->> 'status' = 'aguardando_sinal' then
+    v_ini := minutos(r.dados ->> 'hora'); v_dur := coalesce((r.dados ->> 'dur')::int, 30);
+    select exists (
+      select 1 from registros o
+      where o.barbearia_id = p_b and o.colecao = 'agendamentos' and o.id <> p_id
+        and o.dados ->> 'data' = r.dados ->> 'data' and o.dados ->> 'barbeiroId' = r.dados ->> 'barbeiroId'
+        and segura_horario(o.dados)
+        and minutos(o.dados ->> 'hora') < v_ini + v_dur and v_ini < minutos(o.dados ->> 'hora') + coalesce((o.dados ->> 'dur')::int, 30)
+    ) into v_choque;
+    if not v_choque then
+      update registros set dados = dados || jsonb_build_object('status', 'agendado', 'sinalPago', p_valor, 'sinalPagoEm', now(),
+          'sinalMetodo', p_metodo, 'mpPagamento', p_pagamento)
+        where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+      return 'confirmado';
+    end if;
+  end if;
+
+  if r.dados ->> 'status' in ('agendado', 'cadeira', 'feito') and coalesce((r.dados ->> 'sinalPago')::numeric, 0) = 0 then
+    update registros set dados = dados || jsonb_build_object('sinalPago', p_valor, 'sinalPagoEm', now(), 'sinalMetodo', p_metodo, 'mpPagamento', p_pagamento)
+      where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+    return 'confirmado';
+  end if;
+
+  update registros set dados = dados || jsonb_build_object('status', case when dados ->> 'status' = 'aguardando_sinal' then 'cancelado' else dados ->> 'status' end,
+      'pagoSemHorario', true, 'sinalPago', p_valor, 'sinalPagoEm', now(), 'sinalMetodo', p_metodo, 'mpPagamento', p_pagamento)
+    where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+  return 'devolver';
+end $$;
+
+-- Ninguém do navegador chama as funções do servidor.
+do $$
+declare f text;
+begin
+  foreach f in array array[
+    'mp_criar_estado(uuid, uuid)', 'mp_usar_estado(text)',
+    'mp_salvar_conta(uuid, text, text, text, text, timestamptz, boolean)', 'mp_conta(uuid)',
+    'mp_cobranca(text, text)', 'mp_registrar(uuid, text, jsonb, timestamptz)',
+    'mp_confirmar(uuid, text, numeric, text, text)'] loop
+    execute 'revoke all on function public.' || f || ' from public, anon, authenticated';
+    if exists (select 1 from pg_roles where rolname = 'service_role') then
+      execute 'grant execute on function public.' || f || ' to service_role';
+    end if;
+  end loop;
 end $$;
 
 -- ---------- Funções do administrador do sistema (você) ----------

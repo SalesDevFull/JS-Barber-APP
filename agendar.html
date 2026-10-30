@@ -110,6 +110,10 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
 .poste i{display:block;height:200%;background:repeating-linear-gradient(-45deg,#B23A3A 0 8px,#F3E9DA 8px 16px,#2F5A9E 16px 24px,#F3E9DA 24px 32px);animation:girar 1s linear infinite}
 @keyframes girar{from{transform:translateY(-45.25px)}to{transform:translateY(0)}}
 .rodape{text-align:center;font-size:12px;color:var(--dim)}
+.metodos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.metodos .chip{width:100%}
+.cartao-box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;min-height:120px}
+.seguro{display:flex;gap:8px;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
 :focus-visible{outline:3px solid var(--marca);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .topo{position:relative;border-bottom:0;overflow:hidden;padding-bottom:24px}
@@ -160,8 +164,8 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
   const app = document.getElementById('app');
   const slug = new URLSearchParams(location.search).get('b') || '';
   const KEY = 'ag_pend_' + slug;
-  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, pend: null, pago: false, confirmaDesistir: false, tela: '' };
-  try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; } catch (e) { st.nome = ''; st.tel = ''; }
+  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, pend: null, pago: false, confirmaDesistir: false, tela: '', metodo: '', gerando: false, erroPag: '', brick: null };
+  try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; st.email = localStorage.getItem('ag_email') || ''; } catch (e) { st.nome = ''; st.tel = ''; st.email = ''; }
   let sb = null, timer = null, poll = null;
 
   function msg(t) { app.innerHTML = '<div class="card centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><p style="margin:0">' + t + '</p></div>'; }
@@ -267,47 +271,121 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
       '<div class="field"><label for="f-tel">WhatsApp com DDD</label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" value="' + esc(st.tel) + '"></div></section>';
     if (b.sinal && s) {
       const v = Math.round(Number(s.preco) * Number(b.sinal.pct)) / 100;
-      h += '<div class="card pix"><span class="lbl" style="color:var(--warn)">Sinal pra garantir o horário</span><span>Pra confirmar, você paga <b>' + brl(v) + '</b> (' + esc(b.sinal.pct) + '%) no Pix agora. O restante, ' + brl(Number(s.preco) - v) + ', você paga na barbearia.</span><span class="tiny">O horário fica reservado por ' + esc(b.sinal.prazo) + ' minutos enquanto você paga.</span></div>';
+      const tudo = Number(b.sinal.pct) >= 100;
+      h += '<div class="card pix"><span class="lbl" style="color:var(--warn)">' + (tudo ? 'Pagamento na hora de agendar' : 'Sinal pra garantir o horário') + '</span><span>Pra confirmar, você paga <b>' + brl(v) + '</b>' + (tudo ? '' : ' (' + esc(b.sinal.pct) + '%)') + ' ' + comoPaga(b.sinal) + ' agora.' + (tudo ? '' : ' O restante, ' + brl(Number(s.preco) - v) + ', você paga na barbearia.') + '</span><span class="tiny">O horário fica reservado por ' + esc(b.sinal.prazo) + ' minutos enquanto você paga.</span></div>';
     } else if (b.sinal) {
-      h += '<p class="tiny" style="margin:0">Esta barbearia pede um sinal de ' + esc(b.sinal.pct) + '% no Pix pra garantir o horário.</p>';
+      h += '<p class="tiny" style="margin:0">Esta barbearia pede um sinal de ' + esc(b.sinal.pct) + '% ' + comoPaga(b.sinal) + ' pra garantir o horário.</p>';
     }
     if (st.erro) h += '<p class="erro" role="alert">' + esc(st.erro) + '</p>';
     const pronto = s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10;
-    const rotulo = st.enviando ? 'Reservando…' : (s && st.hora ? (b.sinal ? 'Reservar e pagar o sinal' : 'Confirmar ' + s.nome.toLowerCase() + ' às ' + st.hora) : 'Confirmar horário');
+    const rotulo = st.enviando ? 'Reservando…' : (s && st.hora ? (b.sinal ? (Number(b.sinal.pct) >= 100 ? 'Reservar e pagar' : 'Reservar e pagar o sinal') : 'Confirmar ' + s.nome.toLowerCase() + ' às ' + st.hora) : 'Confirmar horário');
     h += '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button>';
     h += infos();
     app.innerHTML = h;
   }
 
+  const comoPaga = (sn) => { const on = sn && sn.online; return on && on.cartao ? (on.pix || sn.pixManual || sn.chave ? 'no cartão ou no Pix' : 'no cartão de crédito') : 'no Pix'; };
+  function tirarCartao() { if (st.brick) { try { st.brick.unmount(); } catch (e) { /* já saiu */ } st.brick = null; } }
   function renderPix() {
-    const p = st.pend; const sn = p.sinal;
+    const p = st.pend; const sn = p.sinal; const on = sn.online || null;
+    tirarCartao();
     const restante = Math.max(0, (new Date(sn.expira) - new Date()) / 1000);
     if (restante <= 0) { expirou(); return; }
     animar('pix');
-    const codigo = window.Pix.brcode({ tipo: sn.tipo, chave: sn.chave, nome: sn.nome, cidade: sn.cidade, valor: sn.valor, txid: p.id.slice(0, 25) });
-    const zap = st.b.whatsapp ? waLink(st.b.whatsapp, 'Oi! Fiz o Pix de ' + brl(sn.valor) + ' do sinal pro meu horário de ' + diaLongo(p.dia) + ' às ' + p.hora + ' (' + p.servico + '). Segue o comprovante.') : '';
-    app.innerHTML = topo() +
-      '<div class="card pix"><div class="centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><h2>Falta só o sinal</h2>' +
+    const pixOnline = !!(on && on.pix); const pixManual = !!sn.chave; const temPix = pixOnline || pixManual;
+    const temCartao = !!(on && on.cartao && on.publicKey);
+    if (!st.metodo || (st.metodo === 'cartao' && !temCartao) || (st.metodo === 'pix' && !temPix)) st.metodo = temPix ? 'pix' : 'cartao';
+    const m = st.metodo;
+    const tudo = Math.abs(Number(p.preco) - Number(sn.valor)) < 0.01;
+    let h = topo() +
+      '<div class="card pix"><div class="centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><h2>' + (tudo ? 'Falta só pagar' : 'Falta só o sinal') + '</h2>' +
       '<span class="sub">' + esc(p.servico) + ' com ' + esc(p.barbeiro) + ', ' + esc(diaLongo(p.dia)) + ' às ' + esc(p.hora) + '</span>' +
-      '<span class="valor">' + brl(sn.valor) + '</span><span class="tiny">O restante, ' + brl(Math.max(0, Number(p.preco) - Number(sn.valor))) + ', você paga na barbearia.</span></div>' +
-      '<div class="qr" id="pix-qr" role="img" aria-label="QR code do Pix de ' + brl(sn.valor) + '"></div>' +
-      '<span class="lbl">Pix copia e cola</span><div class="copia" id="pix-codigo">' + esc(codigo) + '</div>' +
-      '<button type="button" class="btn" data-a="copiar">Copiar código Pix</button>' +
-      '<span class="sub" style="text-align:center">Horário reservado por mais <span class="relogio" id="relogio">' + fmtRel(restante) + '</span></span></div>' +
-      (st.pago ? '<div class="card ok"><b>Recebemos seu aviso!</b><span class="sub">Assim que a barbearia ver o Pix, seu horário é confirmado aqui mesmo. Pode deixar esta página aberta.</span>' + (zap ? '<a class="btn zap" href="' + esc(zap) + '" target="_blank" rel="noopener">Mandar comprovante no WhatsApp</a>' : '') + '</div>'
-        : '<button type="button" class="btn sec" data-a="paguei">Já fiz o Pix</button>') +
-      '<button type="button" class="btn sec" data-a="desistir">' + (st.confirmaDesistir ? 'Toque de novo pra desistir' : 'Desistir da reserva') + '</button>' + infos();
+      '<span class="valor">' + brl(sn.valor) + '</span>' + (tudo ? '' : '<span class="tiny">O restante, ' + brl(Math.max(0, Number(p.preco) - Number(sn.valor))) + ', você paga na barbearia.</span>') + '</div>';
+    if (temPix && temCartao) {
+      h += '<div class="metodos" role="group" aria-label="Como pagar">' +
+        '<button type="button" class="chip' + (m === 'pix' ? ' on' : '') + '" data-a="metodo" data-v="pix" aria-pressed="' + (m === 'pix') + '">Pix</button>' +
+        '<button type="button" class="chip' + (m === 'cartao' ? ' on' : '') + '" data-a="metodo" data-v="cartao" aria-pressed="' + (m === 'cartao') + '">Cartão</button></div>';
+    }
+    let codigo = '';
+    if (m === 'pix' && pixOnline) {
+      if (p.mpPix && p.mpPix.qr) {
+        codigo = p.mpPix.qr;
+        h += '<div class="qr" id="pix-qr" role="img" aria-label="QR code do Pix de ' + brl(sn.valor) + '"></div>' +
+          '<span class="lbl">Pix copia e cola</span><div class="copia" id="pix-codigo">' + esc(codigo) + '</div>' +
+          '<button type="button" class="btn" data-a="copiar">Copiar código Pix</button>' +
+          '<span class="sub" style="text-align:center">Assim que o Pix cair, seu horário confirma sozinho aqui. Pode deixar esta página aberta.</span>';
+      } else {
+        h += '<div class="field"><label for="f-email">Seu e-mail (o Mercado Pago manda o comprovante)</label><input id="f-email" type="email" inputmode="email" autocomplete="email" value="' + esc(st.email) + '"></div>' +
+          '<button type="button" class="btn" data-a="gerarPix"' + (st.gerando ? ' disabled' : '') + '>' + (st.gerando ? 'Gerando o Pix…' : 'Gerar Pix de ' + brl(sn.valor)) + '</button>';
+      }
+    } else if (m === 'pix') {
+      codigo = window.Pix.brcode({ tipo: sn.tipo, chave: sn.chave, nome: sn.nome, cidade: sn.cidade, valor: sn.valor, txid: p.id.slice(0, 25) });
+      h += '<div class="qr" id="pix-qr" role="img" aria-label="QR code do Pix de ' + brl(sn.valor) + '"></div>' +
+        '<span class="lbl">Pix copia e cola</span><div class="copia" id="pix-codigo">' + esc(codigo) + '</div>' +
+        '<button type="button" class="btn" data-a="copiar">Copiar código Pix</button>';
+    } else {
+      h += '<div class="cartao-box" id="mp-cartao"><span class="vazio">Carregando o pagamento seguro…</span></div>' +
+        '<span class="seguro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Os dados do cartão vão direto pro Mercado Pago.</span>';
+    }
+    if (st.erroPag) h += '<p class="erro" id="erro-pag" role="alert">' + esc(st.erroPag) + '</p>'; else h += '<p class="erro" id="erro-pag" role="alert" hidden></p>';
+    h += '<span class="sub" style="text-align:center">Horário reservado por mais <span class="relogio" id="relogio">' + fmtRel(restante) + '</span></span></div>';
+    const zap = st.b.whatsapp ? waLink(st.b.whatsapp, 'Oi! Fiz o Pix de ' + brl(sn.valor) + ' do sinal pro meu horário de ' + diaLongo(p.dia) + ' às ' + p.hora + ' (' + p.servico + '). Segue o comprovante.') : '';
+    if (m === 'pix' && !pixOnline) {
+      h += st.pago ? '<div class="card ok"><b>Recebemos seu aviso!</b><span class="sub">Assim que a barbearia ver o Pix, seu horário é confirmado aqui mesmo. Pode deixar esta página aberta.</span>' + (zap ? '<a class="btn zap" href="' + esc(zap) + '" target="_blank" rel="noopener">Mandar comprovante no WhatsApp</a>' : '') + '</div>'
+        : '<button type="button" class="btn sec" data-a="paguei">Já fiz o Pix</button>';
+    }
+    h += '<button type="button" class="btn sec" data-a="desistir">' + (st.confirmaDesistir ? 'Toque de novo pra desistir' : 'Desistir da reserva') + '</button>' + infos();
+    app.innerHTML = h;
     const qr = document.getElementById('pix-qr');
-    if (qr && window.QRCode) { try { new window.QRCode(qr, { text: codigo, width: 180, height: 180, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) { qr.hidden = true; } }
+    if (qr && codigo && window.QRCode) { try { new window.QRCode(qr, { text: codigo, width: 180, height: 180, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) { qr.hidden = true; } }
+    if (m === 'cartao') montarCartao();
     timer = setInterval(() => {
-      const r = Math.max(0, (new Date(sn.expira) - new Date()) / 1000);
+      const r = Math.max(0, (new Date(st.pend ? st.pend.sinal.expira : 0) - new Date()) / 1000);
       const el = document.getElementById('relogio'); if (el) el.textContent = fmtRel(r);
       if (r <= 0) { clearInterval(timer); expirou(); }
     }, 1000);
   }
+  function mostrarErroPag(t) { st.erroPag = t; const el = document.getElementById('erro-pag'); if (el) { el.textContent = t; el.hidden = !t; } }
+  function carregarSDK() {
+    if (window.MercadoPago) return Promise.resolve();
+    if (carregarSDK.p) return carregarSDK.p;
+    carregarSDK.p = new Promise((ok, falhou) => { const sc = document.createElement('script'); sc.src = 'https://sdk.mercadopago.com/js/v2'; sc.onload = ok; sc.onerror = () => { carregarSDK.p = null; falhou(); }; document.head.appendChild(sc); });
+    return carregarSDK.p;
+  }
+  async function montarCartao() {
+    const p = st.pend; const on = p.sinal.online;
+    try { await carregarSDK(); } catch (e) { const box = document.getElementById('mp-cartao'); if (box) box.innerHTML = '<span class="erro">Não deu pra carregar o pagamento com cartão. Confira a internet e tente de novo.</span>'; return; }
+    const box = document.getElementById('mp-cartao'); if (!box || st.pend !== p || st.metodo !== 'cartao') return;
+    box.innerHTML = '';
+    const mp = new window.MercadoPago(on.publicKey, { locale: 'pt-BR' });
+    const pagar = (form) => new Promise((ok, falhou) => {
+      mostrarErroPag('');
+      sb.functions.invoke('mp-pagar', { body: { slug: slug, id: p.id, metodo: 'cartao', email: (form.payer && form.payer.email) || st.email, cartao: form } }).then((r) => {
+        const d = r.data || {};
+        if (r.error || !d.ok) { mostrarErroPag(d.erro || 'Não deu pra pagar agora. Tente de novo.'); falhou(); return; }
+        ok(); pagou();
+      }).catch(() => { mostrarErroPag('Não deu pra falar com o Mercado Pago. Tente de novo.'); falhou(); });
+    });
+    try {
+      st.brick = await mp.bricks().create('cardPayment', 'mp-cartao', {
+        initialization: { amount: Number(p.sinal.valor), payer: st.email ? { email: st.email } : undefined },
+        customization: {
+          visual: { style: { theme: st.b.tema === 'escuro' ? 'dark' : 'default' } },
+          paymentMethods: { types: { excluded: ['debit_card', 'prepaid_card'] }, minInstallments: 1, maxInstallments: Math.max(1, Number(on.parcelas) || 1) }
+        },
+        callbacks: { onReady: () => {}, onSubmit: (form) => pagar(form), onError: (er) => { console.warn('mp brick', er); } }
+      });
+    } catch (e) { box.innerHTML = '<span class="erro">Não deu pra abrir o pagamento com cartão. Tente o Pix ou recarregue a página.</span>'; }
+  }
+  function pagou() {
+    const p = st.pend; if (!p) return;
+    clearInterval(poll); tirarCartao(); guardar(KEY, null);
+    st.feito = { servico: p.servico, barbeiro: p.barbeiro, dia: p.dia, hora: p.hora, sinal: p.sinal.valor };
+    st.pend = null; st.erroPag = ''; st.metodo = ''; render(); window.scrollTo(0, 0);
+  }
   const fmtRel = (s) => pad(Math.floor(s / 60)) + ':' + pad(Math.floor(s % 60));
   function expirou() {
-    clearInterval(poll); guardar(KEY, null); st.pend = null; st.pago = false; st.hora = null; st.ocup = {};
+    clearInterval(poll); tirarCartao(); guardar(KEY, null); st.pend = null; st.pago = false; st.hora = null; st.ocup = {}; st.metodo = ''; st.erroPag = '';
     st.erro = 'O prazo pra pagar o sinal acabou e o horário foi liberado. Se você já pagou, fale com a barbearia pelo WhatsApp. Ou escolha um horário de novo.';
     render(); carregarDia(st.dia); window.scrollTo(0, 0);
   }
@@ -316,25 +394,24 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     const r = await sb.rpc('status_agendamento', { p_slug: slug, p_id: st.pend.id });
     if (r.error || !r.data) return;
     const s = r.data.status;
-    if (s === 'agendado' || s === 'cadeira' || s === 'feito') {
-      clearInterval(poll); guardar(KEY, null);
-      st.feito = { servico: st.pend.servico, barbeiro: st.pend.barbeiro, dia: st.pend.dia, hora: st.pend.hora, sinal: st.pend.sinal.valor };
-      st.pend = null; render(); window.scrollTo(0, 0);
-    } else if (s === 'expirado') expirou();
+    if (s === 'agendado' || s === 'cadeira' || s === 'feito') pagou();
+    else if (s === 'expirado') expirou();
     else if (s === 'cancelado' || s === 'faltou') {
-      clearInterval(poll); guardar(KEY, null); st.pend = null; st.erro = 'Essa reserva foi cancelada. Escolha um horário de novo.'; render();
+      clearInterval(poll); tirarCartao(); guardar(KEY, null); st.pend = null; st.erro = 'Essa reserva foi cancelada. Escolha um horário de novo.'; render();
     }
   }
-  function acompanhar() { clearInterval(poll); poll = setInterval(conferir, 10000); }
+  function acompanhar() { clearInterval(poll); poll = setInterval(conferir, st.pend && st.pend.mpPix ? 5000 : 10000); }
 
   app.addEventListener('input', (e) => {
     if (e.target.id === 'f-nome') st.nome = e.target.value;
     if (e.target.id === 'f-tel') st.tel = e.target.value;
+    if (e.target.id === 'f-email') st.email = e.target.value;
     const btn = app.querySelector('[data-a="confirmar"]'); if (!btn) return;
     const s = st.b.servicos.find((x) => x.id === st.serv);
     btn.disabled = !(s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10) || st.enviando;
   });
   app.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.id === 'f-email') { e.preventDefault(); const g = app.querySelector('[data-a="gerarPix"]'); if (g && !g.disabled) g.click(); return; }
     if (e.key === 'Enter' && e.target.tagName === 'INPUT') { const btn = app.querySelector('[data-a="confirmar"]'); if (btn && !btn.disabled) { e.preventDefault(); e.target.blur(); btn.click(); } }
   });
   app.addEventListener('click', async (e) => {
@@ -353,10 +430,25 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
       catch (er) { const r = document.createRange(); r.selectNodeContents(document.getElementById('pix-codigo')); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); el.textContent = 'Selecionado. Agora copie.'; }
     }
     if (a === 'paguei') { st.pago = true; renderPix(); conferir(); }
+    if (a === 'metodo') { st.metodo = v; st.erroPag = ''; renderPix(); }
+    if (a === 'gerarPix') {
+      const em = String(st.email || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { mostrarErroPag('Digite um e-mail válido pra gerar o Pix.'); return; }
+      try { localStorage.setItem('ag_email', em); } catch (er) { /* sem armazenamento */ }
+      st.gerando = true; st.erroPag = ''; renderPix();
+      const r = await sb.functions.invoke('mp-pagar', { body: { slug: slug, id: st.pend.id, metodo: 'pix', email: em } }).catch(() => ({ error: true }));
+      st.gerando = false;
+      const d = (r && r.data) || {};
+      if (!st.pend) return;
+      if (r.error || !d.ok) { st.erroPag = d.erro || 'Não deu pra gerar o Pix agora. Tente de novo.'; renderPix(); return; }
+      if (d.confirmado) { pagou(); return; }
+      st.pend.mpPix = { qr: d.qr }; if (d.vence) st.pend.sinal.expira = d.vence;
+      guardar(KEY, st.pend); renderPix(); acompanhar();
+    }
     if (a === 'desistir') {
       if (!st.confirmaDesistir) { st.confirmaDesistir = true; renderPix(); return; }
       await sb.rpc('desistir_reserva', { p_slug: slug, p_id: st.pend.id });
-      clearInterval(poll); guardar(KEY, null); st.pend = null; st.pago = false; st.confirmaDesistir = false; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); window.scrollTo(0, 0);
+      clearInterval(poll); tirarCartao(); guardar(KEY, null); st.pend = null; st.pago = false; st.confirmaDesistir = false; st.metodo = ''; st.erroPag = ''; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); window.scrollTo(0, 0);
     }
     if (a === 'confirmar') {
       st.enviando = true; render();
