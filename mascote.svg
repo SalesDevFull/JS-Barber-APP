@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" class="mascote">
+  <!-- corpo: jaleco creme, colete couro, gravata borboleta vinho -->
+  <g class="m-corpo">
+    <path d="M28 220 C30 178 58 160 100 160 C142 160 170 178 172 220 Z" fill="#EFE3CF"/>
+    <path d="M62 220 L70 170 C80 166 90 164 100 164 C110 164 120 166 130 170 L138 220 Z" fill="#6B4227"/>
+    <path d="M100 166 L84 220 M100 166 L116 220" stroke="#5A361F" stroke-width="2" fill="none"/>
+    <circle cx="100" cy="196" r="2.6" fill="#C9A35B"/>
+    <circle cx="100" cy="210" r="2.6" fill="#C9A35B"/>
+    <path d="M78 160 L100 176 L90 186 Z" fill="#FFFFFF"/>
+    <path d="M122 160 L100 176 L110 186 Z" fill="#FFFFFF"/>
+    <g class="m-gravata">
+      <path d="M100 172 L80 162 C76 161 74 164 75 168 L77 180 C78 184 81 185 84 183 Z" fill="#8E2F35"/>
+      <path d="M100 172 L120 162 C124 161 126 164 125 168 L123 180 C122 184 119 185 116 183 Z" fill="#8E2F35"/>
+      <rect x="94" y="166" width="12" height="12" rx="4" fill="#A63B42"/>
+    </g>
+    <!-- tesoura no bolso -->
+    <g transform="translate(140 186) rotate(-20)">
+      <rect x="-12" y="4" width="24" height="16" rx="3" fill="#E2D3BA"/>
+      <path d="M-4 4 L2 -14 M4 4 L-2 -14" stroke="#9AA3AD" stroke-width="2.4" stroke-linecap="round"/>
+    </g>
+  </g>
+  <!-- pescoço e orelhas -->
+  <rect x="86" y="138" width="28" height="26" rx="10" fill="#D99E76"/>
+  <ellipse cx="50" cy="104" rx="11" ry="15" fill="#E7AE86"/>
+  <ellipse cx="150" cy="104" rx="11" ry="15" fill="#E7AE86"/>
+  <ellipse cx="51" cy="105" rx="5" ry="8" fill="#D2926B"/>
+  <ellipse cx="149" cy="105" rx="5" ry="8" fill="#D2926B"/>
+  <!-- cabeça -->
+  <path d="M54 92 C54 58 74 40 100 40 C126 40 146 58 146 92 L146 112 C146 140 126 156 100 156 C74 156 54 140 54 112 Z" fill="#EDB990"/>
+  
+  
+  <!-- topete -->
+  <path d="M52 92 C42 60 52 30 78 18 C98 8 126 8 142 22 C156 34 156 58 148 92 C144 74 134 64 120 62 C128 56 126 46 116 44 C104 42 94 52 84 58 C70 64 58 74 52 92 Z" fill="#3A2416"/>
+  <path d="M60 52 C66 30 88 16 112 16 C96 22 80 34 72 50 Z" fill="#5B3A24"/>
+  <path d="M118 18 C138 20 150 34 150 54 C144 40 132 30 118 26 Z" fill="#5B3A24"/>
+  <path d="M84 30 C96 24 112 24 124 30" stroke="#6E4A30" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- sobrancelhas -->
+  <path class="m-sob" d="M68 82 C74 74 86 74 92 80" stroke="#3A2416" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path class="m-sob" d="M108 80 C114 74 126 74 132 82" stroke="#3A2416" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- olhos -->
+  <g class="m-olhos">
+    <ellipse cx="80" cy="96" rx="7" ry="8.5" fill="#2A1B12"/>
+    <ellipse cx="120" cy="96" rx="7" ry="8.5" fill="#2A1B12"/>
+    <circle cx="82.5" cy="93" r="2.4" fill="#FFFFFF"/>
+    <circle cx="122.5" cy="93" r="2.4" fill="#FFFFFF"/>
+  </g>
+  <!-- bochechas -->
+  <ellipse cx="68" cy="116" rx="9" ry="5.5" fill="#E58E7A" opacity=".45"/>
+  <ellipse cx="132" cy="116" rx="9" ry="5.5" fill="#E58E7A" opacity=".45"/>
+  <!-- nariz -->
+  <path d="M100 98 C96 108 92 114 96 118 C99 120 104 120 106 117" stroke="#C98763" stroke-width="3" fill="#E3A781" stroke-linecap="round"/>
+  <!-- sorriso -->
+  <path class="m-boca" d="M88 134 C94 142 106 142 112 134 C106 137 94 137 88 134 Z" fill="#8E2F35"/>
+  <!-- bigode enrolado -->
+  <g class="m-bigode">
+    <path d="M100 120 C92 116 80 116 72 124 C66 130 58 132 52 128 C46 124 46 116 52 114 C48 120 54 124 58 120 C62 116 66 112 74 112 C84 112 94 114 100 118 C106 114 116 112 126 112 C134 112 138 116 142 120 C146 124 152 120 148 114 C154 116 154 124 148 128 C142 132 134 130 128 124 C120 116 108 116 100 120 Z" fill="#3A2416"/>
+    <path d="M100 119 C92 115 82 116 76 120 C86 116 94 117 100 121 Z" fill="#5B3A24"/>
+  </g>
+</svg>

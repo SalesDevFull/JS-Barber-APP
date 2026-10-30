@@ -1,13 +1,24 @@
-# App da Barbearia — como colocar no ar
+# JS Barber APP — como colocar no ar
 
-Este projeto é o seu app, hospedado em contas suas. Ele tem três partes:
+Este projeto é o seu app, hospedado em contas suas.
 
 | Arquivo | O que é |
 |---|---|
 | `index.html` | Painel do dono e dos barbeiros (login, agenda, caixa, clientes, gestão) |
-| `agendar.html` | Página pública onde o cliente final agenda, sem precisar de conta |
-| `config.js` | Onde você cola os dados de conexão do Supabase |
+| `agendar.html` | Página pública onde o cliente final agenda (e paga o sinal), sem precisar de conta |
+| `admin.html` | Seu painel de administrador do sistema |
+| `pix.js` | Gera o código Pix "copia e cola" do sinal |
+| `config.js` | Onde ficam os dados de conexão do Supabase |
 | `supabase/schema.sql` | O banco de dados: tabelas, regras de acesso e funções |
+| `manifest.webmanifest`, `*.png` | Nome e ícone do app na tela do celular |
+| `vercel.json` | Ajustes pro ícone e as atualizações aparecerem certinho na Vercel |
+| `mascote.svg` | O mascote (barbeiro bigodudo), caso queira usar em posts ou no Instagram |
+
+## Atualizando uma versão que já está no ar
+
+1. **Banco:** no Supabase, **SQL Editor**, cole o `supabase/schema.sql` inteiro de novo e clique em **Run**. Ele não apaga nada, só acrescenta o que é novo.
+2. **Site:** substitua **todos** os arquivos do seu repositório (ou da pasta do Netlify) pelos desta versão, mantendo o seu `config.js`. Na Vercel, a publicação acontece sozinha depois do envio pro GitHub.
+3. **Ícone no celular:** apague o atalho antigo da tela de início e adicione de novo. O celular guarda o ícone velho e não troca sozinho.
 
 Cada barbearia que assina tem seu próprio espaço. Uma não enxerga os dados da outra, e você, como dono do sistema, controla tudo pelo painel do Supabase.
 
@@ -60,10 +71,20 @@ Sem isso, os links de confirmação de e-mail e de "esqueci a senha" levam pro l
 1. Abra o seu site, clique em **Criar conta nova** e cadastre-se.
 2. Preencha o nome da barbearia, o link (ex.: `barbearia-do-joao`) e o seu nome.
 3. Em **Gestão**:
-   - **Barbearia**: cor, horário de funcionamento, meta do mês, e o **link de agendamento com QR code**.
+   - **Barbearia**: logo, cor, estilo da página do cliente (claro ou escuro), mensagem de boas-vindas, endereço, Instagram, WhatsApp, horário de funcionamento, meta do mês e o **link de agendamento com QR code**.
+   - **Pagamentos**: formas aceitas, chave Pix e o **sinal pra agendar** (veja abaixo).
    - **Serviços**: preços e duração.
    - **Equipe**: barbeiros (aparecem na agenda) e **Acesso ao app** (convite por e-mail pra quem vai usar o painel).
 4. Abra o link de agendamento no celular e marque um horário de teste. Ele aparece na hora na agenda do painel.
+
+### Sinal pra agendar (Pix com confirmação manual)
+- Ligado em **Gestão → Pagamentos**, o cliente que agenda pelo link vê um QR Pix e um código "copia e cola" com o valor do sinal (20%, 30%, 50% ou 100% do serviço).
+- O horário fica **reservado pelo prazo escolhido** (15, 30 ou 60 minutos). Ninguém mais consegue pegar aquele horário enquanto isso.
+- Na **Agenda**, a reserva aparece como "Aguardando sinal". Confira no app do seu banco e toque em **Sinal recebido**. A página do cliente mostra "Horário marcado!" sozinha.
+- Se o prazo acabar sem confirmação, o horário volta a ficar livre. Se o Pix chegou atrasado, use **Recebi mesmo assim**.
+- Na comanda, o sinal já aparece descontado. No fechamento do caixa, ele entra como Pix.
+- Use **Testar o Pix** (mesma tela) pra conferir no app do banco se aparece o seu nome antes de ligar o sinal.
+- O dinheiro cai direto na conta da barbearia, sem taxa e sem intermediário. A confirmação é manual porque o Pix comum não avisa o app; a confirmação automática exige um intermediário pago (Mercado Pago, Asaas etc.).
 
 **Instalar no celular:** abra o site no celular e use "Adicionar à tela de início" (Safari: botão compartilhar; Chrome: menu ⋮). Ele passa a abrir como um aplicativo.
 
@@ -93,7 +114,7 @@ O endereço é o do seu site com `/admin.html` no final (ex.: `https://seusite.n
 4. Abra `/admin.html` e entre com esse e-mail e senha.
 
 ### Como funciona a cobrança
-- Toda barbearia nova ganha **14 dias de teste grátis** (o vencimento começa 14 dias depois do cadastro).
+- Toda barbearia nova ganha **10 dias de teste grátis** (o vencimento começa 10 dias depois do cadastro). Barbearias que já existiam mantêm o vencimento que tinham.
 - Quando o vencimento passa, a barbearia tem **5 dias de tolerância** e vê um aviso no Início do app. Depois disso o acesso é **bloqueado automaticamente**: o painel mostra "Acesso suspenso" e o link de agendamento para de funcionar. Nenhum dado é apagado.
 - Recebeu? Em **Registrar pagamento**, informe o valor e quantos meses. O vencimento avança e o acesso volta na hora.
 - **Desativar** bloqueia na hora, independente do vencimento. **Reativar** desfaz.
@@ -108,7 +129,7 @@ No **Table Editor**: `barbearias` (cadastro e assinatura), `pagamentos` (histór
 ## O que ainda não tem (próximos passos)
 
 - **Lembrete automático no WhatsApp**: hoje o app abre o WhatsApp com a mensagem pronta e a pessoa aperta enviar. O automático exige a API oficial do WhatsApp Business por um parceiro (BSP) e uma função no servidor.
-- **Assinatura no cartão** (para os clientes da barbearia e para cobrar as barbearias): integração com Asaas, Pagar.me ou Mercado Pago.
+- **Pix e cartão com confirmação automática** (sinal e assinatura dos clientes, e cobrança das barbearias): integração com Asaas, Pagar.me ou Mercado Pago.
 - **Nota fiscal (NFS-e)**: integração com NFE.io, Focus NFe ou similar.
 - **Permissões finas**: hoje o barbeiro convidado vê tudo da barbearia (inclusive o caixa). Dá pra restringir depois.
 - **Domínio próprio** (ex.: `agenda.suamarca.com.br`): compre o domínio (registro.br) e aponte no Netlify/Vercel em **Domains**.
@@ -116,5 +137,6 @@ No **Table Editor**: `barbearias` (cadastro e assinatura), `pagamentos` (histór
 ## Segurança — o que já está protegido
 
 - Cada barbearia só lê e grava os próprios dados (regras de acesso no banco, não no site).
-- O cliente final, sem login, só consegue: ver nome, serviços, preços e barbeiros da barbearia; ver quais horários estão ocupados (sem nomes); e marcar um horário. O servidor confere se o horário está livre, se está dentro do funcionamento e se não é no passado.
+- O cliente final, sem login, só consegue: ver o perfil público da barbearia (nome, logo, serviços, preços, barbeiros, contato e a chave Pix quando o sinal está ligado); ver quais horários estão ocupados (sem nomes); marcar um horário; consultar e desistir da própria reserva. O servidor confere se o horário está livre, se está dentro do funcionamento, se não é no passado, e calcula o valor do sinal ele mesmo.
+- Cada WhatsApp só pode ter uma reserva esperando sinal por vez, pra ninguém travar a agenda com reservas falsas.
 - Comissões, custos e dados de clientes nunca aparecem na página pública.

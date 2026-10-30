@@ -5,97 +5,126 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#3B2617">
 <title>Agendar horário</title>
-<link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
-<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
 <style>
-/* Página pública: uma coluna estreita, clara, com a cor da barbearia nos destaques. */
+/* Página pública da barbearia: uma coluna estreita, faixa de madeira com a logo, e o estilo (claro ou escuro) que o dono escolheu. */
 :root{
   color-scheme: light;
-  --bg:#F6F5F2; --surface:#FFFFFF; --line:#E3E1DC; --fg:#141416; --muted:#5A5A62; --dim:#8A8A93;
-  --marca:#8B9BFF; --marca-ink:#141416; --ok:#1E7A44; --ok-soft:#E3F3E9; --bad:#B3261E;
-  --font:'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bg:#F4ECDF; --surface:#FFFBF4; --surface2:#FBF3E6; --line:#E0CFB6; --fg:#2A1B12; --muted:#6B5544; --dim:#8C7560;
+  --marca:#C9A35B; --marca-ink:#2A1B12; --couro:#2A1B12; --couro-fg:#F3E9DA;
+  --ok:#1E6B3C; --ok-soft:#EAF2E2; --ok-line:#C7D6B5; --bad:#A3271F; --warn:#8A5A12; --warn-soft:#FBEFD6; --warn-line:#E8CF9B;
+  --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11;
+  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-tema="escuro"]{
+  color-scheme: dark;
+  --bg:#1A120D; --surface:#271B13; --surface2:#2F2117; --line:#3B2B1F; --fg:#F3E9DA; --muted:#C4AF95; --dim:#A08A73;
+  --couro:#C9A35B; --couro-fg:#1A120D;
+  --ok:#8CC79A; --ok-soft:#1C2418; --ok-line:#3A5236; --bad:#E48A72; --warn:#E3AE57; --warn-soft:#2A1F12; --warn-line:#6B4E25;
 }
 *{box-sizing:border-box}
 html,body{min-height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(rgba(120,80,40,.05) 1px,transparent 1px);background-size:4px 4px;color:var(--fg);font-family:var(--font);font-size:17px;line-height:1.4}
 [hidden]{display:none!important}
-.wrap{max-width:520px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
-.topo{display:flex;align-items:center;gap:12px}
-.logo{width:52px;height:52px;border-radius:14px;background:#141416;color:var(--marca);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0}
-h1{margin:0;font-size:22px;font-weight:700;text-wrap:balance}
-.sub{font-size:14px;color:var(--muted)}
-.tiny{font-size:12px;color:var(--muted)}
+button,input{font-family:inherit}
+.wrap{max-width:520px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+.topo{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.05) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3));color:#F3E9DA;border-radius:18px;padding:18px;border-bottom:3px solid var(--marca);box-shadow:0 8px 20px rgba(60,35,15,.25);display:flex;flex-direction:column;gap:12px}
+.topo-in{display:flex;align-items:center;gap:14px}
+.logo{width:64px;height:64px;border-radius:999px;background:#1A120D;border:2px solid var(--marca);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.logo img{width:100%;height:100%;object-fit:cover;background:#fff}
+.logo svg{width:100%;height:100%}
+h1{margin:0;font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1;text-wrap:balance;color:#F3E9DA}
+.topo .sub{color:#D9C6AA}
+.recado{font-size:16px;color:#EADBC4;border-top:1px solid rgba(201,163,91,.3);padding-top:10px}
+h2{margin:0;font-family:var(--display);font-size:24px;font-weight:700;color:var(--fg)}
+.sub{font-size:15px;color:var(--muted)}
+.tiny{font-size:13px;color:var(--muted)}
 section{display:flex;flex-direction:column;gap:10px}
-.lbl{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.lbl{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-.pick{min-height:60px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--fg);text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;font-family:inherit}
-.pick b{font-size:15px;font-weight:600}
-.pick span{font-size:13px;color:var(--muted)}
-.pick.on{border-color:#141416}
-.dia{min-width:64px;min-height:64px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;font-family:inherit;flex-shrink:0}
-.dia small{font-size:12px;font-weight:500}
+.pick{min-height:60px;padding:11px 13px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.pick b{font-size:16px;font-weight:600}
+.pick span{font-size:14px;color:var(--muted)}
+.pick.on{border:2px solid var(--couro);padding:10px 12px;background:var(--surface2)}
+.dia{min-width:64px;min-height:64px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;flex-shrink:0}
+.dia small{font-size:13px;font-weight:500}
 .dia b{font-size:19px}
-.dia.on{background:#141416;border-color:#141416;color:#fff}
-.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;flex-shrink:0}
-.chip.on{background:#141416;border-color:#141416;color:#fff}
-.slot{min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums}
-.slot.on{background:var(--marca);border-color:#141416;color:var(--marca-ink);font-weight:700}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;flex-shrink:0}
+.dia.on,.chip.on{background:var(--couro);border-color:var(--couro);color:var(--couro-fg)}
+.slot{min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:500;cursor:pointer;font-variant-numeric:tabular-nums}
+.slot.on{background-color:var(--marca);background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.10));border-color:var(--couro);color:var(--marca-ink);font-weight:700}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:14px;color:var(--muted);font-weight:500}
-input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:16px;font-family:inherit;width:100%}
-.btn{min-height:54px;border-radius:14px;border:none;background:#141416;color:var(--marca);font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
-.btn:disabled{background:#E3E1DC;color:#77777F;cursor:default}
-.btn.sec{background:transparent;border:1px solid var(--line);color:var(--fg);font-weight:600;font-size:15px;min-height:48px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
-.ok{background:var(--ok-soft);border-color:#B9DCC6}
-.linha{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.field label{font-size:15px;color:var(--muted);font-weight:500}
+input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:16px;width:100%}
+.btn{min-height:54px;border-radius:14px;border:none;background:var(--couro);color:var(--marca);font-family:var(--display);font-size:19px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 12px rgba(42,27,18,.25);display:flex;align-items:center;justify-content:center;text-decoration:none;text-align:center;padding:0 14px}
+:root[data-tema="escuro"] .btn{color:var(--couro-fg)}
+.btn:disabled{background:var(--line);color:var(--dim);box-shadow:none;cursor:default}
+.btn.sec{background:transparent;border:1px solid var(--line);color:var(--fg);font-family:var(--font);font-weight:600;font-size:16px;min-height:48px;box-shadow:none}
+.btn.zap{background:#1E6B3C;color:#fff;font-family:var(--font);font-size:16px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.card.ok{background:var(--ok-soft);border-color:var(--ok-line)}
+.card.ok::after,.card.pix::after{content:"";position:absolute;inset:6px;border:1px dashed var(--ok-line);border-radius:13px;pointer-events:none}
+.card.pix{background:var(--warn-soft);border-color:var(--warn-line)}
+.card.pix::after{border-color:var(--warn-line)}
+.linha{display:flex;justify-content:space-between;gap:12px;font-size:16px}
 .linha span:first-child{color:var(--muted)}
-.erro{color:var(--bad);font-size:14px;font-weight:500}
-.vazio{color:var(--muted);font-size:14px}
+.valor{font-family:var(--display);font-size:38px;font-weight:700;line-height:1;font-variant-numeric:lining-nums tabular-nums}
+.qr{background:#fff;border-radius:14px;padding:12px;width:204px;height:204px;align-self:center;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.qr img,.qr canvas{width:180px!important;height:180px!important}
+.copia{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all;background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:10px;user-select:all;color:var(--fg)}
+.relogio{font-variant-numeric:tabular-nums;font-weight:700}
+.erro{color:var(--bad);font-size:15px;font-weight:600}
+.vazio{color:var(--muted);font-size:15px}
+.info{display:flex;flex-direction:column;gap:8px;font-size:15px}
+.info a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--marca);text-underline-offset:3px}
+.info .row{display:flex;gap:10px;align-items:flex-start}
+.info svg{flex-shrink:0;margin-top:2px;color:var(--marca)}
+.centro{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.masc{display:inline-flex;line-height:0}
+.masc svg{width:100%;height:100%;overflow:visible}
+.masc .m-olhos{transform-box:view-box;transform-origin:100px 96px;animation:piscar 5s infinite}
+.masc .m-bigode{transform-box:view-box;transform-origin:100px 118px}
+.m-festa{width:110px;height:121px;animation:pular .55s ease-in-out 3}
+.m-festa .m-bigode{animation:bigode .45s ease-in-out 3}
+.m-espera{width:74px;height:81px;animation:flutuar 3.2s ease-in-out infinite}
+@keyframes piscar{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes bigode{0%,100%{transform:rotate(0)}30%{transform:rotate(-8deg)}70%{transform:rotate(8deg)}}
+@keyframes pular{0%,100%{transform:translateY(0) rotate(0)}40%{transform:translateY(-12px) rotate(-5deg)}75%{transform:translateY(0) rotate(4deg)}}
+@keyframes flutuar{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.entra>*{animation:subir .42s cubic-bezier(.2,.7,.3,1) both}
+.entra>*:nth-child(2){animation-delay:.05s}.entra>*:nth-child(3){animation-delay:.1s}.entra>*:nth-child(4){animation-delay:.15s}.entra>*:nth-child(n+5){animation-delay:.2s}
+@keyframes subir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pick,.chip,.dia,.slot,.btn{transition:transform .12s ease,background-color .2s ease,border-color .2s ease}
+.pick:active,.chip:active,.dia:active,.slot:active,.btn:active{transform:scale(.97)}
+.poste{width:22px;height:64px;border-radius:11px;border:3px solid var(--marca);overflow:hidden;background:#F3E9DA;display:block;align-self:center}
+.poste i{display:block;height:200%;background:repeating-linear-gradient(-45deg,#B23A3A 0 8px,#F3E9DA 8px 16px,#2F5A9E 16px 24px,#F3E9DA 24px 32px);animation:girar 1s linear infinite}
+@keyframes girar{from{transform:translateY(-45.25px)}to{transform:translateY(0)}}
+.rodape{text-align:center;font-size:12px;color:var(--dim)}
 :focus-visible{outline:3px solid var(--marca);outline-offset:2px}
-
-/* ===== Estilo couro e madeira (página do cliente) =====
-   Papel creme quente, faixa de madeira com o nome da barbearia, botões em couro escuro com letras em latão. */
-:root{
-  --bg:#F4ECDF; --surface:#FFFBF4; --line:#E0CFB6; --fg:#2A1B12; --muted:#6B5544; --dim:#8C7560;
-  --marca:#C9A35B; --marca-ink:#2A1B12; --couro:#2A1B12; --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11;
-  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
-}
-body{font-size:17px;background-image:radial-gradient(rgba(120,80,40,.05) 1px,transparent 1px);background-size:4px 4px}
-.topo{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.05) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3));color:#F3E9DA;border-radius:18px;padding:18px;border-bottom:3px solid var(--marca);box-shadow:0 8px 20px rgba(60,35,15,.25)}
-.topo h1{font-family:var(--display);font-size:26px;font-weight:700;color:#F3E9DA}
-.topo .sub{color:#D9C6AA}
-.logo{background:#1A120D;color:var(--marca);border:2px solid var(--marca);border-radius:999px;font-family:var(--display);box-shadow:inset 0 0 0 3px #1A120D,inset 0 0 0 4px rgba(201,163,91,.35)}
-h1{font-family:var(--display)}
-.lbl{color:var(--muted);letter-spacing:.1em}
-.pick{border-width:1px;padding:11px 13px}
-.pick.on{border:2px solid var(--couro);padding:10px 12px;background:#FBF3E6}
-.dia.on,.chip.on{background:var(--couro);border-color:var(--couro);color:#F3E9DA}
-.slot.on{background-color:var(--marca);background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.10));border-color:var(--couro);color:var(--marca-ink)}
-.btn{background:var(--couro);color:var(--marca);font-family:var(--display);font-size:19px;letter-spacing:.01em;box-shadow:0 4px 12px rgba(42,27,18,.25)}
-.btn:disabled{background:#E6D9C6;color:#7A6654;box-shadow:none}
-.card{position:relative}
-.card.ok{background:#EEF3E6;border-color:#C7D6B5}
-.card.ok::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(60,90,50,.35);border-radius:13px;pointer-events:none}
-.card.ok h1{color:#2E4A26}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <main class="wrap" id="app">
-  <p class="sub">Carregando…</p>
+  <div class="centro" style="padding-top:80px"><span class="poste" aria-hidden="true"><i></i></span><span class="sub">Carregando…</span></div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix.js"></script>
 <script src="config.js"></script>
 <script>
 (function () {
   'use strict';
+  const MASCOTE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" class="mascote"><g class="m-corpo"><path d="M28 220 C30 178 58 160 100 160 C142 160 170 178 172 220 Z" fill="#EFE3CF"/><path d="M62 220 L70 170 C80 166 90 164 100 164 C110 164 120 166 130 170 L138 220 Z" fill="#6B4227"/><path d="M100 166 L84 220 M100 166 L116 220" stroke="#5A361F" stroke-width="2" fill="none"/><circle cx="100" cy="196" r="2.6" fill="#C9A35B"/><circle cx="100" cy="210" r="2.6" fill="#C9A35B"/><path d="M78 160 L100 176 L90 186 Z" fill="#FFFFFF"/><path d="M122 160 L100 176 L110 186 Z" fill="#FFFFFF"/><g class="m-gravata"><path d="M100 172 L80 162 C76 161 74 164 75 168 L77 180 C78 184 81 185 84 183 Z" fill="#8E2F35"/><path d="M100 172 L120 162 C124 161 126 164 125 168 L123 180 C122 184 119 185 116 183 Z" fill="#8E2F35"/><rect x="94" y="166" width="12" height="12" rx="4" fill="#A63B42"/></g><g transform="translate(140 186) rotate(-20)"><rect x="-12" y="4" width="24" height="16" rx="3" fill="#E2D3BA"/><path d="M-4 4 L2 -14 M4 4 L-2 -14" stroke="#9AA3AD" stroke-width="2.4" stroke-linecap="round"/></g></g><rect x="86" y="138" width="28" height="26" rx="10" fill="#D99E76"/><ellipse cx="50" cy="104" rx="11" ry="15" fill="#E7AE86"/><ellipse cx="150" cy="104" rx="11" ry="15" fill="#E7AE86"/><ellipse cx="51" cy="105" rx="5" ry="8" fill="#D2926B"/><ellipse cx="149" cy="105" rx="5" ry="8" fill="#D2926B"/><path d="M54 92 C54 58 74 40 100 40 C126 40 146 58 146 92 L146 112 C146 140 126 156 100 156 C74 156 54 140 54 112 Z" fill="#EDB990"/><path d="M52 92 C42 60 52 30 78 18 C98 8 126 8 142 22 C156 34 156 58 148 92 C144 74 134 64 120 62 C128 56 126 46 116 44 C104 42 94 52 84 58 C70 64 58 74 52 92 Z" fill="#3A2416"/><path d="M60 52 C66 30 88 16 112 16 C96 22 80 34 72 50 Z" fill="#5B3A24"/><path d="M118 18 C138 20 150 34 150 54 C144 40 132 30 118 26 Z" fill="#5B3A24"/><path d="M84 30 C96 24 112 24 124 30" stroke="#6E4A30" stroke-width="3" stroke-linecap="round" fill="none"/><path class="m-sob" d="M68 82 C74 74 86 74 92 80" stroke="#3A2416" stroke-width="6" stroke-linecap="round" fill="none"/><path class="m-sob" d="M108 80 C114 74 126 74 132 82" stroke="#3A2416" stroke-width="6" stroke-linecap="round" fill="none"/><g class="m-olhos"><ellipse cx="80" cy="96" rx="7" ry="8.5" fill="#2A1B12"/><ellipse cx="120" cy="96" rx="7" ry="8.5" fill="#2A1B12"/><circle cx="82.5" cy="93" r="2.4" fill="#FFFFFF"/><circle cx="122.5" cy="93" r="2.4" fill="#FFFFFF"/></g><ellipse cx="68" cy="116" rx="9" ry="5.5" fill="#E58E7A" opacity=".45"/><ellipse cx="132" cy="116" rx="9" ry="5.5" fill="#E58E7A" opacity=".45"/><path d="M100 98 C96 108 92 114 96 118 C99 120 104 120 106 117" stroke="#C98763" stroke-width="3" fill="#E3A781" stroke-linecap="round"/><path class="m-boca" d="M88 134 C94 142 106 142 112 134 C106 137 94 137 88 134 Z" fill="#8E2F35"/><g class="m-bigode"><path d="M100 120 C92 116 80 116 72 124 C66 130 58 132 52 128 C46 124 46 116 52 114 C48 120 54 124 58 120 C62 116 66 112 74 112 C84 112 94 114 100 118 C106 114 116 112 126 112 C134 112 138 116 142 120 C146 124 152 120 148 114 C154 116 154 124 148 128 C142 132 134 130 128 124 C120 116 108 116 100 120 Z" fill="#3A2416"/><path d="M100 119 C92 115 82 116 76 120 C86 116 94 117 100 121 Z" fill="#5B3A24"/></g></svg>';
   const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const brl = (n) => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pad = (n) => String(n).padStart(2, '0');
@@ -110,14 +139,25 @@ h1{font-family:var(--display)}
   const hoje = () => dstr(new Date());
   const agoraMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
   const diaLongo = (s) => { const d = parseD(s); return SEML[d.getDay()] + ', ' + d.getDate() + ' de ' + MES[d.getMonth()]; };
+  const waLink = (tel, msg) => { let d = String(tel || '').replace(/\D/g, ''); if (!d) return ''; if (d.length <= 11) d = '55' + d; return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg); };
+  const guardar = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento */ } };
+  const ler = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const ICON = {
+    pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+    insta: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
+    zap: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4.1A8 8 0 1 1 20 12z"/></svg>',
+    card: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>'
+  };
 
   const app = document.getElementById('app');
   const slug = new URLSearchParams(location.search).get('b') || '';
-  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, nome: '', tel: '' };
-  try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; } catch (e) { /* sem armazenamento */ }
-  let sb = null;
+  const KEY = 'ag_pend_' + slug;
+  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, pend: null, pago: false, confirmaDesistir: false, tela: '' };
+  try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; } catch (e) { st.nome = ''; st.tel = ''; }
+  let sb = null, timer = null, poll = null;
 
-  function msg(t) { app.innerHTML = '<div class="card"><p style="margin:0">' + t + '</p></div>'; }
+  function msg(t) { app.innerHTML = '<div class="card centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><p style="margin:0">' + t + '</p></div>'; }
+  function animar(nome) { if (st.tela !== nome) { st.tela = nome; app.classList.remove('entra'); void app.offsetWidth; app.classList.add('entra'); setTimeout(() => app.classList.remove('entra'), 800); } }
 
   function livres() {
     const b = st.b; const s = b.servicos.find((x) => x.id === st.serv); if (!s) return [];
@@ -128,12 +168,10 @@ h1{font-family:var(--display)}
     const out = [];
     for (let m = ini; m + dur <= fim + 1; m += step) {
       if (m <= passou) continue;
-      const algumLivre = ids.some((id) => !oc.some((o) => o.barbeiroId === id && toMin(o.hora) < m + dur && m < toMin(o.hora) + (Number(o.dur) || 30)));
-      if (algumLivre) out.push(m);
+      if (ids.some((id) => !oc.some((o) => o.barbeiroId === id && toMin(o.hora) < m + dur && m < toMin(o.hora) + (Number(o.dur) || 30)))) out.push(m);
     }
     return out;
   }
-
   async function carregarDia(dia) {
     if (st.ocup[dia]) return;
     st.carregandoDia = true; render();
@@ -142,19 +180,39 @@ h1{font-family:var(--display)}
     st.carregandoDia = false; render();
   }
 
+  function topo() {
+    const b = st.b;
+    return '<header class="topo"><div class="topo-in"><div class="logo"' + (b.logo ? '' : ' aria-hidden="true"') + '>' + (b.logo ? '<img src="' + esc(b.logo) + '" alt="Logo da ' + esc(b.nome) + '">' : MASCOTE.replace('viewBox="0 0 200 220"', 'viewBox="30 8 140 150"')) + '</div>' +
+      '<div><h1>' + esc(b.nome) + '</h1><span class="sub">Agende seu horário · ' + esc(b.abre) + ' às ' + esc(b.fecha) + '</span></div></div>' +
+      (b.mensagem ? '<div class="recado">' + esc(b.mensagem) + '</div>' : '') + '</header>';
+  }
+  function infos() {
+    const b = st.b; let h = '';
+    if (b.endereco) h += '<div class="row">' + ICON.pin + '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(b.endereco) + '" target="_blank" rel="noopener">' + esc(b.endereco) + '</a></div>';
+    if (b.instagram) h += '<div class="row">' + ICON.insta + '<a href="https://instagram.com/' + encodeURIComponent(b.instagram) + '" target="_blank" rel="noopener">@' + esc(b.instagram) + '</a></div>';
+    if (b.whatsapp) { const w = waLink(b.whatsapp, 'Oi! Vim pela página de agendamento.'); h += '<div class="row">' + ICON.zap + '<a href="' + esc(w) + '" target="_blank" rel="noopener">' + esc(b.whatsapp) + '</a></div>'; }
+    if ((b.formas || []).length) h += '<div class="row">' + ICON.card + '<span>Aceita ' + esc(b.formas.join(', ').replace(/, ([^,]*)$/, ' e $1')) + '</span></div>';
+    return h ? '<section class="card info"><span class="lbl">Sobre a barbearia</span>' + h + '</section>' : '';
+  }
+
   function render() {
     const b = st.b;
+    clearInterval(timer);
+    if (st.pend) return renderPix();
     if (st.feito) {
       const f = st.feito;
+      animar('feito');
       app.innerHTML = topo() +
-        '<div class="card ok"><h1 style="font-size:24px">Horário marcado!</h1>' +
+        '<div class="card ok"><div class="centro"><span class="masc m-festa" role="img" aria-label="Mascote comemorando">' + MASCOTE + '</span><h2>Horário marcado!</h2></div>' +
         '<div class="linha"><span>Serviço</span><b>' + esc(f.servico) + '</b></div>' +
         '<div class="linha"><span>Barbeiro</span><b>' + esc(f.barbeiro) + '</b></div>' +
-        '<div class="linha"><span>Quando</span><b>' + esc(diaLongo(f.dia)) + ' às ' + esc(f.hora) + '</b></div></div>' +
-        '<p class="sub">A barbearia já está vendo seu horário. Se precisar desmarcar, fale com eles pelo WhatsApp.</p>' +
-        '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
+        '<div class="linha"><span>Quando</span><b>' + esc(diaLongo(f.dia)) + ' às ' + esc(f.hora) + '</b></div>' +
+        (f.sinal ? '<div class="linha"><span>Sinal pago</span><b>' + brl(f.sinal) + '</b></div>' : '') + '</div>' +
+        '<p class="sub" style="margin:0">A barbearia já está vendo seu horário. Se precisar desmarcar, fale com ela pelo WhatsApp.</p>' +
+        infos() + '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
       return;
     }
+    animar('form');
     const s = b.servicos.find((x) => x.id === st.serv);
     let h = topo();
     h += '<section><span class="lbl">Serviço</span><div class="grid2">' + b.servicos.map((x) =>
@@ -180,43 +238,112 @@ h1{font-family:var(--display)}
     h += '<section><span class="lbl">Seus dados</span>' +
       '<div class="field"><label for="f-nome">Nome</label><input id="f-nome" autocomplete="name" value="' + esc(st.nome) + '"></div>' +
       '<div class="field"><label for="f-tel">WhatsApp com DDD</label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" value="' + esc(st.tel) + '"></div></section>';
+    if (b.sinal && s) {
+      const v = Math.round(Number(s.preco) * Number(b.sinal.pct)) / 100;
+      h += '<div class="card pix"><span class="lbl" style="color:var(--warn)">Sinal pra garantir o horário</span><span>Pra confirmar, você paga <b>' + brl(v) + '</b> (' + esc(b.sinal.pct) + '%) no Pix agora. O restante, ' + brl(Number(s.preco) - v) + ', você paga na barbearia.</span><span class="tiny">O horário fica reservado por ' + esc(b.sinal.prazo) + ' minutos enquanto você paga.</span></div>';
+    } else if (b.sinal) {
+      h += '<p class="tiny" style="margin:0">Esta barbearia pede um sinal de ' + esc(b.sinal.pct) + '% no Pix pra garantir o horário.</p>';
+    }
     if (st.erro) h += '<p class="erro" role="alert">' + esc(st.erro) + '</p>';
     const pronto = s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10;
-    h += '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + (st.enviando ? 'Marcando…' : (s && st.hora ? 'Confirmar ' + esc(s.nome.toLowerCase()) + ' às ' + st.hora : 'Confirmar horário')) + '</button>';
+    const rotulo = st.enviando ? 'Reservando…' : (s && st.hora ? (b.sinal ? 'Reservar e pagar o sinal' : 'Confirmar ' + s.nome.toLowerCase() + ' às ' + st.hora) : 'Confirmar horário');
+    h += '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button>';
+    h += infos();
     app.innerHTML = h;
   }
-  function topo() {
-    const b = st.b;
-    return '<header class="topo"><div class="logo" aria-hidden="true">' + esc((b.nome.trim()[0] || 'B').toUpperCase()) + '</div><div><h1>' + esc(b.nome) + '</h1><span class="sub">Agende seu horário · ' + esc(b.abre) + ' às ' + esc(b.fecha) + '</span></div></header>';
+
+  function renderPix() {
+    const p = st.pend; const sn = p.sinal;
+    const restante = Math.max(0, (new Date(sn.expira) - new Date()) / 1000);
+    if (restante <= 0) { expirou(); return; }
+    animar('pix');
+    const codigo = window.Pix.brcode({ tipo: sn.tipo, chave: sn.chave, nome: sn.nome, cidade: sn.cidade, valor: sn.valor, txid: p.id.slice(0, 25) });
+    const zap = st.b.whatsapp ? waLink(st.b.whatsapp, 'Oi! Fiz o Pix de ' + brl(sn.valor) + ' do sinal pro meu horário de ' + diaLongo(p.dia) + ' às ' + p.hora + ' (' + p.servico + '). Segue o comprovante.') : '';
+    app.innerHTML = topo() +
+      '<div class="card pix"><div class="centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><h2>Falta só o sinal</h2>' +
+      '<span class="sub">' + esc(p.servico) + ' com ' + esc(p.barbeiro) + ', ' + esc(diaLongo(p.dia)) + ' às ' + esc(p.hora) + '</span>' +
+      '<span class="valor">' + brl(sn.valor) + '</span><span class="tiny">O restante, ' + brl(Math.max(0, Number(p.preco) - Number(sn.valor))) + ', você paga na barbearia.</span></div>' +
+      '<div class="qr" id="pix-qr" role="img" aria-label="QR code do Pix de ' + brl(sn.valor) + '"></div>' +
+      '<span class="lbl">Pix copia e cola</span><div class="copia" id="pix-codigo">' + esc(codigo) + '</div>' +
+      '<button type="button" class="btn" data-a="copiar">Copiar código Pix</button>' +
+      '<span class="sub" style="text-align:center">Horário reservado por mais <span class="relogio" id="relogio">' + fmtRel(restante) + '</span></span></div>' +
+      (st.pago ? '<div class="card ok"><b>Recebemos seu aviso!</b><span class="sub">Assim que a barbearia ver o Pix, seu horário é confirmado aqui mesmo. Pode deixar esta página aberta.</span>' + (zap ? '<a class="btn zap" href="' + esc(zap) + '" target="_blank" rel="noopener">Mandar comprovante no WhatsApp</a>' : '') + '</div>'
+        : '<button type="button" class="btn sec" data-a="paguei">Já fiz o Pix</button>') +
+      '<button type="button" class="btn sec" data-a="desistir">' + (st.confirmaDesistir ? 'Toque de novo pra desistir' : 'Desistir da reserva') + '</button>' + infos();
+    const qr = document.getElementById('pix-qr');
+    if (qr && window.QRCode) { try { new window.QRCode(qr, { text: codigo, width: 180, height: 180, correctLevel: window.QRCode.CorrectLevel.M }); } catch (e) { qr.hidden = true; } }
+    timer = setInterval(() => {
+      const r = Math.max(0, (new Date(sn.expira) - new Date()) / 1000);
+      const el = document.getElementById('relogio'); if (el) el.textContent = fmtRel(r);
+      if (r <= 0) { clearInterval(timer); expirou(); }
+    }, 1000);
   }
-  function atualizarBotao() {
-    const btn = app.querySelector('[data-a="confirmar"]'); if (!btn) return;
-    const s = st.b.servicos.find((x) => x.id === st.serv);
-    btn.disabled = !(s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10) || st.enviando;
+  const fmtRel = (s) => pad(Math.floor(s / 60)) + ':' + pad(Math.floor(s % 60));
+  function expirou() {
+    clearInterval(poll); guardar(KEY, null); st.pend = null; st.pago = false; st.hora = null; st.ocup = {};
+    st.erro = 'O prazo pra pagar o sinal acabou e o horário foi liberado. Se você já pagou, fale com a barbearia pelo WhatsApp. Ou escolha um horário de novo.';
+    render(); carregarDia(st.dia); window.scrollTo(0, 0);
   }
+  async function conferir() {
+    if (!st.pend) return;
+    const r = await sb.rpc('status_agendamento', { p_slug: slug, p_id: st.pend.id });
+    if (r.error || !r.data) return;
+    const s = r.data.status;
+    if (s === 'agendado' || s === 'cadeira' || s === 'feito') {
+      clearInterval(poll); guardar(KEY, null);
+      st.feito = { servico: st.pend.servico, barbeiro: st.pend.barbeiro, dia: st.pend.dia, hora: st.pend.hora, sinal: st.pend.sinal.valor };
+      st.pend = null; render(); window.scrollTo(0, 0);
+    } else if (s === 'expirado') expirou();
+    else if (s === 'cancelado' || s === 'faltou') {
+      clearInterval(poll); guardar(KEY, null); st.pend = null; st.erro = 'Essa reserva foi cancelada. Escolha um horário de novo.'; render();
+    }
+  }
+  function acompanhar() { clearInterval(poll); poll = setInterval(conferir, 10000); }
 
   app.addEventListener('input', (e) => {
     if (e.target.id === 'f-nome') st.nome = e.target.value;
     if (e.target.id === 'f-tel') st.tel = e.target.value;
-    atualizarBotao();
+    const btn = app.querySelector('[data-a="confirmar"]'); if (!btn) return;
+    const s = st.b.servicos.find((x) => x.id === st.serv);
+    btn.disabled = !(s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10) || st.enviando;
+  });
+  app.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') { const btn = app.querySelector('[data-a="confirmar"]'); if (btn && !btn.disabled) { e.preventDefault(); e.target.blur(); btn.click(); } }
   });
   app.addEventListener('click', async (e) => {
     const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
-    const a = el.dataset.a, v = el.dataset.v; st.erro = '';
+    const a = el.dataset.a, v = el.dataset.v;
+    if (a !== 'desistir') st.confirmaDesistir = false;
+    if (['serv', 'barb', 'dia', 'hora'].indexOf(a) >= 0) st.erro = '';
     if (a === 'serv') { st.serv = v; st.hora = null; render(); carregarDia(st.dia); }
     if (a === 'barb') { st.barb = v; st.hora = null; render(); }
     if (a === 'dia') { st.dia = v; st.hora = null; render(); carregarDia(v); }
     if (a === 'hora') { st.hora = v; render(); }
     if (a === 'novo') { st.feito = null; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); }
+    if (a === 'copiar') {
+      const txt = document.getElementById('pix-codigo').textContent;
+      try { await navigator.clipboard.writeText(txt); el.textContent = 'Código copiado!'; setTimeout(() => { el.textContent = 'Copiar código Pix'; }, 2000); }
+      catch (er) { const r = document.createRange(); r.selectNodeContents(document.getElementById('pix-codigo')); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); el.textContent = 'Selecionado. Agora copie.'; }
+    }
+    if (a === 'paguei') { st.pago = true; renderPix(); conferir(); }
+    if (a === 'desistir') {
+      if (!st.confirmaDesistir) { st.confirmaDesistir = true; renderPix(); return; }
+      await sb.rpc('desistir_reserva', { p_slug: slug, p_id: st.pend.id });
+      clearInterval(poll); guardar(KEY, null); st.pend = null; st.pago = false; st.confirmaDesistir = false; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); window.scrollTo(0, 0);
+    }
     if (a === 'confirmar') {
       st.enviando = true; render();
       const r = await sb.rpc('agendar_publico', { p_slug: slug, p_dia: st.dia, p_hora: st.hora, p_servico: st.serv, p_barbeiro: st.barb, p_nome: st.nome.trim(), p_tel: st.tel.trim() });
       st.enviando = false;
       if (r.error) { st.erro = r.error.message || 'Não deu pra marcar. Tente de novo.'; st.hora = null; delete st.ocup[st.dia]; render(); carregarDia(st.dia); return; }
       try { localStorage.setItem('ag_nome', st.nome.trim()); localStorage.setItem('ag_tel', st.tel.trim()); } catch (er) { /* sem armazenamento */ }
-      st.feito = r.data; render(); window.scrollTo(0, 0);
+      if (r.data.status === 'aguardando_sinal' && r.data.sinal) {
+        st.pend = r.data; guardar(KEY, r.data); render(); acompanhar();
+      } else { st.feito = r.data; render(); }
+      window.scrollTo(0, 0);
     }
   });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && st.pend) conferir(); });
 
   async function iniciar() {
     const C = window.APP_CONFIG || {};
@@ -234,7 +361,11 @@ h1{font-family:var(--display)}
     document.title = 'Agendar · ' + st.b.nome;
     const antigas = ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'];
     document.documentElement.style.setProperty('--marca', !st.b.cor || antigas.indexOf(String(st.b.cor).toUpperCase()) >= 0 ? '#C9A35B' : st.b.cor);
+    if (st.b.tema === 'escuro') document.documentElement.setAttribute('data-tema', 'escuro');
     if (!st.b.servicos.length || !st.b.barbeiros.length) { msg('Esta barbearia ainda não abriu a agenda online.'); return; }
+    const p = ler(KEY);
+    if (p && p.id && p.sinal && new Date(p.sinal.expira) > new Date()) { st.pend = p; render(); acompanhar(); conferir(); return; }
+    guardar(KEY, null);
     render(); carregarDia(st.dia);
   }
   iniciar();
