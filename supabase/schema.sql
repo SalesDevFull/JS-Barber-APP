@@ -735,6 +735,30 @@ begin
   delete from pagamentos where id = p_pagamento;
 end $$;
 
+-- Apaga a barbearia e tudo dela (agenda, caixa, clientes, pagamentos, Mercado Pago).
+-- Também apaga as contas de login da equipe, pra o e-mail poder se cadastrar de novo.
+-- Não apaga quem é administrador nem quem também participa de outra barbearia.
+-- Pede o nome exato da barbearia como confirmação.
+create or replace function public.admin_excluir_barbearia(p_id uuid, p_nome text)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_nome text; v_users uuid[]; v_emails text[];
+begin
+  perform exigir_admin();
+  select nome into v_nome from barbearias where id = p_id;
+  if v_nome is null then raise exception 'Barbearia não encontrada.'; end if;
+  if lower(trim(coalesce(p_nome, ''))) <> lower(trim(v_nome)) then
+    raise exception 'Digite o nome exato da barbearia pra confirmar.';
+  end if;
+  select coalesce(array_agg(m.user_id), '{}') into v_users from membros m
+  where m.barbearia_id = p_id
+    and not exists (select 1 from admins a where a.user_id = m.user_id)
+    and not exists (select 1 from membros o where o.user_id = m.user_id and o.barbearia_id <> p_id);
+  select coalesce(array_agg(u.email::text), '{}') into v_emails from auth.users u where u.id = any(v_users);
+  delete from barbearias where id = p_id;
+  delete from auth.users where id = any(v_users);
+  return json_build_object('barbearia', v_nome, 'contas_apagadas', v_emails);
+end $$;
+
 -- ---------- Permissões das funções ----------
 revoke all on function public.criar_barbearia(text, text, jsonb) from public, anon;
 revoke all on function public.entrar_por_convite() from public, anon;
@@ -755,6 +779,8 @@ revoke all on function public.admin_pagamentos(uuid) from public, anon;
 revoke all on function public.admin_registrar_pagamento(uuid, numeric, integer, text) from public, anon;
 revoke all on function public.admin_salvar_barbearia(uuid, boolean, date, numeric, text) from public, anon;
 revoke all on function public.admin_apagar_pagamento(uuid) from public, anon;
+revoke all on function public.admin_excluir_barbearia(uuid, text) from public, anon;
+grant execute on function public.admin_excluir_barbearia(uuid, text) to authenticated;
 grant execute on function public.eh_admin() to authenticated;
 grant execute on function public.exigir_admin() to authenticated;
 grant execute on function public.admin_barbearias() to authenticated;

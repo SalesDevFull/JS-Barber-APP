@@ -73,6 +73,8 @@ textarea{padding:10px 12px;min-height:70px;resize:vertical}
 .form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px}
 @media (max-width:560px){.form{grid-template-columns:1fr}}
 .form .span{grid-column:1/-1}
+.perigo{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding:12px;border:1px dashed var(--bad);border-radius:12px}
+.c-bad{color:var(--bad)}
 .item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .item:last-child{border-bottom:none}
 .num{font-variant-numeric:tabular-nums}
@@ -183,7 +185,10 @@ main{padding-top:26px}
           '<div class="field"><label for="ed-ativa">Acesso</label><select id="ed-ativa"><option value="1"' + (b.ativa ? ' selected' : '') + '>Ativa</option><option value="0"' + (!b.ativa ? ' selected' : '') + '>Desativada</option></select></div>' +
           '<div class="field span"><label for="ed-obs">Anotação interna (só você vê)</label><textarea id="ed-obs">' + esc(b.obs_admin || '') + '</textarea></div>' +
           '<span class="tiny span">Deixe o vencimento em branco pra barbearia nunca ser bloqueada automaticamente (ex.: parceiro ou cortesia).</span>' +
-          '<button type="button" class="btn pri span" data-a="salvar" data-id="' + b.id + '">Salvar</button></div>';
+          '<button type="button" class="btn pri span" data-a="salvar" data-id="' + b.id + '">Salvar</button>' +
+          '<div class="span perigo"><b class="c-bad">Excluir barbearia</b><span class="tiny">Apaga a barbearia e tudo dela: agenda, caixa, clientes, pagamentos e a conexão do Mercado Pago. As contas de login da equipe (' + esc(b.dono_email || 'sem dono') + (b.membros > 1 ? ' e mais ' + (b.membros - 1) : '') + ') também são apagadas, e o e-mail fica livre pra se cadastrar de novo. Não dá pra desfazer.</span>' +
+          '<div class="field"><label for="ex-nome">Pra confirmar, digite o nome: <b>' + esc(b.nome) + '</b></label><input id="ex-nome" autocomplete="off"></div>' +
+          '<button type="button" class="btn bad" data-a="excluir" data-id="' + b.id + '">Excluir pra sempre</button></div></div>';
       }
       if (aberto && S.modo === 'hist') {
         const ps = S.pags.filter((p) => p.barbearia_id === b.id);
@@ -213,7 +218,7 @@ main{padding-top:26px}
   }
 
   view.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.isComposing || e.target.tagName !== 'INPUT' || e.target.type === 'search') return;
+    if (e.key !== 'Enter' || e.isComposing || e.target.tagName !== 'INPUT' || e.target.type === 'search' || e.target.id === 'ex-nome') return;
     const card = e.target.closest('.card, .form'); if (!card) return;
     const pri = card.querySelector('.btn.pri'); if (!pri || pri.disabled) return;
     e.preventDefault(); e.target.blur(); pri.click();
@@ -258,6 +263,16 @@ main{padding-top:26px}
       const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: a === 'reativar', p_vencimento: b.vencimento, p_mensalidade: b.mensalidade, p_obs: b.obs_admin });
       if (r.error) { toast(r.error.message, true); return; }
       toast(a === 'reativar' ? 'Barbearia reativada' : 'Barbearia desativada'); await carregar();
+    }
+    if (a === 'excluir') {
+      const b = S.lista.find((x) => x.id === id); const nome = document.getElementById('ex-nome').value.trim();
+      if (!b || nome.toLowerCase() !== String(b.nome).trim().toLowerCase()) { toast('Digite o nome exato da barbearia pra confirmar.', true); return; }
+      el.disabled = true; el.textContent = 'Excluindo…';
+      const r = await S.sb.rpc('admin_excluir_barbearia', { p_id: id, p_nome: nome });
+      if (r.error) { toast(r.error.message, true); el.disabled = false; el.textContent = 'Excluir pra sempre'; return; }
+      const em = (r.data && r.data.contas_apagadas) || [];
+      toast(b.nome + ' excluída.' + (em.length ? ' E-mail liberado: ' + em.join(', ') + '.' : ''));
+      S.aberto = null; S.modo = null; await carregar();
     }
     if (a === 'apagarPag') {
       if (S.confirm !== 'p' + id) { S.confirm = 'p' + id; render(); return; }
