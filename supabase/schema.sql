@@ -92,6 +92,17 @@ create table if not exists public.sistema_privado (
 alter table public.sistema_privado enable row level security;
 revoke all on public.sistema_privado from anon, authenticated;
 
+-- Fotos dos trabalhos de cada barbeiro (o arquivo fica no Storage, bucket "trabalhos").
+create table if not exists public.fotos (
+  id           uuid primary key default gen_random_uuid(),
+  barbearia_id uuid not null references public.barbearias(id) on delete cascade,
+  barbeiro_id  text not null,
+  caminho      text not null unique,
+  legenda      text check (char_length(legenda) <= 60),
+  criado_em    timestamptz not null default now()
+);
+create index if not exists fotos_barbeiro_idx on public.fotos (barbearia_id, barbeiro_id, criado_em desc);
+
 -- Índices pra consultas que crescem com o número de barbearias.
 create index if not exists membros_user_idx on public.membros (user_id);
 create index if not exists pagamentos_barbearia_idx on public.pagamentos (barbearia_id);
@@ -174,6 +185,64 @@ create or replace function public.meu_barbeiro(b uuid) returns text
 language sql stable security definer set search_path = public as $$
   select m.barbeiro_id from membros m where m.barbearia_id = b and m.user_id = auth.uid() limit 1;
 $$;
+
+-- Quem pode pôr e tirar fotos de um barbeiro: o dono, ou o próprio barbeiro.
+-- Recebe texto porque também é usada nas regras do Storage (pasta "barbearia/barbeiro/arquivo").
+create or replace function public.pode_postar_foto(p_b text, p_barb text) returns boolean
+language plpgsql stable security definer set search_path = public as $$
+declare b uuid;
+begin
+  if p_b !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' or coalesce(p_barb, '') = '' then return false; end if;
+  b := p_b::uuid;
+  return exists (select 1 from membros m join barbearias x on x.id = m.barbearia_id
+                 where m.barbearia_id = b and m.user_id = auth.uid() and barbearia_liberada(x.ativa, x.vencimento)
+                   and (m.papel = 'dono' or m.barbeiro_id = p_barb));
+end $$;
+
+alter table public.fotos enable row level security;
+drop policy if exists fotos_ler on public.fotos;
+create policy fotos_ler on public.fotos for select using (public.eh_membro(barbearia_id));
+drop policy if exists fotos_criar on public.fotos;
+create policy fotos_criar on public.fotos for insert with check (
+  public.pode_postar_foto(barbearia_id::text, barbeiro_id)
+  and caminho like barbearia_id::text || '/' || barbeiro_id || '/%');
+drop policy if exists fotos_editar on public.fotos;
+create policy fotos_editar on public.fotos for update using (public.pode_postar_foto(barbearia_id::text, barbeiro_id))
+  with check (public.pode_postar_foto(barbearia_id::text, barbeiro_id) and caminho like barbearia_id::text || '/' || barbeiro_id || '/%');
+drop policy if exists fotos_apagar on public.fotos;
+create policy fotos_apagar on public.fotos for delete using (public.pode_postar_foto(barbearia_id::text, barbeiro_id));
+
+-- No máximo 30 fotos por barbeiro (deixa a página leve e o armazenamento sob controle).
+create or replace function public.limitar_fotos() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  perform pg_advisory_xact_lock(hashtext('fotos' || new.barbearia_id::text || new.barbeiro_id));
+  if (select count(*) from fotos where barbearia_id = new.barbearia_id and barbeiro_id = new.barbeiro_id) >= 30 then
+    raise exception 'Limite de 30 fotos por barbeiro. Apague alguma antes de pôr outra.';
+  end if;
+  return new;
+end $$;
+drop trigger if exists fotos_limite on public.fotos;
+create trigger fotos_limite before insert on public.fotos for each row execute function public.limitar_fotos();
+
+-- Bucket público "trabalhos": qualquer um vê a foto; só dono ou o próprio barbeiro envia e apaga.
+do $$
+begin
+  if exists (select 1 from pg_namespace where nspname = 'storage') then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+      values ('trabalhos', 'trabalhos', true, 3145728, array['image/jpeg', 'image/webp', 'image/png'])
+      on conflict (id) do update set public = true, file_size_limit = 3145728, allowed_mime_types = array['image/jpeg', 'image/webp', 'image/png'];
+    execute 'drop policy if exists trabalhos_enviar on storage.objects';
+    execute $p$create policy trabalhos_enviar on storage.objects for insert to authenticated
+      with check (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
+    execute 'drop policy if exists trabalhos_ver on storage.objects';
+    execute $p$create policy trabalhos_ver on storage.objects for select to authenticated
+      using (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
+    execute 'drop policy if exists trabalhos_apagar on storage.objects';
+    execute $p$create policy trabalhos_apagar on storage.objects for delete to authenticated
+      using (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
+  end if;
+end $$;
 
 -- Dono: tudo. Barbeiro: agenda, clientes e estoque; comandas e vales só os dele; despesas não.
 drop policy if exists registros_membro on public.registros;
@@ -399,7 +468,10 @@ returns json language sql stable security definer set search_path = public as $$
                 'online', mp_online(b.id, b.config)) end,
     'servicos', coalesce((select json_agg(json_build_object('id', s ->> 'id', 'nome', s ->> 'nome', 'preco', (s ->> 'preco')::numeric, 'dur', (s ->> 'dur')::int))
                           from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s), '[]'::json),
-    'barbeiros', coalesce((select json_agg(json_build_object('id', x ->> 'id', 'nome', x ->> 'nome', 'folgas', coalesce(x -> 'folgas', '[]'::jsonb)))
+    'barbeiros', coalesce((select json_agg(json_build_object('id', x ->> 'id', 'nome', x ->> 'nome', 'folgas', coalesce(x -> 'folgas', '[]'::jsonb),
+                            'fotos', coalesce((select json_agg(json_build_object('c', f.caminho, 'l', f.legenda) order by f.criado_em desc)
+                                               from (select * from fotos f where f.barbearia_id = b.id and f.barbeiro_id = x ->> 'id'
+                                                     order by f.criado_em desc limit 30) f), '[]'::json)))
                           from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x), '[]'::json),
     'semana', b.config -> 'semana',
     'almoco', b.config -> 'almoco',

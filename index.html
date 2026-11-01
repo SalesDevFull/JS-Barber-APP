@@ -289,6 +289,12 @@ button.logo:active{transform:scale(.94)}
 @keyframes sobe{from{transform:translateY(100%)}to{transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.fotos-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.foto{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);border:1px solid var(--line)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .x{position:absolute;top:4px;right:4px;min-width:30px;min-height:30px;border-radius:999px;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:13px;font-weight:700;cursor:pointer;padding:0 8px}
+.foto .x.conf{background:#A3271F}
+.foto .leg{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;font-size:11px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -1007,6 +1013,7 @@ button.logo:active{transform:scale(.94)}
           '<div class="grid2"><div class="field"><label for="cv-barb">Na agenda é</label><select id="cv-barb" data-f="cvBarb">' + opBarb(fv('cvBarb', ((c.barbeiros || [])[1] || (c.barbeiros || [])[0] || {}).id || '')) + '</select></div>' +
           '<div class="field"><label for="cv-papel">Permissão</label><select id="cv-papel" data-f="cvPapel"><option value="barbeiro"' + (fv('cvPapel', 'barbeiro') === 'barbeiro' ? ' selected' : '') + '>Barbeiro</option><option value="dono"' + (fv('cvPapel') === 'dono' ? ' selected' : '') + '>Sócio (acesso total)</option></select></div></div>' +
           '<button type="button" class="btn pri" data-act="convidar">Convidar</button></section>';
+        h += '<section class="card"><span class="h2">Fotos dos trabalhos</span><span class="sub">Cada barbeiro pode pôr até 30 fotos dos cortes dele. Elas aparecem na página de agendamento, na hora de escolher o barbeiro.</span><button type="button" class="btn" data-act="go" data-v="barbeiro">Ver e pôr fotos</button></section>';
         h += cardAvisos();
       }
       h += '<section class="card"><span class="h2">Adicionar barbeiro</span><div class="field"><label for="nb-nome">Nome</label><input id="nb-nome" data-f="nbNome" value="' + esc(fv('nbNome')) + '"></div><div class="field"><label for="nb-com">Comissão nos serviços (%)</label><input id="nb-com" inputmode="numeric" data-f="nbCom" value="' + esc(fv('nbCom', '40')) + '"></div><button type="button" class="btn pri" data-act="barbNovo">Adicionar</button></section>';
@@ -1107,6 +1114,74 @@ button.logo:active{transform:scale(.94)}
     return h;
   }
 
+  // ---------- Fotos dos trabalhos (aparecem pro cliente na hora de escolher o barbeiro) ----------
+  const urlFoto = (c) => urlSupabase((window.APP_CONFIG || {}).SUPABASE_URL) + '/storage/v1/object/public/trabalhos/' + c.split('/').map(encodeURIComponent).join('/');
+  function cardFotos(b) {
+    const fs = (S.fotos || []).filter((f) => f.barbeiro_id === b.id);
+    const meu = souBarbeiro();
+    const env = S.ui.fotoEnv;
+    let h = '<section class="card"><div class="row between"><span class="h2">' + (meu ? 'Meus trabalhos' : 'Trabalhos de ' + esc(primeiroNome(b.nome))) + '</span><span class="tiny">' + fs.length + '/30</span></div>' +
+      '<span class="sub">As fotos aparecem na página de agendamento, pro cliente escolher o barbeiro vendo os cortes.</span>';
+    if (fs.length) h += '<div class="fotos-grid">' + fs.map((f) => '<div class="foto"><img src="' + esc(urlFoto(f.caminho)) + '" alt="' + esc(f.legenda || 'Trabalho de ' + b.nome) + '" loading="lazy">' +
+      (f.legenda ? '<span class="leg">' + esc(f.legenda) + '</span>' : '') +
+      '<button type="button" class="x' + (S.ui.confirm === 'foto' + f.id ? ' conf' : '') + '" data-act="fotoApagar" data-id="' + esc(f.id) + '" aria-label="Apagar foto">' + (S.ui.confirm === 'foto' + f.id ? 'Apagar?' : '✕') + '</button></div>').join('') + '</div>';
+    else h += '<div class="empty" style="padding:14px"><span>Nenhuma foto ainda. Mostre seus melhores cortes!</span></div>';
+    if (fs.length < 30) {
+      h += '<div class="field"><label for="foto-leg">Legenda (opcional)</label><input id="foto-leg" data-f="fotoLeg" maxlength="60" placeholder="Ex.: Degradê navalhado" value="' + esc(fv('fotoLeg')) + '"></div>' +
+        (env ? '<button type="button" class="btn pri" disabled>Enviando ' + env.feito + ' de ' + env.total + '…</button>'
+          : '<label class="btn pri" for="foto-file" role="button" tabindex="0">Adicionar fotos</label><input type="file" id="foto-file" data-barb="' + esc(b.id) + '" accept="image/*" multiple hidden>') +
+        '<span class="tiny">Use fotos bem iluminadas e de frente, de lado ou de costas. A legenda vale pras fotos que você escolher agora.</span>';
+    }
+    return h + '</section>';
+  }
+  async function carregarFotos() {
+    const r = await S.sb.from('fotos').select('id,barbeiro_id,caminho,legenda,criado_em').eq('barbearia_id', S.bid).order('criado_em', { ascending: false });
+    if (!r.error) { S.fotos = r.data || []; scheduleRender(); }
+  }
+  // Reduz a foto no próprio celular (até 1280 px, JPEG) antes de enviar: carrega rápido pro cliente.
+  async function comprimirFoto(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const r = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * r)), hh = Math.max(1, Math.round(img.height * r));
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = hh;
+      cv.getContext('2d').drawImage(img, 0, 0, w, hh);
+      return await new Promise((res) => cv.toBlob((bl) => res(bl), 'image/jpeg', 0.82));
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function enviarFotos(files, barbId) {
+    const lista = Array.from(files).filter((f) => /^image\//.test(f.type));
+    if (!lista.length) { toast('Escolha fotos (JPG ou PNG).', true); return; }
+    const livres = 30 - (S.fotos || []).filter((f) => f.barbeiro_id === barbId).length;
+    if (lista.length > livres) { toast('Cabem só mais ' + livres + ' foto' + (livres === 1 ? '' : 's') + '. Vou enviar as primeiras.', true); lista.length = Math.max(0, livres); }
+    const leg = String(fv('fotoLeg')).trim().slice(0, 60) || null;
+    S.ui.fotoEnv = { feito: 0, total: lista.length }; render();
+    let ok = 0;
+    for (const f of lista) {
+      try {
+        if (f.size > 25 * 1024 * 1024) throw new Error('grande');
+        const blob = await comprimirFoto(f);
+        if (!blob) throw new Error('foto');
+        const caminho = S.bid + '/' + barbId + '/' + newId() + '.jpg';
+        const up = await S.sb.storage.from('trabalhos').upload(caminho, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+        if (up.error) throw up.error;
+        const ins = await S.sb.from('fotos').insert({ barbearia_id: S.bid, barbeiro_id: barbId, caminho: caminho, legenda: leg });
+        if (ins.error) { await S.sb.storage.from('trabalhos').remove([caminho]); throw ins.error; }
+        ok++;
+      } catch (e) {
+        toast(e && /Limite/.test(e.message || '') ? e.message : 'Uma foto não foi enviada. Tente de novo.', true);
+      }
+      S.ui.fotoEnv.feito++; render();
+    }
+    S.ui.fotoEnv = null; delete S.f.fotoLeg;
+    await carregarFotos();
+    if (ok) toast(ok === 1 ? 'Foto publicada!' : ok + ' fotos publicadas!');
+    render();
+  }
+  document.addEventListener('change', (e) => { if (e.target.id === 'foto-file' && e.target.files && e.target.files.length) enviarFotos(e.target.files, e.target.dataset.barb); });
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute && e.target.getAttribute('for') === 'foto-file') { e.preventDefault(); document.getElementById('foto-file').click(); } });
+
   function vBarbeiro() {
     const bs = cfg().barbeiros || [];
     if (!bs.length) return '<div class="empty"><span>Cadastre a equipe em Gestão.</span></div>';
@@ -1129,6 +1204,7 @@ button.logo:active{transform:scale(.94)}
         '<div class="msg"><div class="tiny" style="font-weight:600;letter-spacing:.04em">FICHA DO CLIENTE</div>' + esc(cl && cl.ficha ? cl.ficha : 'Sem anotações ainda.') + '<div class="tiny">' + (dias == null ? 'Primeira visita' : 'Última visita há ' + dias + ' dias') + '</div></div>' +
         (a.status === 'agendado' || a.status === 'cadeira' ? '<button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">' + (a.status === 'cadeira' ? 'Ver comanda' : 'Chamar pra cadeira') + '</button>' : '') + '</div>';
     });
+    h += cardFotos(b);
     h += '<section class="card"><span class="h2">Meus ganhos no mês</span>' +
       '<div class="item"><span class="grow">Comissão em serviços e produtos</span><span class="num">' + brl(rm.com) + '</span></div>' +
       '<div class="item"><span class="grow">Gorjetas</span><span class="num c-ok">+ ' + brl(rm.gorj) + '</span></div>' +
@@ -1278,6 +1354,14 @@ button.logo:active{transform:scale(.94)}
       const r = await S.sb.from('membros').delete().eq('barbearia_id', S.bid).eq('user_id', el.dataset.id);
       if (r.error) { toast('Não deu pra tirar o acesso: ' + r.error.message, true); return; }
       toast('Acesso removido'); await carregarAcessos();
+    },
+    fotoApagar: async (el) => {
+      const id = el.dataset.id; if (precisaConfirmar('foto' + id)) return;
+      const f = (S.fotos || []).find((x) => x.id === id); if (!f) return;
+      const r = await S.sb.from('fotos').delete().eq('id', id).select('id');
+      if (r.error || !r.data || !r.data.length) { toast('Não deu pra apagar essa foto.', true); return; }
+      S.sb.storage.from('trabalhos').remove([f.caminho]);
+      S.fotos = S.fotos.filter((x) => x.id !== id); toast('Foto apagada'); render();
     },
     pushLigar: async () => {
       if (!pushSuportado()) { toast('Este navegador não recebe avisos com o app fechado.', true); return; }
@@ -1752,6 +1836,7 @@ button.logo:active{transform:scale(.94)}
       S.sb.rpc('eh_admin').then((r) => { S.ehAdmin = !r.error && r.data === true; if (S.ehAdmin && S.ui.tab === 'inicio') scheduleRender(); });
       carregarAcessos();
       carregarMP();
+      carregarFotos();
       voltaMP();
     } catch (e) {
       S.status = 'login'; render(); toast('Não deu pra carregar a barbearia. Confira a internet e entre de novo.', true);
