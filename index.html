@@ -9,10 +9,10 @@
 <meta name="apple-mobile-web-app-title" content="JS Barber APP">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>JS Barber APP</title>
-<link rel="manifest" href="manifest.webmanifest?v=3">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+<link rel="manifest" href="manifest.webmanifest?v=4">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
@@ -541,11 +541,14 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     await col('clientes').doc(id).set({ nome: nome || 'Cliente', telefone: tel, criadoEm: new Date().toISOString(), visitas: 0, ultimaVisita: null, ficha: '' });
     return id;
   }
+  // Agendamento com um ou mais serviços (o cliente pode marcar "corte + sobrancelha").
+  const servsAg = (a) => (Array.isArray(a.servicoIds) && a.servicoIds.length ? a.servicoIds : [a.servicoId]).map(serv).filter(Boolean);
+  const servAg = (a) => { const l = servsAg(a); if (l.length <= 1) return l[0] || null; return { id: l.map((x) => x.id).join(','), nome: l.map((x) => x.nome).join(' + '), preco: l.reduce((t, x) => t + num(x.preco), 0), dur: l.reduce((t, x) => t + (Number(x.dur) || 30), 0) }; };
   async function abrirComanda(a) {
     if (a.comandaId) { const ex = S.comandas.find((c) => c.id === a.comandaId && c.status === 'aberta'); if (ex) { S.ui.comanda = ex.id; go('caixa'); return; } }
-    const s = serv(a.servicoId); const id = newId();
+    const lst = servsAg(a); const id = newId();
     const ok = await W(async () => {
-      await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: a.clienteId || null, clienteNome: a.clienteNome || 'Cliente', barbeiroId: a.barbeiroId || null, agendamentoId: a.id, itens: s ? [{ tipo: 's', id: s.id, nome: s.nome, preco: num(s.preco) }] : [], pagamento: formas()[0], gorjeta: 0, sinal: a.sinalDevolvido ? 0 : (num(a.sinalPago) || 0), criadoEm: new Date().toISOString() });
+      await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: a.clienteId || null, clienteNome: a.clienteNome || 'Cliente', barbeiroId: a.barbeiroId || null, agendamentoId: a.id, itens: lst.map((x) => ({ tipo: 's', id: x.id, nome: x.nome, preco: num(x.preco) })), pagamento: formas()[0], gorjeta: 0, sinal: a.sinalDevolvido ? 0 : (num(a.sinalPago) || 0), criadoEm: new Date().toISOString() });
       await col('agendamentos').doc(a.id).update({ status: 'cadeira', comandaId: id });
     });
     if (ok) { S.ui.comanda = id; go('caixa'); }
@@ -578,7 +581,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
   const STATUS = { agendado: ['Agendado', 'c-acc'], cadeira: ['Na cadeira', 'c-ok'], feito: ['Concluído', 'c-muted'], faltou: ['Faltou', 'c-bad'], cancelado: ['Cancelado', 'c-muted'] };
   const stAg = (a) => (a.status === 'aguardando_sinal' ? (sinalExpirado(a) ? ['Sinal não pago', 'c-bad'] : ['Aguardando sinal', 'c-warn']) : (STATUS[a.status] || STATUS.agendado));
   function lembreteTxt(a) {
-    const s = serv(a.servicoId);
+    const s = servAg(a);
     return 'Oi, ' + primeiroNome(a.clienteNome) + '! Lembrete do seu horário na ' + cfg().nome + ': ' + fmtDia(a.data) + ' às ' + a.hora + ', ' + (s ? s.nome.toLowerCase() : 'atendimento') + ' com o ' + barbNome(a.barbeiroId) + '. Você confirma?';
   }
 
@@ -659,7 +662,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
       '<div class="fat">' + real(entrou) + '</div>' +
       '<div class="trio"><div><span class="lbl">Atendidos</span><b>' + fh.length + '</b></div><div><span class="lbl">Na fila</span><b>' + fila.length + '</b></div><div><span class="lbl">Horários livres</span><b>' + liv.length + '</b></div></div></section>';
     naCadeira.forEach((a) => {
-      const s = serv(a.servicoId);
+      const s = servAg(a);
       topo += '<section class="card cadeira"><div class="row between"><span class="badge">Na cadeira</span><span class="tiny">desde ' + esc(a.hora) + '</span></div>' +
         '<div><div class="nome">' + esc(a.clienteNome) + '</div><div class="sub">' + esc(s ? s.nome : '') + ' · com ' + esc(barbNome(a.barbeiroId)) + (s ? ' · ' + esc(brl(s.preco)) : '') + '</div></div>' +
         '<button type="button" class="btn pri lg full" data-act="abrirComanda" data-id="' + esc(a.id) + '">Fechar comanda</button></section>';
@@ -677,7 +680,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     h += '<section class="card"><div class="row between"><span class="lbl">Próximos</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Agenda</button></div>';
     if (!fila.length) h += '<span class="sub">' + (hojeAgs.length ? 'A agenda de hoje acabou. Bom trabalho!' : 'Ninguém marcado pra hoje ainda.') + '</span>';
     else h += '<div class="lista">' + fila.slice(0, 5).map((a) => {
-      const s = serv(a.servicoId); const pend = a.status === 'aguardando_sinal';
+      const s = servAg(a); const pend = a.status === 'aguardando_sinal';
       const sit = pend ? '<span style="color:var(--accent)">Esperando sinal</span>' : (num(a.sinalPago) ? '<span class="c-ok">Sinal pago</span>' : 'Confirmado');
       return '<button type="button" class="linha" data-act="' + (pend ? 'go' : 'abrirComanda') + '" ' + (pend ? 'data-v="agenda"' : 'data-id="' + esc(a.id) + '"') + '><span class="h">' + esc(a.hora) + '</span><div class="grow"><b>' + esc(a.clienteNome) + '</b><span>' + esc(s ? s.nome : '') + ' · ' + esc(barbNome(a.barbeiroId)) + ' · ' + sit + '</span></div>' +
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>';
@@ -736,7 +739,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     const PILL = { 'c-acc': 'background:var(--surface2);color:var(--fg)', 'c-ok': 'background:var(--accent);color:var(--accent-ink)', 'c-muted': 'background:transparent;color:var(--dim)', 'c-bad': 'background:rgba(255,122,107,.12);color:var(--bad)', 'c-warn': 'background:var(--accent-soft);color:var(--accent)' };
     list.forEach((a) => {
       if (!pos && toMin(a.hora) > agoraM) { h += linhaAgora(); pos = true; }
-      const s = serv(a.servicoId); const st = stAg(a); const meu = meuItem(a);
+      const s = servAg(a); const st = stAg(a); const meu = meuItem(a);
       h += '<div class="card tight' + (a.status === 'cadeira' ? ' na-cadeira' : '') + '"' + (a.status === 'feito' ? ' style="opacity:.6"' : '') + '><div class="row"><span class="hora num"' + (a.status === 'cadeira' ? ' style="color:var(--accent)"' : '') + '>' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600;font-size:16px">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : 'Serviço removido') + ' · ' + esc(barbNome(a.barbeiroId)) + ' · ' + (Number(a.dur) || 30) + ' min</div></div><span class="pill" style="' + (PILL[st[1]] || '') + '">' + st[0] + '</span></div>';
       if (!meu) { /* barbeiro vê o horário do colega, mas não mexe */ }
       else if (a.status === 'aguardando_sinal') {
@@ -773,7 +776,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     const bk = S.ui.bk; const c = cfg();
     if (!(c.barbeiros || []).length) return '<div class="empty"><span>Cadastre pelo menos um barbeiro em Gestão → Equipe.</span><button type="button" class="btn pri" data-act="gesTabGo" data-v="equipe">Ir pra equipe</button></div>';
     if (bk.feito) {
-      const a = bk.feito; const s = serv(a.servicoId); const wa = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Seu horário na ' + c.nome + ' está marcado: ' + fmtDia(a.data) + ' às ' + a.hora + ', ' + (s ? s.nome.toLowerCase() : '') + ' com o ' + barbNome(a.barbeiroId) + '. Até lá!');
+      const a = bk.feito; const s = servAg(a); const wa = waLink(a.telefone, 'Oi, ' + primeiroNome(a.clienteNome) + '! Seu horário na ' + c.nome + ' está marcado: ' + fmtDia(a.data) + ' às ' + a.hora + ', ' + (s ? s.nome.toLowerCase() : '') + ' com o ' + barbNome(a.barbeiroId) + '. Até lá!');
       return '<div class="card ok"><span class="mid c-ok">Agendado!</span><span>' + esc(a.clienteNome) + ' · ' + esc(s ? s.nome : '') + '</span><span class="sub">' + esc(fmtDia(a.data)) + ' às ' + esc(a.hora) + ' com ' + esc(barbNome(a.barbeiroId)) + '</span></div>' +
         (wa ? '<a class="btn ok full" href="' + esc(wa) + '" target="_blank" rel="noopener">Mandar confirmação no WhatsApp</a>' : '') +
         '<div class="grid2"><button type="button" class="btn pri" data-act="bkNovo">Novo agendamento</button><button type="button" class="btn" data-act="bkVerAgenda">Ver na agenda</button></div>';
@@ -1255,7 +1258,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     h += '<span class="lbl">Sua agenda de hoje</span>';
     if (!ags.length) h += '<span class="sub">Nada marcado pra você hoje.</span>';
     ags.forEach((a) => {
-      const s = serv(a.servicoId); const cl = S.clientes.find((x) => x.id === a.clienteId); const st = stAg(a);
+      const s = servAg(a); const cl = S.clientes.find((x) => x.id === a.clienteId); const st = stAg(a);
       const dias = cl && cl.ultimaVisita ? diffDays(cl.ultimaVisita, t) : null;
       h += '<div class="card tight"><div class="row"><span class="hora num">' + esc(a.hora) + '</span><span class="grow" style="font-weight:600">' + esc(a.clienteNome) + '</span><span class="tiny ' + st[1] + '" style="font-weight:600">' + st[0] + '</span></div><span class="tiny">' + esc(s ? s.nome : '') + '</span>' +
         '<div class="msg"><div class="tiny" style="font-weight:600;letter-spacing:.04em">FICHA DO CLIENTE</div>' + esc(cl && cl.ficha ? cl.ficha : 'Sem anotações ainda.') + '<div class="tiny">' + (dias == null ? 'Primeira visita' : 'Última visita há ' + dias + ' dias') + '</div></div>' +
@@ -1750,7 +1753,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     } catch (e) { /* sem service worker (ex.: aba anônima) */ }
   }
   function avisar(lista, teste) {
-    const a = lista[lista.length - 1]; const s = serv(a.servicoId);
+    const a = lista[lista.length - 1]; const s = servAg(a);
     const quando = (a.data === today() ? 'hoje' : fmtDia(a.data)) + ' às ' + a.hora;
     const txt = primeiroNome(a.clienteNome) + ' marcou ' + (s ? s.nome.toLowerCase() : 'um horário') + ' ' + quando + ' com ' + barbNome(a.barbeiroId) + (a.status === 'aguardando_sinal' ? '. Esperando o Pix do sinal.' : '.');
     if (!teste) S.novos = (S.novos || 0) + lista.length;
@@ -1764,7 +1767,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
         const titulo = lista.length > 1 ? lista.length + ' agendamentos novos' : 'Agendamento novo';
-        const op = { body: txt, icon: 'icon-192.png?v=3', badge: 'favicon-32.png?v=3', tag: 'agendamento-' + a.id, data: { url: '/#agenda' } };
+        const op = { body: txt, icon: 'icon-192.png?v=4', badge: 'favicon-32.png?v=4', tag: 'agendamento-' + a.id, data: { url: '/#agenda' } };
         if (S.swReg) S.swReg.showNotification(titulo, op).catch(() => {});
         else { const n = new Notification(titulo, op); n.onclick = () => { window.focus(); S.ui.agDia = a.data; go('agenda'); n.close(); }; }
       }

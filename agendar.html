@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0A">
 <title>Agendar horário</title>
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
@@ -188,6 +188,7 @@ h2{font-size:26px;color:var(--fg)}
 .op b{display:block;font-size:16px;font-weight:600}
 .op span{font-size:13px;color:var(--muted)}
 .op .preco{font-weight:700;color:var(--fg);font-size:15px}
+.marca-ok.quad{border-radius:8px}
 .marca-ok{width:28px;height:28px;border-radius:50%;border:2px solid var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .on>.marca-ok,.op.on .marca-ok{background:var(--marca);border-color:var(--marca)}
 .card{background:var(--surface);border-color:var(--line);border-radius:16px}
@@ -274,7 +275,7 @@ input{border-radius:14px;min-height:52px}
   const app = document.getElementById('app');
   const slug = new URLSearchParams(location.search).get('b') || '';
   const KEY = 'ag_pend_' + slug;
-  const st = { b: null, serv: null, barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, pend: null, pago: false, confirmaDesistir: false, tela: '', metodo: '', gerando: false, erroPag: '', brick: null };
+  const st = { b: null, servs: [], barb: 'qualquer', dia: hoje(), hora: null, ocup: {}, carregandoDia: false, enviando: false, erro: '', feito: null, pend: null, pago: false, confirmaDesistir: false, tela: '', metodo: '', gerando: false, erroPag: '', brick: null };
   try { st.nome = localStorage.getItem('ag_nome') || ''; st.tel = localStorage.getItem('ag_tel') || ''; st.email = localStorage.getItem('ag_email') || ''; } catch (e) { st.nome = ''; st.tel = ''; st.email = ''; }
   let sb = null, timer = null, poll = null;
 
@@ -296,8 +297,14 @@ input{border-radius:14px;min-height:52px}
     return !(b.bloqueios || []).some((x) => x.data === dia && (!x.barbeiroId || x.barbeiroId === barbId) && (!x.ini || (ini < toMin(x.fim) && toMin(x.ini) < ini + dur)));
   }
   const diaFechado = (dia) => !expediente(dia) || !(st.b.bloqueios || []).every((x) => !(x.data === dia && !x.barbeiroId && !x.ini));
+  // Os serviços marcados viram um "pacote": soma o tempo e o preço.
+  function pacote() {
+    const l = st.servs.map((id) => st.b.servicos.find((x) => x.id === id)).filter(Boolean);
+    if (!l.length) return null;
+    return { id: l.map((x) => x.id).join(','), nome: l.map((x) => x.nome).join(' + '), preco: l.reduce((a, x) => a + Number(x.preco || 0), 0), dur: l.reduce((a, x) => a + (Number(x.dur) || 30), 0), qtd: l.length };
+  }
   function livres() {
-    const b = st.b; const s = b.servicos.find((x) => x.id === st.serv); if (!s) return [];
+    const b = st.b; const s = pacote(); if (!s) return [];
     const e = expediente(st.dia); if (!e) return [];
     const dur = Number(s.dur) || 30; const step = Number(b.intervalo) || 30;
     const passou = st.dia === hoje() ? agoraMin() : -1;
@@ -352,7 +359,7 @@ input{border-radius:14px;min-height:52px}
         infos() + '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
       return;
     }
-    const s = b.servicos.find((x) => x.id === st.serv);
+    const s = pacote();
     const total = b.sinal ? 4 : 3;
     if (!st.passo) st.passo = 1;
     if (st.passo > 1 && !s) st.passo = 1;
@@ -365,11 +372,13 @@ input{border-radius:14px;min-height:52px}
     const sinalV = s && b.sinal ? Math.round(Number(s.preco) * Number(b.sinal.pct)) / 100 : 0;
     let acao = '';
     if (P === 1) {
-      h += cab('O que vai fazer?') + '<div class="lista" role="radiogroup" aria-label="Serviço">' + b.servicos.map((x) =>
-        '<button type="button" class="op' + (st.serv === x.id ? ' on' : '') + '" role="radio" data-a="serv" data-v="' + esc(x.id) + '" aria-checked="' + (st.serv === x.id) + '"><div style="flex:1;min-width:0"><b>' + esc(x.nome) + '</b><span><span class="preco">' + brl(x.preco) + '</span> · ' + esc(x.dur) + ' min</span></div><span class="marca-ok">' + (st.serv === x.id ? ok : '') + '</span></button>').join('') + '</div>';
+      h += cab('Escolha os serviços', 'pode marcar mais de um') + '<div class="lista" role="group" aria-label="Serviços">' + b.servicos.map((x) => {
+        const on = st.servs.indexOf(x.id) >= 0;
+        return '<button type="button" class="op' + (on ? ' on' : '') + '" role="checkbox" data-a="serv" data-v="' + esc(x.id) + '" aria-checked="' + on + '"><div style="flex:1;min-width:0"><b>' + esc(x.nome) + '</b><span><span class="preco">' + brl(x.preco) + '</span> · ' + esc(x.dur) + ' min</span></div><span class="marca-ok quad">' + (on ? ok : '') + '</span></button>';
+      }).join('') + '</div>';
       if (b.mensagem) h += '<div class="card" style="padding:12px 14px;gap:2px"><b style="font-size:15px">' + esc(b.mensagem) + '</b>' + ((b.formas || []).length ? '<span class="tiny">Aceita ' + esc(b.formas.join(', ').replace(/, ([^,]*)$/, ' e $1')) + '.</span>' : '') + '</div>';
-      acao = (s ? '<div class="resumo"><span>' + esc(s.nome) + ' · ' + esc(s.dur) + ' min</span><span>Total <b>' + brl(s.preco) + '</b></span></div>' : '') +
-        '<button type="button" class="btn" data-a="ir" data-v="2"' + (s ? '' : ' disabled') + '>' + (s ? 'Continuar' : 'Escolha um serviço') + '</button>';
+      acao = (s ? '<div class="resumo"><span>' + (s.qtd > 1 ? s.qtd + ' serviços' : esc(s.nome)) + ' · ' + esc(s.dur) + ' min</span><span>Total <b>' + brl(s.preco) + '</b></span></div>' : '') +
+        '<button type="button" class="btn" data-a="ir" data-v="2"' + (s ? '' : ' disabled') + '>' + (s ? 'Continuar' : 'Escolha pelo menos um') + '</button>';
     } else if (P === 2) {
       h += cab('Escolha o barbeiro', esc(s.nome)) + (b.barbeiros.some((x) => (x.fotos || []).length) ? '<span class="tiny" style="margin-top:-8px">Toque nas fotos pra ver os trabalhos.</span>' : '') + cardsBarbeiros();
       acao = '<div class="row">' + voltar + '<button type="button" class="btn" data-a="ir" data-v="3">Continuar</button></div>';
@@ -598,7 +607,7 @@ input{border-radius:14px;min-height:52px}
     if (e.target.id === 'f-tel') st.tel = e.target.value;
     if (e.target.id === 'f-email') st.email = e.target.value;
     const btn = app.querySelector('[data-a="confirmar"]'); if (!btn) return;
-    const s = st.b.servicos.find((x) => x.id === st.serv);
+    const s = pacote();
     btn.disabled = !(s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10) || st.enviando;
   });
   app.addEventListener('keydown', (e) => {
@@ -610,7 +619,7 @@ input{border-radius:14px;min-height:52px}
     const a = el.dataset.a, v = el.dataset.v;
     if (a !== 'desistir') st.confirmaDesistir = false;
     if (['serv', 'barb', 'dia', 'hora'].indexOf(a) >= 0) st.erro = '';
-    if (a === 'serv') { st.serv = v; st.hora = null; render(); carregarDia(st.dia); }
+    if (a === 'serv') { const i = st.servs.indexOf(v); if (i >= 0) st.servs.splice(i, 1); else if (st.servs.length < 6) st.servs.push(v); st.hora = null; render(); }
     if (a === 'ir') { const n = Number(v); if (n >= 1 && n <= 3) { st.passo = n; st.erro = ''; render(); window.scrollTo(0, 0); if (n === 3 && !st.ocup[st.dia]) carregarDia(st.dia); } return; }
     if (a === 'barb') { st.barb = v; st.hora = null; render(); }
     if (a === 'galeria') { abrirGaleria(v, Number(el.dataset.i) || 0); return; }
@@ -645,7 +654,7 @@ input{border-radius:14px;min-height:52px}
     }
     if (a === 'confirmar') {
       st.enviando = true; render();
-      const r = await sb.rpc('agendar_publico', { p_slug: slug, p_dia: st.dia, p_hora: st.hora, p_servico: st.serv, p_barbeiro: st.barb, p_nome: st.nome.trim(), p_tel: st.tel.trim() });
+      const r = await sb.rpc('agendar_publico', { p_slug: slug, p_dia: st.dia, p_hora: st.hora, p_servico: (pacote() || {}).id, p_barbeiro: st.barb, p_nome: st.nome.trim(), p_tel: st.tel.trim() });
       st.enviando = false;
       if (r.error) { st.erro = r.error.message || 'Não deu pra marcar. Tente de novo.'; st.hora = null; delete st.ocup[st.dia]; render(); carregarDia(st.dia); return; }
       try { localStorage.setItem('ag_nome', st.nome.trim()); localStorage.setItem('ag_tel', st.tel.trim()); } catch (er) { /* sem armazenamento */ }
