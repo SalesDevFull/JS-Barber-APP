@@ -1,4 +1,4 @@
-# JS Barber APP — guia técnico de instalação
+# Degradê — guia técnico de instalação
 
 Este projeto é o seu app, hospedado em contas suas.
 

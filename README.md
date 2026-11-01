@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="JS Barber APP: agenda, caixa, comissão e clientes da barbearia num app só" width="100%">
+  <img src="docs/banner.png" alt="Degradê: agenda, caixa, comissão e clientes da barbearia num app só" width="100%">
 </p>
 
 <p align="center">
@@ -31,7 +31,7 @@
 
 ## O que é
 
-O **JS Barber APP** é um sistema de gestão pra barbearias que funciona no navegador e se instala na tela do celular como um aplicativo. Um único sistema atende várias barbearias: cada uma tem o próprio espaço, a própria marca e o próprio link de agendamento, e nenhuma enxerga os dados da outra.
+O **Degradê** é um sistema de gestão pra barbearias que funciona no navegador e se instala na tela do celular como um aplicativo. Um único sistema atende várias barbearias: cada uma tem o próprio espaço, a própria marca e o próprio link de agendamento, e nenhuma enxerga os dados da outra.
 
 São três aplicativos em um:
 
@@ -230,6 +230,6 @@ flowchart LR
 ---
 
 <p align="center">
-  <img src="mascote.svg" width="72" alt="Mascote do JS Barber APP"><br>
+  <img src="mascote.svg" width="72" alt="Mascote do Degradê"><br>
   <sub>Feito por <a href="https://github.com/SalesDevFull">SalesDevFull</a> · O guia técnico de instalação está em <a href="docs/INSTALACAO.md">docs/INSTALACAO.md</a></sub>
 </p>
