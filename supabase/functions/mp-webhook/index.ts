@@ -38,6 +38,11 @@ Deno.serve(async (req: Request) => {
     if (r.status === 404) return new Response('ok');
     if (!r.ok) return new Response('tente de novo', { status: 500 }); // o Mercado Pago reenvia depois
     const p = await r.json();
+    if ((p.status === 'refunded' || p.status === 'charged_back') && p.external_reference) {
+      const res = await rpc('mp_devolvido', { p_b: b, p_id: String(p.external_reference), p_pagamento: String(p.id), p_status: p.status });
+      console.log('devolvido', p.id, res);
+      return new Response('ok');
+    }
     if (p.status === 'approved' && p.external_reference) {
       const res = await rpc('mp_confirmar', {
         p_b: b, p_id: String(p.external_reference), p_valor: Number(p.transaction_amount),

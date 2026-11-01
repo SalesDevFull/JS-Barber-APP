@@ -494,7 +494,7 @@ button.logo:active{transform:scale(.94)}
     if (a.comandaId) { const ex = S.comandas.find((c) => c.id === a.comandaId && c.status === 'aberta'); if (ex) { S.ui.comanda = ex.id; go('caixa'); return; } }
     const s = serv(a.servicoId); const id = newId();
     const ok = await W(async () => {
-      await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: a.clienteId || null, clienteNome: a.clienteNome || 'Cliente', barbeiroId: a.barbeiroId || null, agendamentoId: a.id, itens: s ? [{ tipo: 's', id: s.id, nome: s.nome, preco: num(s.preco) }] : [], pagamento: formas()[0], gorjeta: 0, sinal: num(a.sinalPago) || 0, criadoEm: new Date().toISOString() });
+      await col('comandas').doc(id).set({ status: 'aberta', data: today(), clienteId: a.clienteId || null, clienteNome: a.clienteNome || 'Cliente', barbeiroId: a.barbeiroId || null, agendamentoId: a.id, itens: s ? [{ tipo: 's', id: s.id, nome: s.nome, preco: num(s.preco) }] : [], pagamento: formas()[0], gorjeta: 0, sinal: a.sinalDevolvido ? 0 : (num(a.sinalPago) || 0), criadoEm: new Date().toISOString() });
       await col('agendamentos').doc(a.id).update({ status: 'cadeira', comandaId: id });
     });
     if (ok) { S.ui.comanda = id; go('caixa'); }
@@ -596,7 +596,8 @@ button.logo:active{transform:scale(.94)}
     let h = '';
     if (S.papel === 'dono' && S.venc) {
       const dv = diffDays(t, S.venc); const dVenc = fmtDia(S.venc);
-      if (dv < 0) h += '<section class="card warn"><span class="lbl c-warn">Mensalidade vencida</span><span>Venceu em ' + esc(dVenc) + '. O acesso será bloqueado em ' + Math.max(0, 6 + dv) + ' dia' + (6 + dv === 1 ? '' : 's') + '. Fale com o suporte pra regularizar.</span></section>';
+      const falta = Math.max(0, (S.tol == null ? 5 : S.tol) + 1 + dv);
+      if (dv < 0) h += '<section class="card warn"><span class="lbl c-warn">Mensalidade vencida</span><span>Venceu em ' + esc(dVenc) + '. O acesso será bloqueado ' + (falta <= 1 ? 'amanhã' : 'em ' + falta + ' dias') + '. Fale com o suporte pra regularizar.</span></section>';
       else if (dv <= 7) h += '<section class="card warn"><span class="lbl c-warn">Assinatura</span><span>Sua assinatura vence ' + (dv === 0 ? 'hoje' : dv === 1 ? 'amanhã' : 'em ' + dv + ' dias') + ' (' + esc(dVenc) + ').</span></section>';
     }
 
@@ -690,7 +691,8 @@ button.logo:active{transform:scale(.94)}
           (waS ? '<a class="btn sm ok" href="' + esc(waS) + '" target="_blank" rel="noopener">Falar no WhatsApp</a>' : '<span></span>') +
           '<button type="button" class="btn sm bad" data-act="cancelarAg" data-id="' + esc(a.id) + '">' + conf('cancel' + a.id, 'Cancelar reserva') + '</button></div>';
       } else if (a.status === 'agendado') {
-        if (num(a.sinalPago)) h += '<span class="tiny c-ok">Sinal de ' + brl(a.sinalPago) + ' pago' + (a.mpPagamento ? (a.sinalMetodo === 'pix' ? ' no Pix (Mercado Pago)' : ' no cartão (Mercado Pago)') : '') + '</span>';
+        if (a.sinalDevolvido) h += '<span class="tiny c-warn">Sinal de ' + brl(a.sinalPago) + ' devolvido pelo Mercado Pago</span>';
+        else if (num(a.sinalPago)) h += '<span class="tiny c-ok">Sinal de ' + brl(a.sinalPago) + ' pago' + (a.mpPagamento ? (a.sinalMetodo === 'pix' ? ' no Pix (Mercado Pago)' : ' no cartão (Mercado Pago)') : '') + '</span>';
         const wa = waLink(a.telefone, lembreteTxt(a));
         h += '<div class="grid2"><button type="button" class="btn pri sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">Abrir comanda</button>' +
           (wa ? '<a class="btn sm ok" href="' + esc(wa) + '" target="_blank" rel="noopener">Lembrete WhatsApp</a>' : '<span class="btn sm" style="color:var(--dim)">Sem telefone</span>') +
@@ -861,8 +863,12 @@ button.logo:active{transform:scale(.94)}
         : perm === 'denied' ? '<span class="tiny c-warn">As notificações foram bloqueadas neste aparelho. Libere nas configurações do navegador.</span>'
         : perm === 'indisponivel' ? '<span class="tiny">Este navegador não mostra notificações. No iPhone, adicione o app à tela de início primeiro.</span>'
         : '<button type="button" class="btn" data-act="pedirNotif">Ativar notificação neste aparelho</button>') +
+      (pushSuportado() ? (S.push === true ? '<div class="row between"><span class="tiny c-ok">Avisos com o app fechado: ligados neste aparelho.</span><button type="button" class="btn sm" data-act="pushDesligar">Desligar</button></div>'
+          : S.push === 'carregando' ? '<span class="tiny">Ligando os avisos…</span>'
+          : perm === 'denied' ? '' : '<button type="button" class="btn pri" data-act="pushLigar">Receber avisos com o app fechado</button>')
+        : (/iPhone|iPad/.test(navigator.userAgent) ? '<span class="tiny">No iPhone, os avisos com o app fechado funcionam depois de adicionar o app à tela de início (iOS 16.4 ou mais novo).</span>' : '')) +
       '<button type="button" class="btn sm" data-act="testarAviso">Testar o aviso</button>' +
-      '<span class="tiny">Os avisos chegam com o app aberto (ou em segundo plano). Com o app totalmente fechado, ainda não.</span></section>';
+      '<span class="tiny">' + (S.push === true ? 'O aviso chega neste celular mesmo com o app fechado, quando um cliente agenda pelo link ou paga o sinal online.' : 'Sem os avisos com o app fechado, o aviso só chega com o app aberto (ou em segundo plano).') + '</span></section>';
   }
 
   // Mercado Pago: a conta é da barbearia, o app só ajuda a cobrar.
@@ -1273,6 +1279,31 @@ button.logo:active{transform:scale(.94)}
       if (r.error) { toast('Não deu pra tirar o acesso: ' + r.error.message, true); return; }
       toast('Acesso removido'); await carregarAcessos();
     },
+    pushLigar: async () => {
+      if (!pushSuportado()) { toast('Este navegador não recebe avisos com o app fechado.', true); return; }
+      S.push = 'carregando'; render();
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') throw new Error('Libere as notificações pra receber os avisos.');
+        const ch = await S.sb.rpc('push_chave');
+        if (ch.error || !ch.data) throw new Error('Os avisos ainda não foram configurados no servidor.');
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(ch.data) });
+        const j = sub.toJSON();
+        const r = await S.sb.rpc('push_inscrever', { p_b: S.bid, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+        if (r.error) throw new Error(r.error.message);
+        S.push = true; toast('Pronto! Os avisos chegam mesmo com o app fechado.');
+      } catch (e) { S.push = false; toast(e && e.message ? e.message : 'Não deu pra ligar os avisos aqui.', true); }
+      render();
+    },
+    pushDesligar: async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+        if (sub) { await S.sb.rpc('push_cancelar', { p_endpoint: sub.endpoint }); await sub.unsubscribe(); }
+      } catch (e) { /* já estava desligado */ }
+      S.push = false; toast('Avisos com o app fechado desligados neste aparelho'); render();
+    },
     pedirNotif: async () => {
       if (!('Notification' in window)) { toast('Este navegador não mostra notificações.', true); return; }
       try { const r = await Notification.requestPermission(); toast(r === 'granted' ? 'Notificações ativadas neste aparelho' : 'Notificações não foram liberadas', r !== 'granted'); } catch (e) { toast('Não deu pra ativar aqui.', true); }
@@ -1558,6 +1589,15 @@ button.logo:active{transform:scale(.94)}
     if (novos.length) avisar(novos);
   }
   let avisoT = null;
+  const pushSuportado = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const b64uBytes = (s) => { const t = s.replace(/-/g, '+').replace(/_/g, '/'); const bin = atob(t + '='.repeat((4 - (t.length % 4)) % 4)); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
+  async function iniciarSW() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      S.swReg = await navigator.serviceWorker.register('sw.js');
+      if ('PushManager' in window) { const sub = await S.swReg.pushManager.getSubscription(); S.push = !!sub && Notification.permission === 'granted'; scheduleRender(); }
+    } catch (e) { /* sem service worker (ex.: aba anônima) */ }
+  }
   function avisar(lista, teste) {
     const a = lista[lista.length - 1]; const s = serv(a.servicoId);
     const quando = (a.data === today() ? 'hoje' : fmtDia(a.data)) + ' às ' + a.hora;
@@ -1572,8 +1612,10 @@ button.logo:active{transform:scale(.94)}
     try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch (e) { /* sem vibração */ }
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
-        const n = new Notification(lista.length > 1 ? lista.length + ' agendamentos novos' : 'Agendamento novo', { body: txt, icon: 'icon-192.png?v=3', tag: 'agendamento-' + a.id });
-        n.onclick = () => { window.focus(); S.ui.agDia = a.data; go('agenda'); n.close(); };
+        const titulo = lista.length > 1 ? lista.length + ' agendamentos novos' : 'Agendamento novo';
+        const op = { body: txt, icon: 'icon-192.png?v=3', badge: 'favicon-32.png?v=3', tag: 'agendamento-' + a.id, data: { url: '/#agenda' } };
+        if (S.swReg) S.swReg.showNotification(titulo, op).catch(() => {});
+        else { const n = new Notification(titulo, op); n.onclick = () => { window.focus(); S.ui.agDia = a.data; go('agenda'); n.close(); }; }
       }
     } catch (e) { /* sem notificação */ }
     if (S.ui.tab === 'inicio' || S.ui.tab === 'agenda') scheduleRender();
@@ -1706,6 +1748,7 @@ button.logo:active{transform:scale(.94)}
         })
         .subscribe();
       S.status = 'ok'; render();
+      S.sb.rpc('tolerancia_dias').then((r) => { if (!r.error && r.data != null) { S.tol = Number(r.data); scheduleRender(); } });
       S.sb.rpc('eh_admin').then((r) => { S.ehAdmin = !r.error && r.data === true; if (S.ehAdmin && S.ui.tab === 'inicio') scheduleRender(); });
       carregarAcessos();
       carregarMP();
@@ -1739,6 +1782,7 @@ button.logo:active{transform:scale(.94)}
   }
 
   async function boot() {
+    iniciarSW();
     const t = (location.hash || '').replace('#', ''); if (TABS.indexOf(t) >= 0) S.ui.tab = t;
     render();
     const C = window.APP_CONFIG || {};

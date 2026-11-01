@@ -66,6 +66,33 @@ const RECUSA: Record<string, string> = {
   cc_rejected_duplicated_payment: 'Esse pagamento já foi feito. Confira seu extrato.',
   cc_rejected_high_risk: 'O pagamento foi recusado por segurança. Tente outro cartão ou o Pix.',
   cc_rejected_max_attempts: 'Muitas tentativas. Use outro cartão ou o Pix.',
+  cc_rejected_blacklist: 'Esse cartão não pode ser usado. Tente outro cartão ou o Pix.',
+  cc_rejected_card_error: 'O cartão não respondeu. Tente de novo ou use outro cartão.',
+  cc_rejected_invalid_installments: 'Esse cartão não aceita esse número de parcelas. Tente à vista.',
+  cc_rejected_other_reason: 'O banco do cartão recusou o pagamento. Tente outro cartão ou o Pix.',
+  cc_rejected_card_type_not_allowed: 'Esse tipo de cartão não é aceito. Use um cartão de crédito.',
+  cc_amount_rate_limit_exceeded: 'O cartão passou do limite de uso agora. Tente outro cartão ou o Pix.',
+  rejected_insufficient_data: 'Faltaram dados do cartão. Confira e tente de novo.',
+  rejected_by_issuer: 'O banco do cartão recusou o pagamento. Tente outro cartão ou o Pix.',
+};
+
+// Erros que o Mercado Pago devolve antes de tentar cobrar (dados inválidos e afins).
+const ERRO_MP: Record<string, string> = {
+  '205': 'Digite o número do cartão.', 'E301': 'O número do cartão está errado. Confira.',
+  '208': 'Confira o mês de validade.', '209': 'Confira o ano de validade.', '325': 'Confira o mês de validade.', '326': 'Confira o ano de validade.',
+  '224': 'Digite o código de segurança (CVV).', 'E302': 'O código de segurança (CVV) está errado.',
+  '221': 'Digite o nome como está no cartão.', '316': 'Confira o nome como está no cartão.',
+  '212': 'Confira o CPF do titular.', '213': 'Confira o CPF do titular.', '214': 'Confira o CPF do titular.',
+  '322': 'Confira o CPF do titular.', '323': 'Confira o CPF do titular.', '324': 'Confira o CPF do titular.', '2067': 'Confira o CPF do titular.',
+  '3034': 'O número não bate com a bandeira do cartão. Confira o número.',
+  '4033': 'Esse número de parcelas não está disponível. Tente à vista.',
+  '2034': 'Esse e-mail não pode pagar nesta barbearia (é o mesmo da conta que recebe, ou é uma conta de teste). Use outro e-mail.',
+  '2001': 'Esse pagamento já foi enviado. Aguarde uns segundos e confira.',
+  '3003': 'O formulário do cartão expirou. Recarregue a página e tente de novo.', '106': 'Esse cartão não pode pagar nesta barbearia. Use outro cartão ou o Pix.',
+};
+const erroMP = (p: { cause?: { code?: string | number }[] }) => {
+  const c = (p && Array.isArray(p.cause) ? p.cause : []).map((x) => String(x && x.code)).find((x) => ERRO_MP[x]);
+  return c ? ERRO_MP[c] : '';
 };
 
 Deno.serve(async (req: Request) => {
@@ -137,7 +164,7 @@ Deno.serve(async (req: Request) => {
       }),
     });
     const p = await r.json().catch(() => ({}));
-    if (!r.ok) { console.error('cartao', r.status, JSON.stringify(p)); return falha('Não deu pra pagar com esse cartão. Confira os dados ou use o Pix.'); }
+    if (!r.ok) { console.error('cartao', r.status, JSON.stringify(p)); return falha(erroMP(p) || 'Não deu pra pagar com esse cartão. Confira os dados ou use o Pix.'); }
     if (p.status === 'approved') {
       const res = await rpc('mp_confirmar', { p_b: c.b, p_id: id, p_valor: Number(p.transaction_amount), p_pagamento: String(p.id), p_metodo: p.payment_method_id || 'cartao' });
       if (res === 'devolver') return falha('O pagamento passou, mas o horário não estava mais livre. A barbearia vai devolver o valor. Fale com ela pelo WhatsApp.');

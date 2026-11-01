@@ -47,6 +47,7 @@ main{max-width:900px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px
 .row{display:flex;align-items:center;gap:10px;min-width:0}
 .wrap{flex-wrap:wrap}
 .grow{flex:1;min-width:0}
+.row.wrap>.grow{flex:1 1 220px}
 .h2{margin:0;font-family:var(--display);font-size:20px;font-weight:700}
 .sub{font-size:14px;color:var(--muted)}
 .tiny{font-size:13px;color:var(--muted)}
@@ -82,6 +83,8 @@ a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--fg);color:var(--bg);border:1px solid var(--accent);padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100% - 32px)}
 #toast.err{background:var(--bad);color:#1A0A06}
+.plano-linha{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.copia{font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap;background:var(--surface);border:1px dashed var(--line2);border-radius:10px;padding:10px;user-select:all}
 .empty{text-align:center;color:var(--muted);padding:28px 12px}
 .top{position:sticky;top:0;z-index:20;border-bottom:0!important;box-shadow:0 10px 24px rgba(0,0,0,.5)}
 .top::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:7px;background:repeating-linear-gradient(-45deg,#A32D2D 0 9px,#F3E9DA 9px 18px,#25508F 18px 27px,#F3E9DA 27px 36px);background-size:51px 7px;animation:poste 1.6s linear infinite}
@@ -103,6 +106,7 @@ main{padding-top:26px}
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="pix.js"></script>
 <script src="config.js"></script>
 <script>
 (function () {
@@ -116,10 +120,12 @@ main{padding-top:26px}
   const br = (s) => { if (!s) return '—'; const d = parseD(s); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); };
   const quando = (ts) => { if (!ts) return 'nunca'; const n = dias(String(ts).slice(0, 10), hoje()); return n <= 0 ? 'hoje' : n === 1 ? 'ontem' : 'há ' + n + ' dias'; };
   const num = (v) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : null; };
-  const TOL = 5;
+  const APP_NOME = 'JS Barber APP';
+  const tol = () => (S.sis && S.sis.tolerancia != null ? Number(S.sis.tolerancia) : 5);
+  const novoId = () => 'p' + Math.random().toString(36).slice(2, 8);
 
   const view = document.getElementById('view');
-  const S = { sb: null, lista: [], pags: [], filtro: 'todas', busca: '', aberto: null, modo: null, hist: {}, confirm: null, user: null };
+  const S = { sb: null, lista: [], pags: [], filtro: 'todas', busca: '', aberto: null, modo: null, hist: {}, confirm: null, user: null, sis: null, cfgAberta: false, planosEd: null };
   let tT = null;
   function toast(m, err) { const t = document.getElementById('toast'); t.textContent = m; t.className = err ? 'err' : ''; t.hidden = false; clearTimeout(tT); tT = setTimeout(() => { t.hidden = true; }, 3000); }
 
@@ -127,7 +133,7 @@ main{padding-top:26px}
     const t = hoje(); const v = b.vencimento; const d = v ? dias(t, v) : null;
     if (!b.ativa) return { k: 'bloq', txt: 'Desativada por você', cls: 'p-bad' };
     if (!b.liberada) return { k: 'bloq', txt: 'Bloqueada · venceu em ' + br(v), cls: 'p-bad' };
-    if (d !== null && d < 0) return { k: 'vencendo', txt: 'Vencida há ' + (-d) + ' dia' + (d === -1 ? '' : 's') + ' · bloqueia em ' + (TOL + d + 1) + ' dia' + (TOL + d + 1 === 1 ? '' : 's'), cls: 'p-warn' };
+    if (d !== null && d < 0) return { k: 'vencendo', txt: 'Vencida há ' + (-d) + ' dia' + (d === -1 ? '' : 's') + ' · bloqueia em ' + (tol() + d + 1) + ' dia' + (tol() + d + 1 === 1 ? '' : 's'), cls: 'p-warn' };
     if (Number(b.total_pago) <= 0) return { k: 'teste', txt: 'Teste grátis até ' + br(v), cls: 'p-acc' };
     if (d !== null && d <= 7) return { k: 'vencendo', txt: 'Vence em ' + d + ' dia' + (d === 1 ? '' : 's'), cls: 'p-warn' };
     return { k: 'ok', txt: v ? 'Em dia até ' + br(v) : 'Sem vencimento', cls: 'p-ok' };
@@ -139,6 +145,47 @@ main{padding-top:26px}
       '<div class="field"><label for="a-senha">Senha</label><input id="a-senha" type="password" autocomplete="current-password"></div>' +
       '<button type="button" class="btn pri full" data-a="entrar">Entrar</button>' +
       '<span class="tiny">Use a mesma conta que você criou no app. Ela precisa estar cadastrada como administradora no banco (veja o README).</span></div>';
+  }
+
+  const planos = () => (S.sis && Array.isArray(S.sis.planos) ? S.sis.planos : []);
+  const planoNome = (id) => { const p = planos().find((x) => x.id === id); return p ? p.nome : ''; };
+
+  function vConfig() {
+    const sis = S.sis || {};
+    if (!S.cfgAberta) {
+      return '<section class="card"><div class="row wrap"><div class="grow"><p class="h2">Configurações do sistema</p><span class="tiny">Teste grátis de ' + (sis.teste_dias != null ? sis.teste_dias : 10) + ' dias · tolerância de ' + tol() + ' dias · ' +
+        (planos().length ? planos().length + (planos().length === 1 ? ' plano' : ' planos') : 'nenhum plano') + ' · ' + (sis.pix && sis.pix.chave ? 'Pix cadastrado' : 'sem Pix pra cobrança') + '</span></div>' +
+        '<button type="button" class="btn" data-a="cfgAbrir">Alterar</button></div></section>';
+    }
+    const px = sis.pix || {}; const tipo = px.tipo || 'celular';
+    const ps = S.planosEd || [];
+    return '<section class="card"><p class="h2">Configurações do sistema</p>' +
+      '<div class="form"><div class="field"><label for="cf-teste">Teste grátis (dias)</label><input id="cf-teste" inputmode="numeric" value="' + esc(sis.teste_dias != null ? sis.teste_dias : 10) + '"></div>' +
+      '<div class="field"><label for="cf-tol">Tolerância após vencer (dias)</label><input id="cf-tol" inputmode="numeric" value="' + esc(tol()) + '"></div>' +
+      '<span class="tiny span">O teste grátis vale pras barbearias que se cadastrarem daqui pra frente. A tolerância vale pra todas na hora.</span></div>' +
+      '<p class="h2" style="font-size:18px">Planos</p><div class="form"><div class="span stack" id="cf-planos">' +
+      (ps.length ? ps.map((p, i) => '<div class="plano-linha"><input data-plano="' + i + '" data-campo="nome" placeholder="Nome do plano" value="' + esc(p.nome) + '" aria-label="Nome do plano"><input data-plano="' + i + '" data-campo="preco" inputmode="decimal" placeholder="Preço" value="' + esc(p.preco != null ? String(p.preco).replace('.', ',') : '') + '" aria-label="Preço por mês"><button type="button" class="btn" data-a="planoTirar" data-v="' + i + '" aria-label="Remover plano">✕</button></div>').join('')
+        : '<span class="tiny">Nenhum plano. Crie, por exemplo, "Básico" e "Completo".</span>') +
+      '</div><button type="button" class="btn span" data-a="planoNovo">+ Adicionar plano</button><span class="tiny span">O primeiro plano da lista é o padrão das barbearias novas.</span></div>' +
+      '<p class="h2" style="font-size:18px">Seu Pix (pra cobrar as mensalidades)</p><div class="form">' +
+      '<div class="field"><label for="cf-tipo">Tipo de chave</label><select id="cf-tipo">' + [['celular', 'Celular'], ['cpf', 'CPF'], ['cnpj', 'CNPJ'], ['email', 'E-mail'], ['aleatoria', 'Chave aleatória']].map((k) => '<option value="' + k[0] + '"' + (tipo === k[0] ? ' selected' : '') + '>' + k[1] + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="cf-chave">Chave Pix</label><input id="cf-chave" autocomplete="off" value="' + esc(px.chaveDigitada || px.chave || '') + '"></div>' +
+      '<div class="field"><label for="cf-nome">Nome de quem recebe</label><input id="cf-nome" maxlength="25" value="' + esc(px.nome || '') + '"></div>' +
+      '<div class="field"><label for="cf-cidade">Cidade</label><input id="cf-cidade" maxlength="15" value="' + esc(px.cidade || '') + '"></div></div>' +
+      '<div class="row wrap"><button type="button" class="btn pri" data-a="cfgSalvar">Salvar configurações</button><button type="button" class="btn" data-a="cfgFechar">Cancelar</button></div></section>';
+  }
+
+  function cobranca(b) {
+    const px = (S.sis && S.sis.pix) || null;
+    if (!px || !px.chave || !window.Pix || !(Number(b.mensalidade) > 0)) return null;
+    const txid = ('JSB' + String(b.slug).replace(/[^a-z0-9]/gi, '')).toUpperCase().slice(0, 25);
+    const codigo = window.Pix.brcode({ tipo: px.tipo, chave: px.chave, nome: px.nome, cidade: px.cidade, valor: Number(b.mensalidade), txid: txid });
+    const d = b.vencimento ? dias(hoje(), b.vencimento) : null;
+    const quandoVence = d === null ? '' : d < 0 ? ' venceu em ' + br(b.vencimento) : d === 0 ? ' vence hoje' : ' vence em ' + br(b.vencimento);
+    const msg = 'Olá! Tudo bem? Aqui é do ' + APP_NOME + '. A mensalidade da ' + b.nome + (planoNome(b.plano) ? ' (plano ' + planoNome(b.plano) + ')' : '') + ' de ' + brl(b.mensalidade) + quandoVence + '.\n\n' +
+      'Pra pagar, é só usar o Pix copia e cola:\n\n' + codigo + '\n\nAssim que cair, eu libero por aqui. Obrigado!';
+    let tel = String(b.whatsapp || '').replace(/\D/g, ''); if (tel && tel.length <= 11) tel = '55' + tel;
+    return { codigo: codigo, msg: msg, link: tel.length >= 12 ? 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg) : '' };
   }
 
   function render() {
@@ -156,6 +203,7 @@ main{padding-top:26px}
       '<div class="kpi"><span>Em teste grátis</span><b>' + cnt('teste') + '</b></div>' +
       '<div class="kpi"><span>Receita mensal prevista</span><b>' + brl(prevista) + '</b></div>' +
       '<div class="kpi"><span>Recebido este mês</span><b>' + brl(recebidoMes) + '</b></div></div>';
+    h += vConfig();
     const filtros = [['todas', 'Todas'], ['vencendo', 'Vencendo ou vencidas (' + cnt('vencendo') + ')'], ['bloq', 'Bloqueadas (' + cnt('bloq') + ')'], ['teste', 'Em teste (' + cnt('teste') + ')'], ['ok', 'Em dia (' + cnt('ok') + ')']];
     h += '<div class="chips">' + filtros.map((f) => '<button type="button" class="chip' + (S.filtro === f[0] ? ' on' : '') + '" data-a="filtro" data-v="' + f[0] + '" aria-pressed="' + (S.filtro === f[0]) + '">' + f[1] + '</button>').join('') + '</div>';
     h += '<div class="field"><label for="busca" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar</label><input id="busca" type="search" placeholder="Buscar por nome, link ou e-mail do dono" value="' + esc(S.busca) + '"></div>';
@@ -167,10 +215,10 @@ main{padding-top:26px}
       const b = x.b, s = x.s, aberto = S.aberto === b.id;
       h += '<section class="card' + (s.k === 'bloq' ? ' bloq' : s.k === 'vencendo' ? ' alerta' : '') + '">' +
         '<div class="row wrap"><div class="grow"><p class="h2">' + esc(b.nome) + '</p><span class="tiny">' + esc(b.dono_email || 'sem dono') + ' · <a href="' + esc(base + 'agendar.html?b=' + encodeURIComponent(b.slug)) + '" target="_blank" rel="noopener">' + esc(b.slug) + '</a></span></div><span class="pill ' + s.cls + '">' + esc(s.txt) + '</span></div>' +
-        '<div class="meta"><div><span>Mensalidade</span><b>' + (b.mensalidade != null ? brl(b.mensalidade) : 'não definida') + '</b></div><div><span>Vencimento</span><b>' + br(b.vencimento) + '</b></div>' +
+        '<div class="meta"><div><span>Mensalidade</span><b>' + (b.mensalidade != null ? brl(b.mensalidade) : 'não definida') + (planoNome(b.plano) ? ' · ' + esc(planoNome(b.plano)) : '') + '</b></div><div><span>Vencimento</span><b>' + br(b.vencimento) + '</b></div>' +
         '<div><span>Uso (30 dias)</span><b>' + b.agendamentos_30d + ' agend. · ' + b.comandas_30d + ' comandas</b></div><div><span>Último uso</span><b>' + quando(b.ultima_atividade) + '</b></div></div>' +
         (b.obs_admin ? '<span class="tiny">Anotação: ' + esc(b.obs_admin) + '</span>' : '') +
-        '<div class="row wrap"><button type="button" class="btn pri" data-a="modo" data-id="' + b.id + '" data-v="pagar">Registrar pagamento</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="editar">Editar</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="hist">Histórico</button>' +
+        '<div class="row wrap"><button type="button" class="btn pri" data-a="modo" data-id="' + b.id + '" data-v="pagar">Registrar pagamento</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="editar">Editar</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="hist">Histórico</button><button type="button" class="btn" data-a="modo" data-id="' + b.id + '" data-v="cobrar">Cobrar</button>' +
         (b.ativa ? '<button type="button" class="btn bad" data-a="desativar" data-id="' + b.id + '">' + (S.confirm === 'd' + b.id ? 'Toque de novo pra desativar' : 'Desativar') + '</button>' : '<button type="button" class="btn ok" data-a="reativar" data-id="' + b.id + '">Reativar</button>') + '</div>';
       if (aberto && S.modo === 'pagar') {
         h += '<div class="form"><div class="field"><label for="pg-valor">Valor recebido (R$)</label><input id="pg-valor" inputmode="decimal" value="' + esc(b.mensalidade != null ? String(b.mensalidade).replace('.', ',') : '') + '"></div>' +
@@ -180,7 +228,8 @@ main{padding-top:26px}
           '<button type="button" class="btn pri span" data-a="pagar" data-id="' + b.id + '">Confirmar pagamento</button></div>';
       }
       if (aberto && S.modo === 'editar') {
-        h += '<div class="form"><div class="field"><label for="ed-mens">Mensalidade (R$)</label><input id="ed-mens" inputmode="decimal" value="' + esc(b.mensalidade != null ? String(b.mensalidade).replace('.', ',') : '') + '"></div>' +
+        h += '<div class="form">' + (planos().length ? '<div class="field"><label for="ed-plano">Plano</label><select id="ed-plano"><option value="">Sem plano (valor livre)</option>' + planos().map((p) => '<option value="' + esc(p.id) + '"' + (b.plano === p.id ? ' selected' : '') + '>' + esc(p.nome) + ' · ' + brl(p.preco) + '</option>').join('') + '</select></div>' : '') +
+          '<div class="field"><label for="ed-mens">Mensalidade (R$)</label><input id="ed-mens" inputmode="decimal" value="' + esc(b.mensalidade != null ? String(b.mensalidade).replace('.', ',') : '') + '"></div>' +
           '<div class="field"><label for="ed-venc">Vencimento</label><input id="ed-venc" type="date" value="' + esc(b.vencimento || '') + '"></div>' +
           '<div class="field"><label for="ed-ativa">Acesso</label><select id="ed-ativa"><option value="1"' + (b.ativa ? ' selected' : '') + '>Ativa</option><option value="0"' + (!b.ativa ? ' selected' : '') + '>Desativada</option></select></div>' +
           '<div class="field span"><label for="ed-obs">Anotação interna (só você vê)</label><textarea id="ed-obs">' + esc(b.obs_admin || '') + '</textarea></div>' +
@@ -190,6 +239,14 @@ main{padding-top:26px}
           '<div class="field"><label for="ex-nome">Pra confirmar, digite o nome: <b>' + esc(b.nome) + '</b></label><input id="ex-nome" autocomplete="off"></div>' +
           '<button type="button" class="btn bad" data-a="excluir" data-id="' + b.id + '">Excluir pra sempre</button></div></div>';
       }
+      if (aberto && S.modo === 'cobrar') {
+        const cb = cobranca(b);
+        if (!cb) h += '<div class="form"><span class="tiny span">' + (!(S.sis && S.sis.pix && S.sis.pix.chave) ? 'Cadastre o seu Pix em Configurações do sistema (lá em cima) pra gerar a cobrança.' : 'Defina a mensalidade desta barbearia em Editar pra gerar a cobrança.') + '</span></div>';
+        else h += '<div class="form"><div class="span copia" id="cb-msg">' + esc(cb.msg) + '</div>' +
+          '<div class="span row wrap">' + (cb.link ? '<a class="btn pri" href="' + esc(cb.link) + '" target="_blank" rel="noopener">Enviar no WhatsApp</a>' : '<span class="tiny">A barbearia não cadastrou WhatsApp. Copie a mensagem e mande por onde preferir.</span>') +
+          '<button type="button" class="btn" data-a="copiar" data-v="msg" data-id="' + b.id + '">Copiar mensagem</button><button type="button" class="btn" data-a="copiar" data-v="pix" data-id="' + b.id + '">Copiar só o Pix</button></div>' +
+          '<span class="tiny span">Quando o Pix cair, use "Registrar pagamento" pra liberar o próximo mês.</span></div>';
+      }
       if (aberto && S.modo === 'hist') {
         const ps = S.pags.filter((p) => p.barbearia_id === b.id);
         h += '<div class="form"><div class="span">' + (ps.length ? ps.map((p) => '<div class="item"><span class="grow">' + br(String(p.pago_em).slice(0, 10)) + ' · ' + p.meses + (p.meses === 1 ? ' mês' : ' meses') + ' · até ' + br(p.vence_ate) + (p.obs ? ' · ' + esc(p.obs) : '') + '</span><b class="num">' + brl(p.valor) + '</b><button type="button" class="btn" data-a="apagarPag" data-id="' + p.id + '" aria-label="Apagar pagamento">' + (S.confirm === 'p' + p.id ? 'Confirmar' : '✕') + '</button></div>').join('') : '<span class="tiny">Nenhum pagamento registrado.</span>') +
@@ -197,14 +254,14 @@ main{padding-top:26px}
       }
       h += '</section>';
     });
-    h += '<div class="row wrap" style="justify-content:space-between"><span class="tiny">' + esc(S.user ? S.user.email : '') + ' · tolerância de ' + TOL + ' dias após o vencimento</span><button type="button" class="btn" data-a="atualizar">Atualizar</button><button type="button" class="btn" data-a="sair">Sair</button></div>';
+    h += '<div class="row wrap" style="justify-content:space-between"><span class="tiny">' + esc(S.user ? S.user.email : '') + ' · tolerância de ' + tol() + ' dias após o vencimento</span><button type="button" class="btn" data-a="atualizar">Atualizar</button><button type="button" class="btn" data-a="sair">Sair</button></div>';
     view.innerHTML = h;
   }
 
   async function carregar() {
-    const [a, b] = await Promise.all([S.sb.rpc('admin_barbearias'), S.sb.rpc('admin_pagamentos', { p_id: null })]);
+    const [a, b, c] = await Promise.all([S.sb.rpc('admin_barbearias'), S.sb.rpc('admin_pagamentos', { p_id: null }), S.sb.rpc('admin_sistema')]);
     if (a.error) { toast(a.error.message, true); return; }
-    S.lista = a.data || []; S.pags = b.data || [];
+    S.lista = a.data || []; S.pags = b.data || []; S.sis = c.error ? null : c.data;
     render();
   }
 
@@ -224,6 +281,8 @@ main{padding-top:26px}
     e.preventDefault(); e.target.blur(); pri.click();
   });
   view.addEventListener('input', (e) => {
+    if (e.target.dataset.plano != null && S.planosEd) { S.planosEd[Number(e.target.dataset.plano)][e.target.dataset.campo] = e.target.value; return; }
+    if (e.target.id === 'ed-plano') { const pl = planos().find((x) => x.id === e.target.value); const m = document.getElementById('ed-mens'); if (pl && m) m.value = String(pl.preco).replace('.', ','); return; }
     if (e.target.id === 'busca') {
       S.busca = e.target.value; const pos = e.target.selectionStart; render();
       const i = document.getElementById('busca'); i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) { /* ok */ }
@@ -252,7 +311,8 @@ main{padding-top:26px}
     }
     if (a === 'salvar') {
       const mens = document.getElementById('ed-mens').value.trim();
-      const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: document.getElementById('ed-ativa').value === '1', p_vencimento: document.getElementById('ed-venc').value || null, p_mensalidade: mens ? num(mens) : null, p_obs: document.getElementById('ed-obs').value });
+      const pl = document.getElementById('ed-plano');
+      const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: document.getElementById('ed-ativa').value === '1', p_vencimento: document.getElementById('ed-venc').value || null, p_mensalidade: mens ? num(mens) : null, p_obs: document.getElementById('ed-obs').value, p_plano: pl ? pl.value : null });
       if (r.error) { toast(r.error.message, true); return; }
       toast('Salvo'); S.aberto = null; S.modo = null; await carregar();
     }
@@ -263,6 +323,28 @@ main{padding-top:26px}
       const r = await S.sb.rpc('admin_salvar_barbearia', { p_id: id, p_ativa: a === 'reativar', p_vencimento: b.vencimento, p_mensalidade: b.mensalidade, p_obs: b.obs_admin });
       if (r.error) { toast(r.error.message, true); return; }
       toast(a === 'reativar' ? 'Barbearia reativada' : 'Barbearia desativada'); await carregar();
+    }
+    if (a === 'cfgAbrir') { S.cfgAberta = true; S.planosEd = planos().map((p) => ({ id: p.id, nome: p.nome, preco: p.preco })); render(); }
+    if (a === 'cfgFechar') { S.cfgAberta = false; S.planosEd = null; render(); }
+    if (a === 'planoNovo') { S.planosEd.push({ id: novoId(), nome: '', preco: '' }); render(); }
+    if (a === 'planoTirar') { S.planosEd.splice(Number(el.dataset.v), 1); render(); }
+    if (a === 'cfgSalvar') {
+      const tipo = document.getElementById('cf-tipo').value; const chave = document.getElementById('cf-chave').value.trim();
+      const nome = document.getElementById('cf-nome').value.trim(); const cidade = document.getElementById('cf-cidade').value.trim();
+      if (chave && !window.Pix.validarChave(tipo, chave)) { toast('Essa chave Pix não parece válida pro tipo escolhido.', true); return; }
+      if (chave && (!nome || !cidade)) { toast('Preencha o nome e a cidade do Pix.', true); return; }
+      const ps = S.planosEd.map((p) => ({ id: p.id, nome: String(p.nome || '').trim(), preco: num(p.preco) }));
+      if (ps.some((p) => !p.nome || p.preco === null || p.preco < 0)) { toast('Cada plano precisa de nome e preço.', true); return; }
+      const r = await S.sb.rpc('admin_salvar_sistema', { p: {
+        teste_dias: parseInt(document.getElementById('cf-teste').value, 10), tolerancia: parseInt(document.getElementById('cf-tol').value, 10),
+        pix: chave ? { tipo: tipo, chave: window.Pix.normalizarChave(tipo, chave), chaveDigitada: chave, nome: nome, cidade: cidade } : null, planos: ps } });
+      if (r.error) { toast(r.error.message, true); return; }
+      S.cfgAberta = false; S.planosEd = null; toast('Configurações salvas'); await carregar();
+    }
+    if (a === 'copiar') {
+      const b = S.lista.find((x) => x.id === id); const cb = b && cobranca(b); if (!cb) return;
+      const txt = el.dataset.v === 'pix' ? cb.codigo : cb.msg;
+      try { await navigator.clipboard.writeText(txt); toast(el.dataset.v === 'pix' ? 'Pix copiado' : 'Mensagem copiada'); } catch (er) { toast('Não deu pra copiar. Selecione o texto e copie.', true); }
     }
     if (a === 'excluir') {
       const b = S.lista.find((x) => x.id === id); const nome = document.getElementById('ex-nome').value.trim();
