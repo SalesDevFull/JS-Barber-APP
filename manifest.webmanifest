@@ -1,6 +1,6 @@
 {
-  "name": "JS Barber APP",
-  "short_name": "JS Barber APP",
+  "name": "Degradê",
+  "short_name": "Degradê",
   "description": "Agenda, caixa, comissão e clientes da barbearia.",
   "start_url": "./index.html",
   "scope": "./",

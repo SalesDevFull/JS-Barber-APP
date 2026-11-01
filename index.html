@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="JS Barber APP">
+<meta name="apple-mobile-web-app-title" content="Degradê">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>JS Barber APP</title>
+<title>Degradê</title>
 <link rel="manifest" href="manifest.webmanifest?v=4">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
@@ -298,7 +298,8 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
 .abertura .heroi .masc{width:180px;height:198px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.6))}
 .nome-app{font-family:var(--display);font-size:clamp(30px,9.5vw,42px);font-weight:700;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;line-height:1.05;background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
 .abertura .nome-app{background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
-.nome-app em{font-style:normal;color:var(--accent)}
+.nome-app em{font-style:normal;color:var(--accent);background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 18%,var(--accent) 82%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;padding-right:.04em}
+.abertura .nome-app{font-size:clamp(40px,13vw,56px);letter-spacing:.06em}
 .abertura .sub{font-size:15px}
 /* Início */
 .saud{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -590,7 +591,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
   const linkPublico = () => { const base = location.origin + location.pathname.replace(/[^/]*$/, ''); return base + 'agendar.html?b=' + encodeURIComponent(S.slug || ''); };
 
   function abertura(sub) {
-    return '<div class="abertura"><div class="heroi">' + mascote('m-hero m-grande', 'Mascote do JS Barber APP') + '</div><div class="nome-app">JS Barber <em>App</em></div><div class="sub">' + sub + '</div></div>';
+    return '<div class="abertura"><div class="heroi">' + mascote('m-hero m-grande', 'Mascote do Degradê') + '</div><div class="nome-app"><em>Degradê</em></div><div class="sub">' + sub + '</div></div>';
   }
 
   // Lê o valor direto do campo (o preenchimento automático do celular nem sempre avisa a página).
@@ -623,7 +624,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
       const b = barb(S.meuBarb); const t0 = today();
       const minha = S.ags.filter((a) => a.data === t0 && a.barbeiroId === S.meuBarb && segura(a) && a.status !== 'feito');
       const fala = !b ? 'Peça pro dono ligar sua conta a um barbeiro.' : (minha.length ? 'Você tem ' + minha.length + ' cliente' + (minha.length === 1 ? '' : 's') + ' na agenda hoje.' : 'Sua agenda de hoje está livre.');
-      return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do JS Barber APP') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
+      return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do Degradê') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
         '<div class="grid2"><button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button><button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button></div>' + cardLink() + vBarbeiro();
     }
     const t = today(), m = mesAtual(), c = cfg();
