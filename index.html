@@ -475,7 +475,7 @@ button.logo:active{transform:scale(.94)}
     if (!S.db) { toast('Sem conexão com o banco de dados.', true); return false; }
     try { await fn(); if (okMsg) toast(okMsg); return true; }
     catch (e) {
-      toast(e && e.amigavel ? e.amigavel : e && e.code === 'quota_exceeded' ?'Limite de registros atingido. Apague dados antigos em Gestão.' : 'Não deu pra salvar. Confira a conexão e tente de novo.', true);
+      toast(e && e.amigavel ? e.amigavel : e && /acabou de ser ocupado/.test(e.message || '') ? 'Esse horário acabou de ser ocupado por outro agendamento. Escolha outro.' : e && e.code === 'quota_exceeded' ?'Limite de registros atingido. Apague dados antigos em Gestão.' : 'Não deu pra salvar. Confira a conexão e tente de novo.', true);
       return false;
     }
   }

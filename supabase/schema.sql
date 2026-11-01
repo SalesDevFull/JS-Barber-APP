@@ -977,6 +977,46 @@ begin
   end loop;
 end $$;
 
+-- ---------- Trava contra dois agendamentos no mesmo horário ----------
+-- Vale pra tudo: link do cliente, painel do dono, barbeiros e confirmação de sinal.
+-- Uma marcação por vez por barbearia e dia (mesma trava do agendamento online), e o banco
+-- recusa se o barbeiro já tiver alguém nesse horário.
+create or replace function public.travar_horario() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare v_old jsonb; v_ini int; v_dur int;
+begin
+  if new.colecao <> 'agendamentos' or not segura_horario(new.dados) then return new; end if;
+  if tg_op = 'UPDATE' then v_old := old.dados;
+  else select dados into v_old from registros where barbearia_id = new.barbearia_id and colecao = new.colecao and id = new.id;
+  end if;
+  -- Se já segurava o mesmo horário antes (ex.: só mudou de "agendado" pra "na cadeira"), não precisa conferir.
+  if v_old is not null and segura_horario(v_old)
+     and v_old ->> 'data' is not distinct from new.dados ->> 'data'
+     and v_old ->> 'hora' is not distinct from new.dados ->> 'hora'
+     and v_old ->> 'dur' is not distinct from new.dados ->> 'dur'
+     and v_old ->> 'barbeiroId' is not distinct from new.dados ->> 'barbeiroId' then
+    return new;
+  end if;
+  if coalesce(new.dados ->> 'hora', '') !~ '^[0-2][0-9]:[0-5][0-9]$' then return new; end if;
+  perform pg_advisory_xact_lock(hashtext(new.barbearia_id::text || (new.dados ->> 'data')));
+  v_ini := minutos(new.dados ->> 'hora'); v_dur := coalesce((new.dados ->> 'dur')::int, 30);
+  if exists (
+    select 1 from registros o
+    where o.barbearia_id = new.barbearia_id and o.colecao = 'agendamentos' and o.id <> new.id
+      and o.dados ->> 'data' = new.dados ->> 'data' and o.dados ->> 'barbeiroId' = new.dados ->> 'barbeiroId'
+      and segura_horario(o.dados)
+      and minutos(o.dados ->> 'hora') < v_ini + v_dur and v_ini < minutos(o.dados ->> 'hora') + coalesce((o.dados ->> 'dur')::int, 30)
+  ) then
+    raise exception 'Esse horário acabou de ser ocupado. Escolha outro.' using errcode = 'P0001', hint = 'horario_ocupado';
+  end if;
+  return new;
+end $$;
+revoke all on function public.travar_horario() from public, anon, authenticated;
+
+drop trigger if exists registros_travar_horario on public.registros;
+create trigger registros_travar_horario before insert or update on public.registros
+  for each row when (new.colecao = 'agendamentos') execute function public.travar_horario();
+
 -- ---------- Permissões das funções ----------
 revoke all on function public.criar_barbearia(text, text, jsonb) from public, anon;
 revoke all on function public.entrar_por_convite() from public, anon;
