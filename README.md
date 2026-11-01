@@ -37,7 +37,7 @@ São três aplicativos em um:
 
 | | Pra quem | O que faz |
 |---|---|---|
-| **Painel da barbearia** | Dono e barbeiros | Agenda, caixa, comissões, clientes, estoque, horários e configurações |
+| **Painel da barbearia** | Dono e barbeiros | Agenda, caixa, comissões, clientes, horários e configurações |
 | **Página de agendamento** | Cliente final | Escolhe serviço, barbeiro, dia e hora, e paga o sinal no Pix ou no cartão. Sem precisar de conta |
 | **Painel do administrador** | Dono do sistema | Todas as barbearias assinantes, mensalidades, testes grátis e bloqueios |
 
@@ -94,7 +94,6 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 - **Comissão calculada sozinha**, sempre em cima do valor cheio do serviço.
 - O sinal pago no Pix já aparece descontado, mostrando só o que falta receber.
 - Fechamento do dia por forma de pagamento.
-- O produto vendido sai do estoque automaticamente.
 - O mascote comemora com confete quando a comanda fecha.
 
 ### Clientes
@@ -150,8 +149,6 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 
 ### Gestão
 - Serviços com preço e duração.
-- Estoque com alerta de mínimo.
-- Despesas e "quanto sobrou no mês".
 - Perfil da barbearia: logo, nome, cor, mensagem, endereço e redes.
 - Botão Sair no cabeçalho e menu da conta ao tocar no mascote.
 
