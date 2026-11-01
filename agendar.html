@@ -110,6 +110,34 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
 .poste i{display:block;height:200%;background:repeating-linear-gradient(-45deg,#B23A3A 0 8px,#F3E9DA 8px 16px,#2F5A9E 16px 24px,#F3E9DA 24px 32px);animation:girar 1s linear infinite}
 @keyframes girar{from{transform:translateY(-45.25px)}to{transform:translateY(0)}}
 .rodape{text-align:center;font-size:12px;color:var(--dim)}
+.barbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.barb{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:8px}
+.barb.on{border:2px solid var(--couro);padding:7px;background:var(--surface2)}
+.barb-sel{display:flex;align-items:center;gap:10px;background:none;border:0;padding:2px;color:var(--fg);text-align:left;cursor:pointer;min-height:48px;width:100%}
+.barb-sel b{font-size:16px;font-weight:600;display:block}
+.barb-sel small{font-size:13px;color:var(--muted)}
+.av{width:44px;height:44px;border-radius:999px;flex-shrink:0;object-fit:cover;background:var(--surface2);border:2px solid var(--marca);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:18px;color:var(--fg)}
+.miniaturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.mini{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:0;padding:0;background:var(--surface2);cursor:pointer}
+.mini img{width:100%;height:100%;object-fit:cover;display:block}
+.mini .mais{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:15px}
+.ver-todos{background:none;border:0;color:var(--fg);font-size:13px;font-weight:600;text-decoration:underline;text-decoration-color:var(--marca);text-underline-offset:3px;cursor:pointer;padding:4px 2px;text-align:left}
+#galeria{position:fixed;inset:0;z-index:50;background:#0A0705;display:flex;flex-direction:column;color:#F3E9DA;padding:max(10px,env(safe-area-inset-top,0px)) 0 max(12px,env(safe-area-inset-bottom,0px))}
+#galeria .g-top{display:flex;align-items:center;gap:10px;padding:0 12px}
+#galeria .g-top b{font-family:var(--display);font-size:20px}
+#galeria .g-top span{font-size:14px;color:#C4AF95;font-variant-numeric:tabular-nums}
+#galeria .g-x,#galeria .g-nav{min-width:46px;min-height:46px;border-radius:999px;border:1px solid rgba(243,233,218,.25);background:rgba(0,0,0,.35);color:#F3E9DA;font-size:22px;cursor:pointer}
+#galeria .g-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;padding:10px 0;touch-action:pan-y}
+#galeria .g-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+#galeria .g-nav{position:absolute;top:50%;transform:translateY(-50%)}
+#galeria .g-prev{left:8px} #galeria .g-next{right:8px}
+#galeria .g-leg{text-align:center;font-size:15px;min-height:20px;padding:0 16px}
+#galeria .g-bot{padding:10px 16px 0;max-width:520px;width:100%;margin:0 auto}
+#galeria .g-bot .btn{background:var(--marca);color:#2A1B12}
+#galeria .g-tira{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0;scrollbar-width:none;justify-content:safe center}
+#galeria .g-tira button{width:52px;height:52px;flex-shrink:0;border-radius:8px;overflow:hidden;border:2px solid transparent;padding:0;background:none;cursor:pointer;opacity:.6}
+#galeria .g-tira button.on{border-color:var(--marca);opacity:1}
+#galeria .g-tira img{width:100%;height:100%;object-fit:cover}
 .metodos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .metodos .chip{width:100%}
 .cartao-box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;min-height:120px}
@@ -247,7 +275,8 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     let h = topo();
     h += '<section><span class="lbl">Serviço</span><div class="grid2">' + b.servicos.map((x) =>
       '<button type="button" class="pick' + (st.serv === x.id ? ' on' : '') + '" data-a="serv" data-v="' + esc(x.id) + '" aria-pressed="' + (st.serv === x.id) + '"><b>' + esc(x.nome) + '</b><span>' + brl(x.preco) + ' · ' + esc(x.dur) + ' min</span></button>').join('') + '</div></section>';
-    h += '<section><span class="lbl">Barbeiro</span><div class="chips">' +
+    if (b.barbeiros.some((x) => (x.fotos || []).length)) h += secaoBarbeiros();
+    else h += '<section><span class="lbl">Barbeiro</span><div class="chips">' +
       '<button type="button" class="chip' + (st.barb === 'qualquer' ? ' on' : '') + '" data-a="barb" data-v="qualquer" aria-pressed="' + (st.barb === 'qualquer') + '">Qualquer um</button>' +
       b.barbeiros.map((x) => '<button type="button" class="chip' + (st.barb === x.id ? ' on' : '') + '" data-a="barb" data-v="' + esc(x.id) + '" aria-pressed="' + (st.barb === x.id) + '">' + esc(x.nome) + '</button>').join('') + '</div></section>';
     h += '<section><span class="lbl">Dia</span><div class="chips">';
@@ -286,6 +315,77 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
 
   const comoPaga = (sn) => { const on = sn && sn.online; return on && on.cartao ? (on.pix || sn.pixManual || sn.chave ? 'no cartão ou no Pix' : 'no cartão de crédito') : 'no Pix'; };
   function tirarCartao() { if (st.brick) { try { st.brick.unmount(); } catch (e) { /* já saiu */ } st.brick = null; } }
+  const urlFoto = (c) => st.u + '/storage/v1/object/public/trabalhos/' + String(c).split('/').map(encodeURIComponent).join('/');
+  const inicial = (n) => esc(String(n || '?').trim().charAt(0).toUpperCase());
+  // Barbeiros com fotos dos trabalhos: o cliente vê os cortes antes de escolher.
+  function secaoBarbeiros() {
+    const b = st.b;
+    let h = '<section><span class="lbl">Barbeiro</span><span class="tiny" style="margin-top:-6px">Toque nas fotos pra ver os trabalhos de cada um.</span><div class="barbs">';
+    h += '<div class="barb' + (st.barb === 'qualquer' ? ' on' : '') + '"><button type="button" class="barb-sel" data-a="barb" data-v="qualquer" aria-pressed="' + (st.barb === 'qualquer') + '"><span class="av" aria-hidden="true">✂</span><span><b>Qualquer um</b><small>Primeiro horário livre</small></span></button></div>';
+    b.barbeiros.forEach((x) => {
+      const fs = x.fotos || []; const on = st.barb === x.id;
+      h += '<div class="barb' + (on ? ' on' : '') + '"><button type="button" class="barb-sel" data-a="barb" data-v="' + esc(x.id) + '" aria-pressed="' + on + '">' +
+        (fs.length ? '<img class="av" src="' + esc(urlFoto(fs[0].c)) + '" alt="" loading="lazy">' : '<span class="av" aria-hidden="true">' + inicial(x.nome) + '</span>') +
+        '<span><b>' + esc(x.nome) + '</b><small>' + (fs.length ? fs.length + (fs.length === 1 ? ' trabalho' : ' trabalhos') : 'Sem fotos ainda') + '</small></span></button>';
+      if (fs.length) {
+        h += '<div class="miniaturas">' + fs.slice(0, 3).map((f, i) => '<button type="button" class="mini" data-a="galeria" data-v="' + esc(x.id) + '" data-i="' + i + '" aria-label="Ver trabalho ' + (i + 1) + ' de ' + esc(x.nome) + '"><img src="' + esc(urlFoto(f.c)) + '" alt="' + esc(f.l || 'Trabalho de ' + x.nome) + '" loading="lazy">' +
+          (i === 2 && fs.length > 3 ? '<span class="mais">+' + (fs.length - 3) + '</span>' : '') + '</button>').join('') + '</div>';
+      }
+      h += '</div>';
+    });
+    return h + '</div></section>';
+  }
+  let gal = null;
+  function abrirGaleria(barbId, i) {
+    const x = st.b.barbeiros.find((y) => y.id === barbId); if (!x || !(x.fotos || []).length) return;
+    gal = { x: x, i: Math.max(0, Math.min(i, x.fotos.length - 1)), volta: document.activeElement };
+    let el = document.getElementById('galeria');
+    if (!el) { el = document.createElement('div'); el.id = 'galeria'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
+    desenharGaleria(); document.body.style.overflow = 'hidden';
+    const fx = el.querySelector('.g-x'); if (fx) fx.focus();
+  }
+  function desenharGaleria() {
+    const el = document.getElementById('galeria'); if (!el || !gal) return;
+    const fs = gal.x.fotos; const f = fs[gal.i]; const varias = fs.length > 1;
+    el.setAttribute('aria-label', 'Trabalhos de ' + gal.x.nome);
+    el.innerHTML = '<div class="g-top"><div style="flex:1;min-width:0"><b>' + esc(gal.x.nome) + '</b><br><span>' + (gal.i + 1) + ' de ' + fs.length + '</span></div><button type="button" class="g-x" data-g="fechar" aria-label="Fechar">✕</button></div>' +
+      '<div class="g-img"><img src="' + esc(urlFoto(f.c)) + '" alt="' + esc(f.l || 'Trabalho de ' + gal.x.nome) + '">' +
+      (varias ? '<button type="button" class="g-nav g-prev" data-g="ant" aria-label="Foto anterior">‹</button><button type="button" class="g-nav g-next" data-g="prox" aria-label="Próxima foto">›</button>' : '') + '</div>' +
+      '<div class="g-leg">' + esc(f.l || '') + '</div>' +
+      (varias ? '<div class="g-tira">' + fs.map((t, i) => '<button type="button" class="' + (i === gal.i ? 'on' : '') + '" data-g="ir" data-i="' + i + '" aria-label="Foto ' + (i + 1) + '"><img src="' + esc(urlFoto(t.c)) + '" alt="" loading="lazy"></button>').join('') + '</div>' : '') +
+      '<div class="g-bot"><button type="button" class="btn" data-g="escolher">Agendar com ' + esc(gal.x.nome.split(' ')[0]) + '</button></div>';
+    const on = el.querySelector('.g-tira .on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  function fecharGaleria() {
+    const el = document.getElementById('galeria'); if (el) el.remove();
+    document.body.style.overflow = ''; const v = gal && gal.volta; gal = null; if (v && v.focus) v.focus();
+  }
+  const passo = (d) => { if (!gal) return; const n = gal.x.fotos.length; gal.i = (gal.i + d + n) % n; desenharGaleria(); };
+  document.addEventListener('click', (e) => {
+    const g = e.target.closest && e.target.closest('#galeria [data-g]'); if (!g) return;
+    const a = g.dataset.g;
+    if (a === 'fechar') fecharGaleria();
+    if (a === 'ant') passo(-1);
+    if (a === 'prox') passo(1);
+    if (a === 'ir') { gal.i = Number(g.dataset.i); desenharGaleria(); }
+    if (a === 'escolher') {
+      const id = gal.x.id; fecharGaleria(); st.barb = id; st.hora = null; st.erro = ''; render();
+      const dia = app.querySelector('.dia.on'); if (dia && dia.scrollIntoView) dia.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (!gal) return;
+    if (e.key === 'Escape') fecharGaleria();
+    if (e.key === 'ArrowLeft') passo(-1);
+    if (e.key === 'ArrowRight') passo(1);
+  });
+  let toqueX = null;
+  document.addEventListener('touchstart', (e) => { if (gal && e.target.closest('.g-img')) toqueX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!gal || toqueX === null) return; const dx = e.changedTouches[0].clientX - toqueX; toqueX = null;
+    if (Math.abs(dx) > 40) passo(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
   function renderPix() {
     const p = st.pend; const sn = p.sinal; const on = sn.online || null;
     tirarCartao();
@@ -421,6 +521,7 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (['serv', 'barb', 'dia', 'hora'].indexOf(a) >= 0) st.erro = '';
     if (a === 'serv') { st.serv = v; st.hora = null; render(); carregarDia(st.dia); }
     if (a === 'barb') { st.barb = v; st.hora = null; render(); }
+    if (a === 'galeria') { abrirGaleria(v, Number(el.dataset.i) || 0); return; }
     if (a === 'dia') { st.dia = v; st.hora = null; render(); carregarDia(v); }
     if (a === 'hora') { st.hora = v; render(); }
     if (a === 'novo') { st.feito = null; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); }
@@ -473,6 +574,7 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (painel) u = 'https://' + painel[1] + '.supabase.co';
     u = u.replace(/\/(rest|auth|storage|realtime)\/v1.*$/i, '').replace(/\/+$/, '');
     if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    st.u = u;
     sb = window.supabase.createClient(u, String(C.SUPABASE_ANON_KEY || '').trim());
     const r = await sb.rpc('barbearia_publica', { p_slug: slug });
     if (r.error || !r.data) { msg('Barbearia não encontrada. Confira o link com a barbearia.'); return; }
