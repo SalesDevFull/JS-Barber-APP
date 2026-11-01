@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3B2617">
+<meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="JS Barber APP">
@@ -14,7 +14,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
 <style>
 :root{padding-top:env(safe-area-inset-top,0px)}
 body{margin:0}
@@ -112,50 +113,6 @@ input.small{min-height:44px;font-size:15px;padding:0 10px}
 .qr img,.qr canvas{width:140px!important;height:140px!important}
 .link{font-size:14px;color:var(--accent);font-weight:500;word-break:break-all;user-select:text}
 
-/* ===== Estilo couro e madeira =====
-   Fundo de couro escuro com textura fina, cabeçalho e abas em madeira com friso de latão,
-   costura pespontada nos cartões, títulos em serifa clássica e destaques dourados. */
-:root{
-  --bg:#1A120D; --surface:#271B13; --surface2:#1F160F; --line:#3B2B1F; --line2:#4E3929;
-  --fg:#F3E9DA; --fg2:#E6D8C3; --muted:#C4AF95; --dim:#A08A73;
-  --accent:#C9A35B; --accent-ink:#1A120D; --accent-soft:#3A2B1C;
-  --ok:#8CC79A; --ok-soft:#1C2418; --ok-line:#3A5236;
-  --warn:#E3AE57; --warn-soft:#2A1F12; --warn-line:#6B4E25;
-  --bad:#E48A72; --bad-line:#5E3326;
-  --wood-1:#3B2617; --wood-2:#4A3020; --wood-3:#2C1C11;
-  --stitch:rgba(201,163,91,.30);
-  --font:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
-}
-body{font-size:16px;background-color:var(--bg);background-image:radial-gradient(rgba(255,235,205,.03) 1px,transparent 1px),radial-gradient(rgba(0,0,0,.22) 1px,transparent 1px);background-size:3px 3px,5px 5px;background-position:0 0,1px 2px}
-body::before{background:var(--wood-2)}
-.top,.tabs{background-color:var(--wood-1);background-image:repeating-linear-gradient(91deg,rgba(0,0,0,0) 0 13px,rgba(0,0,0,.10) 13px 14px,rgba(255,220,170,.04) 14px 29px,rgba(0,0,0,.07) 29px 31px),linear-gradient(180deg,var(--wood-2),var(--wood-3))}
-.top{border-bottom:2px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.35)}
-.tabs{border-top:2px solid var(--accent);box-shadow:0 -6px 18px rgba(0,0,0,.35)}
-.top h1{font-family:var(--display);font-size:25px;font-weight:700;letter-spacing:0}
-.top small{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.logo{width:46px;height:46px;border-radius:999px;background:var(--bg);color:var(--accent);border:2px solid var(--accent);font-family:var(--display);font-size:21px;box-shadow:inset 0 0 0 3px var(--bg),inset 0 0 0 4px var(--stitch)}
-.tab{color:var(--muted);font-size:12px;font-weight:600}
-.tab.on{color:var(--accent);background:rgba(0,0,0,.22)}
-.card{position:relative;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,235,205,.05),0 2px 10px rgba(0,0,0,.25)}
-.card.costura::after{content:"";position:absolute;inset:5px;border:1px dashed var(--stitch);border-radius:10px;pointer-events:none}
-.card.tight{box-shadow:inset 0 1px 0 rgba(255,235,205,.04)}
-.h2{font-family:var(--display);font-size:20px;font-weight:700}
-.big{font-family:var(--display);font-weight:700;font-variant-numeric:lining-nums tabular-nums;letter-spacing:0}
-.lbl{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.btn{border-radius:10px}
-.btn.pri,.chip.on,.slot.on{background-color:var(--accent);background-image:linear-gradient(180deg,rgba(255,255,255,.20),rgba(0,0,0,.14));border-color:var(--accent);color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.4)}
-.btn:disabled{background-image:none;box-shadow:none}
-.pick.on{border-color:var(--accent)}
-.badge{background:var(--accent-soft);border-color:var(--line2);color:var(--accent)}
-.msg{color:var(--fg2)}
-.sw{border-color:var(--bg)}
-#toast{background:var(--fg);color:var(--bg);border:1px solid var(--accent)}
-.empty{font-family:var(--font)}
-.abertura{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-block:28px 6px}
-.selo{width:88px;height:88px;border-radius:999px;border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;background-color:var(--wood-1);background-image:linear-gradient(180deg,var(--wood-2),var(--wood-3));box-shadow:inset 0 0 0 4px var(--wood-3),inset 0 0 0 5px var(--stitch),0 6px 18px rgba(0,0,0,.4)}
-.nome-app{font-family:var(--display);font-size:30px;font-weight:700;line-height:1.1;text-wrap:balance}
-
 /* ===== Mascote, animações e detalhes =====
    O barbeiro bigodudo aparece no login, no Início, nos vazios e nas comemorações.
    As animações são curtas e somem pra quem pede menos movimento no celular. */
@@ -181,11 +138,11 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
 @keyframes flutuar{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes pular{0%,100%{transform:translateY(0) rotate(0)}40%{transform:translateY(-12px) rotate(-5deg)}75%{transform:translateY(0) rotate(4deg)}}
 @keyframes cutuca{0%,100%{transform:scale(1)}40%{transform:scale(1.08) rotate(-3deg)}}
-.hero{background-color:#2C1E15;background-image:radial-gradient(120% 90% at 0% 0%,rgba(201,163,91,.16),transparent 60%);gap:14px}
+.hero{background:linear-gradient(180deg,var(--accent-soft),transparent 70%),var(--surface);gap:14px}
 .hero .row{align-items:flex-end;gap:12px}
 .balao{position:relative;flex:1;min-width:0;background:var(--surface2);border:1px solid var(--line2);border-radius:14px 14px 14px 4px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;margin-bottom:18px}
 .balao::before{content:"";position:absolute;left:-7px;bottom:10px;width:12px;height:12px;background:var(--surface2);border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);transform:rotate(45deg)}
-.balao b{font-family:var(--display);font-size:19px;font-weight:700}
+.balao b{font-family:var(--display);font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
 .balao span{font-size:15px;color:var(--fg2)}
 .mini>div{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px}
 .mini b{font-family:var(--display);font-size:24px;font-weight:700;line-height:1.1;font-variant-numeric:lining-nums tabular-nums}
@@ -236,45 +193,6 @@ body{background-image:radial-gradient(rgba(255,235,205,.022) 1px,transparent 1px
 .mini-chip{min-height:40px;padding:0 10px;font-size:13px}
 .dia-info{font-size:13px;line-height:1.5}
 .acesso{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
-/* ===== Visual "Premium dourado + poste" =====
-   Madeira escura, couro com textura, latão polido e a listra do poste de barbeiro correndo embaixo do cabeçalho.
-   (antes: A — Premium dourado: madeira escura, latão polido, couro com textura, ícones dourados */
-:root{--bg:#120C08;--surface:#211710;--surface2:#1A120C;--line:#3A2A1C;--line2:#5A4129;--gold1:#F3D58C;--gold2:#C9A35B;--gold3:#8E6A2E}
-body{background-color:var(--bg);background-image:radial-gradient(120% 60% at 50% 0%,rgba(201,163,91,.10),transparent 60%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
-.top{padding-block:18px 16px;border-bottom:0;box-shadow:0 10px 24px rgba(0,0,0,.5)}
-.top::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:7px;background:repeating-linear-gradient(-45deg,#A32D2D 0 9px,#F3E9DA 9px 18px,#25508F 18px 27px,#F3E9DA 27px 36px);background-size:51px 7px;animation:poste 1.6s linear infinite;box-shadow:0 2px 6px rgba(0,0,0,.45)}
-@keyframes poste{from{background-position:0 0}to{background-position:51px 0}}
-.top{position:sticky}
-.top h1{font-size:28px;background:linear-gradient(180deg,var(--gold1),var(--gold2) 55%,var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.01em}
-.top small{color:#D8C3A0}
-.logo{width:52px;height:52px;border:2px solid var(--gold2);box-shadow:0 0 0 3px #2C1D12,0 0 0 4px rgba(201,163,91,.5),0 6px 14px rgba(0,0,0,.5)}
-main{gap:16px;padding-top:22px}
-.card{background-color:var(--surface);background-image:linear-gradient(180deg,rgba(255,235,205,.045),transparent 40%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E");border:1px solid var(--line);border-top:1px solid rgba(201,163,91,.45);border-radius:18px;box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,235,205,.06)}
-.card>.lbl:first-child,.card>.row:first-child>.lbl{display:flex;align-items:center;gap:8px;color:var(--gold1)}
-.card>.lbl:first-child::before,.card>.row:first-child>.lbl::before{content:"";width:18px;height:18px;flex-shrink:0;background:linear-gradient(180deg,var(--gold1),var(--gold3));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cpath d='M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cpath d='M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12'/%3E%3C/svg%3E") center/contain no-repeat}
-.hero{background-color:#2A1C12;background-image:radial-gradient(140% 100% at 0% 0%,rgba(243,213,140,.22),transparent 55%),linear-gradient(160deg,#3A2716,#1C130D);border:1px solid rgba(201,163,91,.55)}
-.hero .m-hero{width:104px;height:114px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
-.balao{background:#F3E9DA;border-color:#F3E9DA;color:#2A1B12}
-.balao::before{background:#F3E9DA;border-color:#F3E9DA}
-.balao b{color:#2A1B12}.balao span{color:#4A3626}
-.mini>div{background:linear-gradient(180deg,rgba(243,213,140,.10),rgba(0,0,0,.15));border:1px solid rgba(201,163,91,.35);text-align:center;align-items:center}
-.mini b{font-size:30px;background:linear-gradient(180deg,var(--gold1),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.mid.num,.big{background:linear-gradient(180deg,#FFF3D6,#E6C77E);-webkit-background-clip:text;background-clip:text;color:transparent}
-.mid.num.c-ok{background:none;color:var(--ok)}.mid.num.c-bad{background:none;color:var(--bad)}
-.btn.pri,.chip.on{background-image:linear-gradient(180deg,#F6DE9C 0%,#D8B064 45%,#B88A3E 55%,#D9B36B 100%);border-color:#E9C877;color:#2A1B12;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(201,163,91,.25)}
-.btn{border-radius:14px}
-.tabs{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));border:1px solid rgba(201,163,91,.5);border-radius:22px;padding:6px 4px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
-.tab.on{background:linear-gradient(180deg,rgba(243,213,140,.22),rgba(201,163,91,.08));color:var(--gold1)}
-.item{border-bottom-color:rgba(201,163,91,.15)}
-.hora{color:var(--gold1);font-family:var(--display)}
-.pill.p-ok{background:rgba(140,199,154,.12)}.pill.p-acc{background:rgba(201,163,91,.14)}
-
-.tabs{background-color:var(--wood-1)}
-#toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-main{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
-.abertura .nome-app{background:linear-gradient(180deg,var(--gold1),var(--gold2) 55%,var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent}
-.badge-n{top:2px}
-
 button.logo{padding:0;cursor:pointer;flex-shrink:0}
 button.logo:active{transform:scale(.94)}
 .sair-top{min-height:40px;padding:0 12px;flex-shrink:0;background:rgba(0,0,0,.2)}
@@ -295,6 +213,129 @@ button.logo:active{transform:scale(.94)}
 .foto .x{position:absolute;top:4px;right:4px;min-width:30px;min-height:30px;border-radius:999px;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:13px;font-weight:700;cursor:pointer;padding:0 8px}
 .foto .x.conf{background:#A3271F}
 .foto .leg{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;font-size:11px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Design v2: preto, cor de destaque da barbearia (amarelo por padrão), letra Bai Jamjuree =====
+   Um botão de destaque por tela, títulos e rótulos em maiúsculas, nomes em letra normal, alvos de toque grandes. */
+:root{
+  color-scheme:dark;
+  --bg:#0A0A0A; --surface:#151515; --surface2:#1D1D1D; --line:#2A2A2A; --line2:#353535;
+  --fg:#F5F5F5; --fg2:#E2E2E2; --muted:#B0B0B0; --dim:#7A7A7A;
+  --accent:#FFD60A; --accent-ink:#0A0A0A; --accent-soft:rgba(255,214,10,.12); --accent-line:rgba(255,214,10,.45);
+  --ok:#7ED98B; --ok-soft:rgba(126,217,139,.10); --ok-line:rgba(126,217,139,.35);
+  --warn:#FFD60A; --warn-soft:rgba(255,214,10,.08); --warn-line:rgba(255,214,10,.40);
+  --bad:#FF7A6B; --bad-line:rgba(255,122,107,.45);
+  --font:'Bai Jamjuree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Bai Jamjuree', system-ui, sans-serif;
+  --wood-1:#121212; --wood-2:#121212; --wood-3:#0A0A0A; --stitch:transparent;
+}
+body{background:var(--bg);background-image:none;font-family:var(--font);font-size:16px;color:var(--fg)}
+body::before{background:var(--bg)}
+.top{background:var(--bg);border-bottom:1px solid var(--line);box-shadow:none;padding-block:16px 14px}
+.top small{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.top h1{font-family:var(--display);font-size:24px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--fg)}
+.logo{width:46px;height:46px;border-radius:999px;background:#111;color:var(--accent);border:2px solid var(--accent);font-family:var(--display);font-weight:700;box-shadow:none}
+.logo.tem-logo{background:#fff}
+.sair-top{background:var(--surface);border-color:var(--line)}
+main{gap:14px;padding-top:18px;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.tabs{background:#121212;border:1px solid var(--line);border-top:1px solid var(--line);left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));border-radius:22px;padding:6px 4px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
+.tab{color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tab.on{color:var(--accent);background:transparent}
+.badge-n{background:var(--accent);color:var(--accent-ink)}
+.card{background:var(--surface);background-image:none;border:1px solid var(--line);border-radius:16px;box-shadow:none}
+.card.tight{border-radius:16px}
+.card.warn{background:linear-gradient(180deg,var(--accent-soft),transparent 70%),var(--surface);border-color:var(--accent-line)}
+.card.ok{background:var(--ok-soft);border-color:var(--ok-line)}
+.card>.lbl:first-child::before,.card>.row:first-child>.lbl::before{display:none}
+.card>.lbl:first-child,.card>.row:first-child>.lbl{color:var(--muted)}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.h2{font-family:var(--display);font-size:18px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.big{font-family:var(--display);font-size:38px;font-weight:700;letter-spacing:0;background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
+.mid{font-weight:700}
+.mid.num{background:none;color:inherit;-webkit-text-fill-color:currentColor}
+.hora{color:var(--fg);font-family:var(--display);font-weight:700}
+.btn{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.05em;text-transform:uppercase;box-shadow:none;background-image:none}
+.btn.sm{min-height:44px;font-size:12px}
+.btn.lg{min-height:56px;font-size:16px;font-weight:700}
+.btn.pri{background:var(--accent);background-image:none;border-color:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none}
+.btn.warn{color:var(--accent);border-color:var(--accent-line)}
+.btn.ok{color:var(--ok);border-color:var(--ok-line)}
+.btn.bad{color:var(--bad);border-color:var(--bad-line)}
+.btn:disabled{background:var(--surface);border-color:var(--line);color:var(--dim)}
+.chip{min-height:40px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;font-size:13px}
+.chip.on{background:var(--fg);background-image:none;border-color:var(--fg);color:#0A0A0A;box-shadow:none}
+.pick{border-radius:14px;background:var(--surface);border-color:var(--line)}
+.pick.on{border:2px solid var(--accent);background:var(--surface)}
+.pick b{font-size:15px}
+.slot{border-radius:12px;border-color:var(--line);background:var(--surface);font-weight:600}
+.slot.on{background:var(--accent);background-image:none;border-color:var(--accent);color:var(--accent-ink);box-shadow:none}
+.badge{background:var(--accent);border:0;color:var(--accent-ink);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:5px;padding:3px 7px}
+.pill{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;border:0;background:var(--surface2)}
+.p-ok{color:var(--ok);background:var(--ok-soft)} .p-warn{color:var(--accent);background:var(--accent-soft)} .p-acc{color:var(--accent-ink);background:var(--accent)}
+.pill.p-ok{background:var(--ok-soft)}.pill.p-acc{background:var(--accent)}
+input,select,textarea{border-radius:14px;border-color:var(--line);background:var(--surface);min-height:52px}
+.field label{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.msg{background:var(--surface2);border-color:var(--line);color:var(--fg2)}
+.item{border-bottom-color:var(--line)}
+.item.agora{background:var(--accent-soft);border-radius:12px}
+.bar i{background:var(--accent)}
+.c-acc{color:var(--accent)} .c-warn{color:var(--accent)}
+#toast{background:var(--fg);color:#0A0A0A;border:0;font-family:var(--display)}
+#toast.err{background:var(--bad);color:#140806}
+.folha{background:#151515;border-top:1px solid var(--line)}
+.folha-alca{background:#3A3A3A}
+.folha-admin{color:var(--accent);border-color:var(--accent-line)}
+.admin-card{border-color:var(--accent-line)!important}
+.aviso-in{background:#151515;border:2px solid var(--accent)}
+.aviso-in b{font-family:var(--display);text-transform:uppercase;letter-spacing:.04em}
+.sw{border-color:var(--bg)} .sw.on{border-color:var(--fg)}
+.link{color:var(--accent)}
+.empty{color:var(--muted)}
+/* Login com o mascote */
+.abertura{position:relative;padding-block:8px 4px;align-items:flex-start;text-align:left;gap:6px}
+.abertura .heroi{position:relative;align-self:stretch;height:220px;display:flex;justify-content:center;overflow:hidden}
+.abertura .heroi::before{content:"";position:absolute;left:50%;top:45%;width:400px;height:400px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,var(--accent-soft) 0%,rgba(10,10,10,0) 65%)}
+.abertura .heroi::after{content:"";position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(180deg,rgba(10,10,10,0),var(--bg) 85%)}
+.abertura .heroi .masc{width:180px;height:198px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.6))}
+.nome-app{font-family:var(--display);font-size:clamp(30px,9.5vw,42px);font-weight:700;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;line-height:1.05;background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
+.abertura .nome-app{background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
+.nome-app em{font-style:normal;color:var(--accent)}
+.abertura .sub{font-size:15px}
+/* Início */
+.saud{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.saud h2{margin:2px 0 0;font:600 26px var(--display)}
+.fat{font:700 44px/1.08 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.fat small{font-size:24px;color:var(--muted)}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.trio>div{padding-left:14px;border-left:1px solid var(--line)}
+.trio>div:first-child{padding-left:0;border-left:0}
+.trio b{display:block;font:700 18px var(--display);font-variant-numeric:tabular-nums}
+.trio .lbl{font-size:10px}
+.cadeira{border-color:var(--accent-line);background:linear-gradient(180deg,var(--accent-soft),transparent 70%),var(--surface)}
+.cadeira .nome{font:600 20px var(--display)}
+.lista .linha{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;color:var(--fg);width:100%;text-align:left;cursor:pointer;font-family:var(--font)}
+.lista .linha:first-child{border-top:0}
+.lista .linha .h{font:700 18px var(--display);width:58px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.lista .linha b{display:block;font:600 16px var(--display)}
+.lista .linha span{font-size:13px;color:var(--muted)}
+/* Agenda */
+.semana7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.semana7 button{min-height:64px;border-radius:14px;border:0;background:transparent;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;font-family:var(--display)}
+.semana7 button small{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.semana7 button b{font-size:20px}
+.semana7 button i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.semana7 button.on{background:var(--accent);color:var(--accent-ink)}
+.semana7 button.on small{color:var(--accent-ink)}
+.semana7 button.on i{background:var(--accent-ink)}
+.agora-linha{display:flex;align-items:center;gap:8px;margin:2px 0}
+.agora-linha b{font:700 12px var(--display);color:var(--accent);width:52px}
+.agora-linha i{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.agora-linha span{flex:1;height:2px;background:var(--accent)}
+.card.tight.na-cadeira{border-color:var(--accent)}
+.encaixe{min-height:48px;border:1.5px dashed #3A3A3A;border-radius:14px;background:transparent;color:var(--muted);font:600 13px var(--display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer;width:100%}
+.grid3>.btn,.grid2>.btn{padding:0 8px;letter-spacing:.03em}
+.grid3>.btn{font-size:12px}
+.fab{position:fixed;right:max(20px,calc(50% - 300px));bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:21;width:60px;height:60px;border-radius:20px;border:0;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.5);cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -374,9 +415,13 @@ button.logo:active{transform:scale(.94)}
     ],
     barbeiros: []
   };
-  const CORES = [['#C9A35B', 'Latão'], ['#C8814F', 'Cobre'], ['#D2A877', 'Couro claro'], ['#C0646B', 'Vinho'], ['#8FAF7A', 'Verde musgo'], ['#E8D9BE', 'Creme']];
+  const CORES = [['#FFD60A', 'Amarelo'], ['#3DDC97', 'Verde'], ['#FF7A45', 'Laranja'], ['#5AA9FF', 'Azul'], ['#C084FC', 'Roxo'], ['#FF5C7A', 'Rosa'], ['#E5E5E5', 'Branco']];
   // Cores do visual antigo viram o latão do novo visual.
-  const corMarca = (c) => (!c || ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'].indexOf(String(c).toUpperCase()) >= 0 ? '#C9A35B' : c);
+  // Cores antigas (do visual de madeira) viram o amarelo novo; as outras continuam valendo.
+  const corMarca = (c) => (!c || ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3', '#C9A35B'].indexOf(String(c).toUpperCase()) >= 0 ? '#FFD60A' : c);
+  // Texto por cima da cor: preto em cor clara, branco em cor escura.
+  const tinta = (c) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return '#0A0A0A'; const n = parseInt(m[1], 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#0A0A0A' : '#FFFFFF'; };
+  const rgba = (c, a) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return 'rgba(255,214,10,' + a + ')'; const n = parseInt(m[1], 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
   const TABS = ['inicio', 'agenda', 'caixa', 'clientes', 'gestao', 'agendar', 'barbeiro'];
   const TITULOS = { inicio: 'Resumo do dia', agenda: 'Agenda', caixa: 'Caixa e comanda', clientes: 'Clientes', gestao: 'Gestão', agendar: 'Novo agendamento', barbeiro: 'Modo barbeiro' };
   const titulo = (tab) => (tab === 'gestao' && S.papel === 'barbeiro' ? 'Sua conta' : TITULOS[tab]);
@@ -542,7 +587,7 @@ button.logo:active{transform:scale(.94)}
   const linkPublico = () => { const base = location.origin + location.pathname.replace(/[^/]*$/, ''); return base + 'agendar.html?b=' + encodeURIComponent(S.slug || ''); };
 
   function abertura(sub) {
-    return '<div class="abertura">' + mascote('m-hero m-grande', 'Mascote do JS Barber APP') + '<div class="nome-app">JS Barber APP</div><div class="sub">' + sub + '</div></div>';
+    return '<div class="abertura"><div class="heroi">' + mascote('m-hero m-grande', 'Mascote do JS Barber APP') + '</div><div class="nome-app">JS Barber <em>App</em></div><div class="sub">' + sub + '</div></div>';
   }
 
   // Lê o valor direto do campo (o preenchimento automático do celular nem sempre avisa a página).
@@ -550,7 +595,7 @@ button.logo:active{transform:scale(.94)}
 
   function vLogin() {
     const criar = S.ui.loginModo === 'criar';
-    return abertura('Agenda, caixa e clientes num lugar só') + '<div class="card"><p class="mid" style="margin:0">' + (criar ? 'Criar sua conta' : 'Entrar') + '</p>' +
+    return abertura('Sua barbearia na régua: agenda, caixa e clientes num app só.') + '<div class="card"><p class="h2" style="margin:0">' + (criar ? 'Criar sua conta' : 'Entrar') + '</p>' +
       '<p class="sub" style="margin:0">' + (criar ? 'Dono de barbearia ou barbeiro convidado: crie a conta com o seu e-mail.' : 'Use o e-mail e a senha da sua conta.') + '</p>' +
       '<div class="field"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="email" data-f="lgEmail" value="' + esc(fv('lgEmail')) + '"></div>' +
       '<div class="field"><label for="lg-senha">Senha' + (criar ? ' (mínimo 6 caracteres)' : '') + '</label><input id="lg-senha" type="password" autocomplete="' + (criar ? 'new-password' : 'current-password') + '" data-f="lgSenha" value=""></div>' +
@@ -608,12 +653,18 @@ button.logo:active{transform:scale(.94)}
     }
 
     const quem = S.papel === 'dono' ? primeiroNome(((c.barbeiros || [])[0] || {}).nome) : '';
-    const fala = fila.length ? 'Ainda tem ' + pl(fila.length, 'cliente', 'clientes') + ' na agenda hoje' + (liv.length ? ' e ' + pl(liv.length, 'horário livre', 'horários livres') + ' pra encaixe.' : '.')
-      : (hojeAgs.length ? 'A agenda de hoje acabou. Bom trabalho!' : (liv.length ? 'Agenda de hoje livre. Que tal chamar quem sumiu?' : 'Dia tranquilo por aqui.'));
-    h += '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do JS Barber APP') +
-      '<div class="balao"><b>' + saudacao() + (quem ? ', ' + esc(quem) : '') + '!</b><span>' + esc(fala) + '</span></div></div>' +
-      '<div class="grid3 mini"><div><span class="tiny">Atendidos</span><b class="num">' + fh.length + '</b></div><div><span class="tiny">Na fila</span><b class="num">' + fila.length + '</b></div><div><span class="tiny">Livres</span><b class="num">' + liv.length + '</b></div></div></section>';
-
+    const real = (v) => { const t2 = brl(v); const k2 = t2.lastIndexOf(','); return k2 > 0 ? esc(t2.slice(0, k2)) + '<small>' + esc(t2.slice(k2)) + '</small>' : esc(t2); };
+    let topo = '<div class="saud"><div><div class="lbl">' + esc(fmtDia(t)) + '</div><h2>' + esc(saudacao()) + (quem ? ', ' + esc(quem) : '') + '</h2></div></div>' +
+      '<section class="card"><div class="row between"><span class="lbl">Entrou hoje</span>' + (saiu ? '<span class="tiny">saiu ' + esc(brl(saiu)) + '</span>' : '') + '</div>' +
+      '<div class="fat">' + real(entrou) + '</div>' +
+      '<div class="trio"><div><span class="lbl">Atendidos</span><b>' + fh.length + '</b></div><div><span class="lbl">Na fila</span><b>' + fila.length + '</b></div><div><span class="lbl">Horários livres</span><b>' + liv.length + '</b></div></div></section>';
+    naCadeira.forEach((a) => {
+      const s = serv(a.servicoId);
+      topo += '<section class="card cadeira"><div class="row between"><span class="badge">Na cadeira</span><span class="tiny">desde ' + esc(a.hora) + '</span></div>' +
+        '<div><div class="nome">' + esc(a.clienteNome) + '</div><div class="sub">' + esc(s ? s.nome : '') + ' · com ' + esc(barbNome(a.barbeiroId)) + (s ? ' · ' + esc(brl(s.preco)) : '') + '</div></div>' +
+        '<button type="button" class="btn pri lg full" data-act="abrirComanda" data-id="' + esc(a.id) + '">Fechar comanda</button></section>';
+    });
+    h = topo + h;
     h += cardLink();
     if (S.ehAdmin) h += cardAdmin();
     if (pend.length) h += '<section class="card warn"><span class="lbl c-warn">Sinal pra conferir</span><span>' + pl(pend.length, 'reserva esperando', 'reservas esperando') + ' o Pix do sinal. Confira no app do banco e confirme na agenda.</span><button type="button" class="btn warn" data-act="verPendentes">Ver reservas</button></section>';
@@ -623,29 +674,19 @@ button.logo:active{transform:scale(.94)}
         '<div class="grid2">' + (waD ? '<a class="btn sm ok" href="' + esc(waD) + '" target="_blank" rel="noopener">Falar no WhatsApp</a>' : '<span></span>') + '<button type="button" class="btn sm" data-act="devolvidoOk" data-id="' + esc(a.id) + '">Já resolvi</button></div></section>';
     });
 
-    h += '<section class="card"><div class="row between"><span class="lbl">Agora</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Agenda completa</button></div>';
-    if (!naCadeira.length && !fila.length) h += '<span class="sub">Ninguém na cadeira nem esperando.</span>';
-    naCadeira.forEach((a) => {
-      const s = serv(a.servicoId);
-      h += '<div class="item agora"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : '') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div><span class="pill p-ok">Na cadeira</span></div><button type="button" class="btn sm pri" data-act="abrirComanda" data-id="' + esc(a.id) + '">Comanda</button></div>';
-    });
-    fila.slice(0, 4).forEach((a, i) => {
-      const s = serv(a.servicoId); const pendente = a.status === 'aguardando_sinal';
-      h += '<div class="item"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : '') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div>' +
-        (pendente ? '<span class="pill p-warn">Esperando o sinal</span>' : (i === 0 && !naCadeira.length ? '<span class="pill p-acc">Próximo</span>' : '')) + '</div>' +
-        (pendente ? '' : '<button type="button" class="btn sm" data-act="abrirComanda" data-id="' + esc(a.id) + '">Chamar</button>') + '</div>';
-    });
+    h += '<section class="card"><div class="row between"><span class="lbl">Próximos</span><button type="button" class="btn sm" data-act="go" data-v="agenda">Agenda</button></div>';
+    if (!fila.length) h += '<span class="sub">' + (hojeAgs.length ? 'A agenda de hoje acabou. Bom trabalho!' : 'Ninguém marcado pra hoje ainda.') + '</span>';
+    else h += '<div class="lista">' + fila.slice(0, 5).map((a) => {
+      const s = serv(a.servicoId); const pend = a.status === 'aguardando_sinal';
+      const sit = pend ? '<span style="color:var(--accent)">Esperando sinal</span>' : (num(a.sinalPago) ? '<span class="c-ok">Sinal pago</span>' : 'Confirmado');
+      return '<button type="button" class="linha" data-act="' + (pend ? 'go' : 'abrirComanda') + '" ' + (pend ? 'data-v="agenda"' : 'data-id="' + esc(a.id) + '"') + '><span class="h">' + esc(a.hora) + '</span><div class="grow"><b>' + esc(a.clienteNome) + '</b><span>' + esc(s ? s.nome : '') + ' · ' + esc(barbNome(a.barbeiroId)) + ' · ' + sit + '</span></div>' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>';
+    }).join('') + '</div>';
     h += '</section>';
-
     h += '<div class="grid3">' +
-      '<button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button>' +
+      '<button type="button" class="btn' + (naCadeira.length ? '' : ' pri') + '" data-act="go" data-v="agendar">Agendar</button>' +
       '<button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button>' +
       '<button type="button" class="btn" data-act="go" data-v="barbeiro">Barbeiro</button></div>';
-
-    h += '<section class="card"><span class="lbl">Dinheiro de hoje</span><div class="grid3">' +
-      '<div><div class="tiny">Entrou</div><div class="mid num c-ok">' + brl(entrou) + '</div></div>' +
-      '<div><div class="tiny">Saiu</div><div class="mid num c-bad">' + brl(saiu) + '</div></div>' +
-      '<div><div class="tiny">Pra equipe</div><div class="mid num">' + brl(equipe) + '</div></div></div></section>';
 
     h += '<section class="card"><div class="row between"><span class="lbl">Este mês</span><span class="tiny">' + (meta ? 'meta ' + brl(meta) : 'sem meta') + '</span></div>' +
       '<div class="row between" style="align-items:flex-end"><div><div class="tiny">Projeção</div><span class="big num">' + brl(proj) + '</span></div><div style="text-align:right"><div class="tiny">Faturado</div><span class="mid num">' + brl(fat) + '</span></div></div>' +
@@ -670,10 +711,15 @@ button.logo:active{transform:scale(.94)}
     let list = S.ags.filter((a) => a.data === dia && a.status !== 'cancelado');
     if (S.ui.agBarb !== 'todos') list = list.filter((a) => a.barbeiroId === S.ui.agBarb);
     list.sort(byHora);
-    let h = '<div class="row between"><button type="button" class="btn sm" data-act="agDia" data-v="-1" aria-label="Dia anterior">‹</button>' +
-      '<div style="text-align:center"><div class="mid">' + esc(fmtDia(dia)) + '</div><div class="tiny">' + (dia === t ? 'hoje' : (dia === addDays(t, 1) ? 'amanhã' : '&nbsp;')) + '</div></div>' +
-      '<button type="button" class="btn sm" data-act="agDia" data-v="1" aria-label="Próximo dia">›</button></div>';
-    if (dia !== t) h += '<button type="button" class="btn sm" data-act="agHoje">Voltar pra hoje</button>';
+    const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const SEM3 = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const pdia = (x) => { const q = x.split('-').map(Number); return new Date(q[0], q[1] - 1, q[2]); };
+    const ini = addDays(dia, -pdia(dia).getDay());
+    const temAg = new Set(S.ags.filter((a) => segura(a)).map((a) => a.data));
+    let h = '<div class="row between"><div><div class="lbl">' + MESES[pdia(dia).getMonth()] + ' ' + pdia(dia).getFullYear() + '</div><div class="tiny">' + (dia === t ? 'hoje' : (dia === addDays(t, 1) ? 'amanhã' : esc(fmtDia(dia)))) + '</div></div>' +
+      '<div class="row" style="gap:8px">' + (dia !== t ? '<button type="button" class="btn sm" data-act="agHoje">Hoje</button>' : '') +
+      '<button type="button" class="btn sm" data-act="agDia" data-v="-7" aria-label="Semana anterior">‹</button><button type="button" class="btn sm" data-act="agDia" data-v="7" aria-label="Próxima semana">›</button></div></div>';
+    h += '<div class="semana7">' + [0, 1, 2, 3, 4, 5, 6].map((k) => { const d = addDays(ini, k); return '<button type="button" class="' + (d === dia ? 'on' : '') + '" data-act="agDiaSet" data-v="' + d + '" aria-pressed="' + (d === dia) + '"><small>' + SEM3[pdia(d).getDay()] + '</small><b>' + pdia(d).getDate() + '</b>' + (temAg.has(d) ? '<i></i>' : '<span style="height:5px"></span>') + '</button>'; }).join('') + '</div>';
     h += barbChips('agBarb', S.ui.agBarb, 'todos', 'Todos');
     const exp = expediente(dia); const avisos = [];
     if (!exp) avisos.push('Barbearia fechada nesse dia.');
@@ -683,11 +729,15 @@ button.logo:active{transform:scale(.94)}
       bloqueiosDoDia(dia).forEach((x) => avisos.push((x.barbeiroId ? barbNome(x.barbeiroId) : 'Todos') + ' bloqueado ' + (x.ini ? 'das ' + x.ini + ' às ' + x.fim : 'o dia inteiro') + (x.motivo ? ' (' + x.motivo + ')' : '') + '.'));
     }
     h += '<div class="msg dia-info">' + avisos.map(esc).join('<br>') + '</div>';
-    h += '<button type="button" class="btn pri full" data-act="agendarNoDia">+ Agendar nesse dia</button>';
+    h += '<button type="button" class="fab" data-act="agendarNoDia" aria-label="Agendar nesse dia"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>';
     if (!list.length) h += '<div class="empty">' + mascote('m-peq') + '<span>Nenhum horário marcado nesse dia.</span></div>';
+    let pos = dia !== t; const agoraM = nowMin();
+    const linhaAgora = () => '<div class="agora-linha" aria-label="Agora"><b>' + toHora(agoraM) + '</b><i></i><span></span></div>';
+    const PILL = { 'c-acc': 'background:var(--surface2);color:var(--fg)', 'c-ok': 'background:var(--accent);color:var(--accent-ink)', 'c-muted': 'background:transparent;color:var(--dim)', 'c-bad': 'background:rgba(255,122,107,.12);color:var(--bad)', 'c-warn': 'background:var(--accent-soft);color:var(--accent)' };
     list.forEach((a) => {
+      if (!pos && toMin(a.hora) > agoraM) { h += linhaAgora(); pos = true; }
       const s = serv(a.servicoId); const st = stAg(a); const meu = meuItem(a);
-      h += '<div class="card tight"><div class="row"><span class="hora num">' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : 'Serviço removido') + ' · ' + esc(barbNome(a.barbeiroId)) + '</div></div><span class="tiny ' + st[1] + '" style="font-weight:600">' + st[0] + '</span></div>';
+      h += '<div class="card tight' + (a.status === 'cadeira' ? ' na-cadeira' : '') + '"' + (a.status === 'feito' ? ' style="opacity:.6"' : '') + '><div class="row"><span class="hora num"' + (a.status === 'cadeira' ? ' style="color:var(--accent)"' : '') + '>' + esc(a.hora) + '</span><div class="grow"><div style="font-weight:600;font-size:16px">' + esc(a.clienteNome) + '</div><div class="tiny">' + esc(s ? s.nome : 'Serviço removido') + ' · ' + esc(barbNome(a.barbeiroId)) + ' · ' + (Number(a.dur) || 30) + ' min</div></div><span class="pill" style="' + (PILL[st[1]] || '') + '">' + st[0] + '</span></div>';
       if (!meu) { /* barbeiro vê o horário do colega, mas não mexe */ }
       else if (a.status === 'aguardando_sinal') {
         const exp = sinalExpirado(a);
@@ -709,6 +759,13 @@ button.logo:active{transform:scale(.94)}
       }
       h += '</div>';
     });
+    if (!pos && list.length) h += linhaAgora();
+    // Próximo horário livre do dia: um toque e já abre o agendamento nele.
+    if (exp && dia >= t) {
+      const bs = S.ui.agBarb !== 'todos' ? [S.ui.agBarb] : (cfg().barbeiros || []).map((b) => b.id);
+      let prox = null; bs.forEach((bid) => { const l = livres(dia, bid, 30)[0]; if (l != null && (prox === null || l < prox.m)) prox = { m: l, b: bid }; });
+      if (prox) h += '<button type="button" class="encaixe" data-act="encaixar" data-v="' + toHora(prox.m) + '" data-b="' + esc(prox.b) + '">+ Encaixar às ' + toHora(prox.m) + (bs.length > 1 ? ' com ' + esc(primeiroNome(barbNome(prox.b))) : '') + '</button>';
+    }
     return h;
   }
 
@@ -1097,7 +1154,7 @@ button.logo:active{transform:scale(.94)}
       h += '<section class="card"><span class="h2">Perfil e página de agendamento</span>' +
         '<div class="field"><label for="bb-nome">Nome da barbearia</label><input id="bb-nome" data-f="bbNome" value="' + esc(fv('bbNome', c.nome)) + '"></div>' +
         '<span class="lbl">Cor da marca</span><div class="chips">' + CORES.map((k) => '<button type="button" class="sw' + (fv('bbCor', corMarca(c.cor)) === k[0] ? ' on' : '') + '" style="background:' + k[0] + '" data-act="bbCor" data-v="' + k[0] + '" aria-label="Cor ' + k[1] + '" aria-pressed="' + (fv('bbCor', corMarca(c.cor)) === k[0]) + '"></button>').join('') + '</div>' +
-        '<span class="lbl">Estilo da página do cliente</span><div class="chips">' + chip('Claro (creme)', 'bbTema', 'claro', tema === 'claro') + chip('Escuro (couro)', 'bbTema', 'escuro', tema === 'escuro') + '</div>' +
+        '<span class="lbl">Estilo da página do cliente</span><div class="chips">' + chip('Claro', 'bbTema', 'claro', tema === 'claro') + chip('Escuro', 'bbTema', 'escuro', tema === 'escuro') + '</div>' +
         '<div class="field"><label for="bb-msg">Mensagem de boas-vindas</label><textarea id="bb-msg" data-f="bbMsg" maxlength="240" placeholder="Ex.: Corte na régua e café por conta da casa.">' + esc(fv('bbMsg', c.mensagem || '')) + '</textarea></div>' +
         '<div class="field"><label for="bb-end">Endereço</label><input id="bb-end" data-f="bbEnd" value="' + esc(fv('bbEnd', c.endereco || '')) + '" placeholder="Rua, número, bairro"></div>' +
         '<div class="grid2"><div class="field"><label for="bb-insta">Instagram</label><input id="bb-insta" data-f="bbInsta" value="' + esc(fv('bbInsta', c.instagram ? '@' + c.instagram : '')) + '" placeholder="@suabarbearia"></div>' +
@@ -1216,7 +1273,9 @@ button.logo:active{transform:scale(.94)}
   // ---------- render ----------
   function applyTheme() {
     const c = cfg();
-    document.documentElement.style.setProperty('--accent', corMarca(c.cor));
+    const cor = corMarca(c.cor); const st = document.documentElement.style;
+    st.setProperty('--accent', cor); st.setProperty('--accent-ink', tinta(cor));
+    st.setProperty('--accent-soft', rgba(cor, 0.12)); st.setProperty('--accent-line', rgba(cor, 0.45));
     const lg = document.getElementById('logo');
     lg.innerHTML = c.logo ? '<img src="' + esc(c.logo) + '" alt="">' : MASCOTE_ROSTO;
     lg.classList.toggle('tem-logo', !!c.logo);
@@ -1436,13 +1495,21 @@ button.logo:active{transform:scale(.94)}
     // agenda
     agDia: (el) => { S.ui.agDia = addDays(S.ui.agDia, Number(el.dataset.v)); render(); },
     agHoje: () => { S.ui.agDia = today(); render(); },
+    agDiaSet: (el) => { S.ui.agDia = el.dataset.v; render(); },
+    encaixar: (el) => { S.ui.bk = { serv: null, barb: el.dataset.b || 'qualquer', dia: S.ui.agDia < today() ? today() : S.ui.agDia, hora: el.dataset.v, feito: null }; S.f.bkNome = ''; S.f.bkTel = ''; go('agendar'); },
     agBarb: (el) => { S.ui.agBarb = el.dataset.v; render(); },
     agendarNoDia: () => { S.ui.bk = { serv: null, barb: S.ui.agBarb !== 'todos' ? S.ui.agBarb : 'qualquer', dia: S.ui.agDia < today() ? today() : S.ui.agDia, hora: null, feito: null }; S.f.bkNome = ''; S.f.bkTel = ''; go('agendar'); },
     abrirComanda: (el) => { const a = S.ags.find((x) => x.id === el.dataset.id); if (a) abrirComanda(a); },
     faltou: async (el) => { if (precisaConfirmar('faltou' + el.dataset.id)) return; await W(() => col('agendamentos').doc(el.dataset.id).update({ status: 'faltou' }), 'Marcado como falta'); },
     cancelarAg: async (el) => { if (precisaConfirmar('cancel' + el.dataset.id)) return; await W(() => col('agendamentos').doc(el.dataset.id).update({ status: 'cancelado' }), 'Horário cancelado'); },
     // agendar
-    bkServ: (el) => { S.ui.bk.serv = el.dataset.v; S.ui.bk.hora = null; render(); },
+    bkServ: (el) => {
+      const bk = S.ui.bk; bk.serv = el.dataset.v; const sv = serv(bk.serv); const dur = sv ? Number(sv.dur) || 30 : 30;
+      // Veio do "Encaixar": mantém o horário se ele ainda couber no serviço escolhido.
+      if (bk.hora) { const ini = toMin(bk.hora); const bs = bk.barb === 'qualquer' ? (cfg().barbeiros || []).map((b) => b.id) : [bk.barb];
+        if (!bs.some((bid) => permitido(bk.dia, bid, ini, dur) && !ocupado(bk.dia, bid, ini, dur))) bk.hora = null; }
+      render();
+    },
     bkBarb: (el) => { S.ui.bk.barb = el.dataset.v; S.ui.bk.hora = null; render(); },
     bkDia: (el) => { S.ui.bk.dia = el.dataset.v; S.ui.bk.hora = null; render(); },
     bkHora: (el) => { S.ui.bk.hora = el.dataset.v; render(); },

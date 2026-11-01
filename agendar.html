@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3B2617">
+<meta name="theme-color" content="#0A0A0A">
 <title>Agendar horário</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
 <style>
 /* Página pública da barbearia: uma coluna estreita, faixa de madeira com a logo, e o estilo (claro ou escuro) que o dono escolheu. */
 :root{
@@ -149,6 +150,87 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
 @keyframes poste{from{background-position:0 0}to{background-position:51px 0}}
 .topo h1{background:linear-gradient(180deg,#F3D58C,#D9B36B 55%,#B88A3E);-webkit-background-clip:text;background-clip:text;color:transparent}
 .slot.on{background-image:linear-gradient(180deg,#F6DE9C 0%,#D8B064 45%,#B88A3E 55%,#D9B36B 100%)}
+
+/* ===== Design v2 (escuro por padrão; "claro" é a versão clara) ===== */
+:root,:root[data-tema="escuro"]{
+  color-scheme:dark;
+  --bg:#0A0A0A; --surface:#151515; --surface2:#1D1D1D; --line:#2A2A2A; --fg:#F5F5F5; --muted:#B0B0B0; --dim:#7A7A7A;
+  --marca:#FFD60A; --marca-ink:#0A0A0A; --marca-soft:rgba(255,214,10,.12); --marca-line:rgba(255,214,10,.45);
+  --couro:var(--marca); --couro-fg:var(--marca-ink);
+  --ok:#7ED98B; --ok-soft:rgba(126,217,139,.10); --ok-line:rgba(126,217,139,.35); --bad:#FF7A6B;
+  --warn:var(--marca); --warn-soft:var(--marca-soft); --warn-line:var(--marca-line);
+  --font:'Bai Jamjuree', system-ui, -apple-system, 'Segoe UI', sans-serif; --display:var(--font);
+}
+:root[data-tema="claro"]{
+  color-scheme:light;
+  --bg:#F6F6F4; --surface:#FFFFFF; --surface2:#F0F0EE; --line:#E2E2DE; --fg:#111111; --muted:#5E5E5E; --dim:#8A8A8A;
+  --ok:#1E7A3C; --ok-soft:#EAF5EC; --ok-line:#BFE0C6; --bad:#B42318;
+}
+body{background:var(--bg);background-image:none;font-family:var(--font)}
+.wrap{gap:16px;padding-bottom:0}
+h1,h2{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+h2{font-size:26px;color:var(--fg)}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em}
+.topo{background:none;border:0;box-shadow:none;padding:4px 0 0;color:var(--fg);gap:8px;overflow:visible}
+.topo::after{display:none}
+.topo h1{font-size:19px;background:none;color:var(--fg);-webkit-text-fill-color:currentColor;text-transform:none;letter-spacing:0}
+.topo .sub{color:var(--muted);font-size:13px}
+.topo-in{gap:12px}
+.logo{width:52px;height:52px;background:#111;border:2px solid var(--marca);box-shadow:none}
+.recado{border-top:0;padding-top:0;color:var(--muted);font-size:14px}
+.passos{display:flex;gap:6px}
+.passos i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.passos i.on{background:var(--marca)}
+.passo-lbl{display:flex;justify-content:space-between;align-items:center;margin-top:-6px}
+.lista{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:2px 16px}
+.op{display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--fg);text-align:left;cursor:pointer;font-family:var(--font)}
+.op:first-child{border-top:0}
+.op b{display:block;font-size:16px;font-weight:600}
+.op span{font-size:13px;color:var(--muted)}
+.op .preco{font-weight:700;color:var(--fg);font-size:15px}
+.marca-ok{width:28px;height:28px;border-radius:50%;border:2px solid var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.on>.marca-ok,.op.on .marca-ok{background:var(--marca);border-color:var(--marca)}
+.card{background:var(--surface);border-color:var(--line);border-radius:16px}
+.card.ok{background:var(--ok-soft);border-color:var(--ok-line)}
+.card.pix{background:linear-gradient(180deg,var(--marca-soft),transparent 70%),var(--surface);border-color:var(--marca-line)}
+.card.ok::after,.card.pix::after{display:none}
+.btn{background:var(--marca);background-image:none;color:var(--marca-ink);font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;min-height:56px;box-shadow:none}
+:root[data-tema="escuro"] .btn{color:var(--marca-ink)}
+.btn:disabled{background:var(--surface2);color:var(--dim)}
+.btn.sec{background:var(--surface2);border:1px solid var(--line);color:var(--fg);font-size:14px;min-height:50px}
+.btn.zap{background:#1E7A3C;color:#fff}
+.voltar{width:56px;min-width:56px;padding:0}
+.acao{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:10px;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(0,0,0,0),var(--bg) 22%)}
+.acao .resumo{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.acao .resumo b{color:var(--marca)}
+:root[data-tema="claro"] .acao .resumo b{color:var(--fg)}
+.acao .row{display:flex;gap:10px}
+.chip{border-radius:999px;background:transparent;color:var(--muted);font-weight:600}
+.chip.on,.dia.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.dia{border-radius:16px;min-width:60px;min-height:72px;font-family:var(--display)}
+.dia small{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.dia.on{background:var(--marca);border-color:var(--marca);color:var(--marca-ink)}
+.dia.fechado{opacity:.35;border-style:dashed}
+.slot{border-radius:12px;min-height:48px;font-weight:600;font-family:var(--display)}
+.slot.on{background:var(--marca);background-image:none;border-color:var(--marca);color:var(--marca-ink)}
+input{border-radius:14px;min-height:52px}
+.field label{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.info a{text-decoration-color:var(--marca)}
+.info svg{color:var(--marca)}
+.barbs{display:flex;flex-direction:column;gap:10px}
+.barb{padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);gap:10px}
+.barb.on{border:2px solid var(--marca);padding:11px;background:var(--surface)}
+.barb-sel{justify-content:space-between}
+.barb-sel .quem{display:flex;align-items:center;gap:12px;min-width:0}
+.barb-sel b{font-size:17px}
+.av{width:48px;height:48px;border-color:var(--marca)}
+.miniaturas{gap:6px}
+.mini{border-radius:10px}
+.valor{font-family:var(--display);font-weight:700}
+.copia{background:var(--surface2);border-color:var(--line)}
+.metodos .chip{min-height:46px}
+#galeria .g-bot .btn{background:var(--marca);color:var(--marca-ink)}
+.poste{border-color:var(--marca)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -239,9 +321,9 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
 
   function topo() {
     const b = st.b;
+    const linha = b.endereco ? b.endereco + ' · ' + horarioHoje().replace('Hoje: ', '').toLowerCase() : horarioHoje();
     return '<header class="topo"><div class="topo-in"><div class="logo"' + (b.logo ? '' : ' aria-hidden="true"') + '>' + (b.logo ? '<img src="' + esc(b.logo) + '" alt="Logo da ' + esc(b.nome) + '">' : MASCOTE.replace('viewBox="0 0 200 220"', 'viewBox="30 8 140 150"')) + '</div>' +
-      '<div><h1>' + esc(b.nome) + '</h1><span class="sub">' + esc(horarioHoje()) + '</span></div></div>' +
-      (b.mensagem ? '<div class="recado">' + esc(b.mensagem) + '</div>' : '') + '</header>';
+      '<div style="min-width:0"><h1>' + esc(b.nome) + '</h1><span class="sub">' + esc(linha) + '</span></div></div></header>';
   }
   function horarioHoje() { const e = expediente(hoje()); return e && !diaFechado(hoje()) ? 'Hoje: ' + e.abre + ' às ' + e.fecha : 'Hoje: fechado · agende pros próximos dias'; }
   function infos() {
@@ -270,71 +352,80 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
         infos() + '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
       return;
     }
-    animar('form');
     const s = b.servicos.find((x) => x.id === st.serv);
-    let h = topo();
-    h += '<section><span class="lbl">Serviço</span><div class="grid2">' + b.servicos.map((x) =>
-      '<button type="button" class="pick' + (st.serv === x.id ? ' on' : '') + '" data-a="serv" data-v="' + esc(x.id) + '" aria-pressed="' + (st.serv === x.id) + '"><b>' + esc(x.nome) + '</b><span>' + brl(x.preco) + ' · ' + esc(x.dur) + ' min</span></button>').join('') + '</div></section>';
-    if (b.barbeiros.some((x) => (x.fotos || []).length)) h += secaoBarbeiros();
-    else h += '<section><span class="lbl">Barbeiro</span><div class="chips">' +
-      '<button type="button" class="chip' + (st.barb === 'qualquer' ? ' on' : '') + '" data-a="barb" data-v="qualquer" aria-pressed="' + (st.barb === 'qualquer') + '">Qualquer um</button>' +
-      b.barbeiros.map((x) => '<button type="button" class="chip' + (st.barb === x.id ? ' on' : '') + '" data-a="barb" data-v="' + esc(x.id) + '" aria-pressed="' + (st.barb === x.id) + '">' + esc(x.nome) + '</button>').join('') + '</div></section>';
-    h += '<section><span class="lbl">Dia</span><div class="chips">';
-    for (let i = 0; i < 14; i++) {
-      const d = addDays(hoje(), i); const pd = parseD(d);
-      const fech = diaFechado(d);
-      h += '<button type="button" class="dia' + (st.dia === d ? ' on' : '') + (fech ? ' fechado' : '') + '" data-a="dia" data-v="' + d + '" aria-pressed="' + (st.dia === d) + '"' + (fech ? ' disabled aria-label="' + (i === 0 ? 'Hoje' : SEM[pd.getDay()]) + ' ' + pd.getDate() + ', fechado"' : '') + '><small>' + (fech ? 'Fechado' : (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : SEM[pd.getDay()])) + '</small><b>' + pd.getDate() + '</b></button>';
+    const total = b.sinal ? 4 : 3;
+    if (!st.passo) st.passo = 1;
+    if (st.passo > 1 && !s) st.passo = 1;
+    const P = st.passo;
+    animar('passo' + P);
+    const ok = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--marca-ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    const voltar = '<button type="button" class="btn sec voltar" data-a="ir" data-v="' + (P - 1) + '" aria-label="Voltar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>';
+    let h = topo() + '<div class="passos" aria-hidden="true">' + Array.from({ length: total }, (_, k) => '<i class="' + (k < P ? 'on' : '') + '"></i>').join('') + '</div>';
+    const cab = (t, dir) => '<div class="passo-lbl"><span class="lbl">Passo ' + P + ' de ' + total + '</span><span class="tiny">' + (dir || '') + '</span></div><h2>' + t + '</h2>';
+    const sinalV = s && b.sinal ? Math.round(Number(s.preco) * Number(b.sinal.pct)) / 100 : 0;
+    let acao = '';
+    if (P === 1) {
+      h += cab('O que vai fazer?') + '<div class="lista" role="radiogroup" aria-label="Serviço">' + b.servicos.map((x) =>
+        '<button type="button" class="op' + (st.serv === x.id ? ' on' : '') + '" role="radio" data-a="serv" data-v="' + esc(x.id) + '" aria-checked="' + (st.serv === x.id) + '"><div style="flex:1;min-width:0"><b>' + esc(x.nome) + '</b><span><span class="preco">' + brl(x.preco) + '</span> · ' + esc(x.dur) + ' min</span></div><span class="marca-ok">' + (st.serv === x.id ? ok : '') + '</span></button>').join('') + '</div>';
+      if (b.mensagem) h += '<div class="card" style="padding:12px 14px;gap:2px"><b style="font-size:15px">' + esc(b.mensagem) + '</b>' + ((b.formas || []).length ? '<span class="tiny">Aceita ' + esc(b.formas.join(', ').replace(/, ([^,]*)$/, ' e $1')) + '.</span>' : '') + '</div>';
+      acao = (s ? '<div class="resumo"><span>' + esc(s.nome) + ' · ' + esc(s.dur) + ' min</span><span>Total <b>' + brl(s.preco) + '</b></span></div>' : '') +
+        '<button type="button" class="btn" data-a="ir" data-v="2"' + (s ? '' : ' disabled') + '>' + (s ? 'Continuar' : 'Escolha um serviço') + '</button>';
+    } else if (P === 2) {
+      h += cab('Escolha o barbeiro', esc(s.nome)) + (b.barbeiros.some((x) => (x.fotos || []).length) ? '<span class="tiny" style="margin-top:-8px">Toque nas fotos pra ver os trabalhos.</span>' : '') + cardsBarbeiros();
+      acao = '<div class="row">' + voltar + '<button type="button" class="btn" data-a="ir" data-v="3">Continuar</button></div>';
+    } else {
+      const bnome = st.barb === 'qualquer' ? 'quem estiver livre' : ((b.barbeiros.find((x) => x.id === st.barb) || {}).nome || '');
+      h += cab('Dia e horário', esc(s.nome) + ' com ' + esc(bnome));
+      h += '<div class="chips">';
+      for (let i = 0; i < 14; i++) {
+        const d = addDays(hoje(), i); const pd = parseD(d); const fech = diaFechado(d);
+        h += '<button type="button" class="dia' + (st.dia === d ? ' on' : '') + (fech ? ' fechado' : '') + '" data-a="dia" data-v="' + d + '" aria-pressed="' + (st.dia === d) + '"' + (fech ? ' disabled aria-label="' + (i === 0 ? 'Hoje' : SEM[pd.getDay()]) + ' ' + pd.getDate() + ', fechado"' : '') + '><small>' + (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : SEM[pd.getDay()]) + '</small><b>' + pd.getDate() + '</b>' + (fech ? '<small style="font-size:9px;letter-spacing:0;text-transform:none">fechado</small>' : '') + '</button>';
+      }
+      h += '</div><section>';
+      if (st.carregandoDia || !st.ocup[st.dia]) h += '<span class="vazio">Buscando horários…</span>';
+      else {
+        const ms = livres();
+        h += '<div class="passo-lbl" style="margin:0"><span class="lbl">' + esc(diaLongo(st.dia)) + '</span><span class="tiny">' + (ms.length ? ms.length + (ms.length === 1 ? ' livre' : ' livres') : '') + '</span></div>';
+        if (!ms.length) h += '<span class="vazio">' + (st.barb !== 'qualquer' && (() => { const bb = b.barbeiros.find((x) => x.id === st.barb); return bb && (bb.folgas || []).indexOf(parseD(st.dia).getDay()) >= 0; })() ? 'Esse barbeiro está de folga nesse dia. Escolha outro dia ou outro barbeiro.' : 'Sem horário livre nesse dia. Tente outro dia ou outro barbeiro.') + '</span>';
+        else h += '<div class="grid4">' + ms.map((m) => { const hh = toHora(m); return '<button type="button" class="slot' + (st.hora === hh ? ' on' : '') + '" data-a="hora" data-v="' + hh + '" aria-pressed="' + (st.hora === hh) + '">' + hh + '</button>'; }).join('') + '</div>';
+      }
+      h += '</section>';
+      h += '<section><span class="lbl">Seus dados</span>' +
+        '<div class="field"><label for="f-nome">Nome</label><input id="f-nome" autocomplete="name" value="' + esc(st.nome) + '"></div>' +
+        '<div class="field"><label for="f-tel">WhatsApp com DDD</label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" value="' + esc(st.tel) + '"></div></section>';
+      if (st.erro) h += '<p class="erro" role="alert">' + esc(st.erro) + '</p>';
+      const pronto = st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10;
+      const tudo = b.sinal && Number(b.sinal.pct) >= 100;
+      const rotulo = st.enviando ? 'Reservando…' : (b.sinal ? (tudo ? 'Pagar e agendar' : 'Pagar sinal e agendar') : 'Confirmar agendamento');
+      acao = (st.hora ? '<div class="card" style="padding:12px 14px;gap:2px"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-size:16px">' + esc(diaLongo(st.dia).split(',')[0]) + ' · ' + esc(st.hora) + '</b><b style="color:var(--marca)">' + brl(s.preco) + '</b></div>' +
+          (b.sinal ? '<span class="tiny">' + (tudo ? 'Pagamento de ' + brl(sinalV) : 'Sinal de ' + brl(sinalV)) + ' ' + comoPaga(b.sinal) + (tudo ? '' : ' · o resto na barbearia') + '. O horário fica reservado por ' + esc(b.sinal.prazo) + ' min enquanto você paga.</span>' : '<span class="tiny">Você paga na barbearia.</span>') + '</div>' : '') +
+        '<div class="row">' + voltar + '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button></div>';
     }
-    h += '</div></section>';
-    h += '<section><span class="lbl">Horário</span>';
-    if (!s) h += '<span class="vazio">Escolha o serviço pra ver os horários livres.</span>';
-    else if (st.carregandoDia || !st.ocup[st.dia]) h += '<span class="vazio">Buscando horários…</span>';
-    else {
-      const ms = livres();
-      if (!ms.length) h += '<span class="vazio">' + (st.barb !== 'qualquer' && (() => { const bb = b.barbeiros.find((x) => x.id === st.barb); return bb && (bb.folgas || []).indexOf(parseD(st.dia).getDay()) >= 0; })() ? 'Esse barbeiro está de folga nesse dia. Escolha outro dia ou outro barbeiro.' : 'Sem horário livre nesse dia. Tente outro dia ou outro barbeiro.') + '</span>';
-      else h += '<div class="grid4">' + ms.map((m) => { const hh = toHora(m); return '<button type="button" class="slot' + (st.hora === hh ? ' on' : '') + '" data-a="hora" data-v="' + hh + '" aria-pressed="' + (st.hora === hh) + '">' + hh + '</button>'; }).join('') + '</div>';
-    }
-    h += '</section>';
-    h += '<section><span class="lbl">Seus dados</span>' +
-      '<div class="field"><label for="f-nome">Nome</label><input id="f-nome" autocomplete="name" value="' + esc(st.nome) + '"></div>' +
-      '<div class="field"><label for="f-tel">WhatsApp com DDD</label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" value="' + esc(st.tel) + '"></div></section>';
-    if (b.sinal && s) {
-      const v = Math.round(Number(s.preco) * Number(b.sinal.pct)) / 100;
-      const tudo = Number(b.sinal.pct) >= 100;
-      h += '<div class="card pix"><span class="lbl" style="color:var(--warn)">' + (tudo ? 'Pagamento na hora de agendar' : 'Sinal pra garantir o horário') + '</span><span>Pra confirmar, você paga <b>' + brl(v) + '</b>' + (tudo ? '' : ' (' + esc(b.sinal.pct) + '%)') + ' ' + comoPaga(b.sinal) + ' agora.' + (tudo ? '' : ' O restante, ' + brl(Number(s.preco) - v) + ', você paga na barbearia.') + '</span><span class="tiny">O horário fica reservado por ' + esc(b.sinal.prazo) + ' minutos enquanto você paga.</span></div>';
-    } else if (b.sinal) {
-      h += '<p class="tiny" style="margin:0">Esta barbearia pede um sinal de ' + esc(b.sinal.pct) + '% ' + comoPaga(b.sinal) + ' pra garantir o horário.</p>';
-    }
-    if (st.erro) h += '<p class="erro" role="alert">' + esc(st.erro) + '</p>';
-    const pronto = s && st.hora && st.nome.trim().length >= 2 && st.tel.replace(/\D/g, '').length >= 10;
-    const rotulo = st.enviando ? 'Reservando…' : (s && st.hora ? (b.sinal ? (Number(b.sinal.pct) >= 100 ? 'Reservar e pagar' : 'Reservar e pagar o sinal') : 'Confirmar ' + s.nome.toLowerCase() + ' às ' + st.hora) : 'Confirmar horário');
-    h += '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button>';
-    h += infos();
+    h += '<div class="acao">' + acao + '</div>';
+    if (P === 1) h += infos();
     app.innerHTML = h;
+  }
+
+  // Cartões dos barbeiros (com as fotos dos trabalhos, quando tiver).
+  function cardsBarbeiros() {
+    const b = st.b;
+    const ok = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--marca-ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    const um = (id, nome, sub, av, fotos) => {
+      const on = st.barb === id;
+      let h = '<div class="barb' + (on ? ' on' : '') + '"><button type="button" class="barb-sel" data-a="barb" data-v="' + esc(id) + '" aria-pressed="' + on + '"><span class="quem">' + av + '<span><b>' + esc(nome) + '</b><small>' + esc(sub) + '</small></span></span><span class="marca-ok">' + (on ? ok : '') + '</span></button>';
+      if (fotos && fotos.length) h += '<div class="miniaturas">' + fotos.slice(0, 3).map((f, i) => '<button type="button" class="mini" data-a="galeria" data-v="' + esc(id) + '" data-i="' + i + '" aria-label="Ver trabalho ' + (i + 1) + ' de ' + esc(nome) + '"><img src="' + esc(urlFoto(f.c)) + '" alt="' + esc(f.l || 'Trabalho de ' + nome) + '" loading="lazy">' + (i === 2 && fotos.length > 3 ? '<span class="mais">+' + (fotos.length - 3) + '</span>' : '') + '</button>').join('') + '</div>';
+      return h + '</div>';
+    };
+    let h = '<div class="barbs">';
+    b.barbeiros.forEach((x) => { const fs = x.fotos || []; h += um(x.id, x.nome, fs.length ? fs.length + (fs.length === 1 ? ' trabalho' : ' trabalhos') : 'Barbeiro', fs.length ? '<img class="av" src="' + esc(urlFoto(fs[0].c)) + '" alt="" loading="lazy">' : '<span class="av" aria-hidden="true">' + inicial(x.nome) + '</span>', fs); });
+    h += um('qualquer', 'Qualquer um', 'Primeiro horário livre', '<span class="av" aria-hidden="true">✂</span>', null);
+    return h + '</div>';
   }
 
   const comoPaga = (sn) => { const on = sn && sn.online; return on && on.cartao ? (on.pix || sn.pixManual || sn.chave ? 'no cartão ou no Pix' : 'no cartão de crédito') : 'no Pix'; };
   function tirarCartao() { if (st.brick) { try { st.brick.unmount(); } catch (e) { /* já saiu */ } st.brick = null; } }
   const urlFoto = (c) => st.u + '/storage/v1/object/public/trabalhos/' + String(c).split('/').map(encodeURIComponent).join('/');
   const inicial = (n) => esc(String(n || '?').trim().charAt(0).toUpperCase());
-  // Barbeiros com fotos dos trabalhos: o cliente vê os cortes antes de escolher.
-  function secaoBarbeiros() {
-    const b = st.b;
-    let h = '<section><span class="lbl">Barbeiro</span><span class="tiny" style="margin-top:-6px">Toque nas fotos pra ver os trabalhos de cada um.</span><div class="barbs">';
-    h += '<div class="barb' + (st.barb === 'qualquer' ? ' on' : '') + '"><button type="button" class="barb-sel" data-a="barb" data-v="qualquer" aria-pressed="' + (st.barb === 'qualquer') + '"><span class="av" aria-hidden="true">✂</span><span><b>Qualquer um</b><small>Primeiro horário livre</small></span></button></div>';
-    b.barbeiros.forEach((x) => {
-      const fs = x.fotos || []; const on = st.barb === x.id;
-      h += '<div class="barb' + (on ? ' on' : '') + '"><button type="button" class="barb-sel" data-a="barb" data-v="' + esc(x.id) + '" aria-pressed="' + on + '">' +
-        (fs.length ? '<img class="av" src="' + esc(urlFoto(fs[0].c)) + '" alt="" loading="lazy">' : '<span class="av" aria-hidden="true">' + inicial(x.nome) + '</span>') +
-        '<span><b>' + esc(x.nome) + '</b><small>' + (fs.length ? fs.length + (fs.length === 1 ? ' trabalho' : ' trabalhos') : 'Sem fotos ainda') + '</small></span></button>';
-      if (fs.length) {
-        h += '<div class="miniaturas">' + fs.slice(0, 3).map((f, i) => '<button type="button" class="mini" data-a="galeria" data-v="' + esc(x.id) + '" data-i="' + i + '" aria-label="Ver trabalho ' + (i + 1) + ' de ' + esc(x.nome) + '"><img src="' + esc(urlFoto(f.c)) + '" alt="' + esc(f.l || 'Trabalho de ' + x.nome) + '" loading="lazy">' +
-          (i === 2 && fs.length > 3 ? '<span class="mais">+' + (fs.length - 3) + '</span>' : '') + '</button>').join('') + '</div>';
-      }
-      h += '</div>';
-    });
-    return h + '</div></section>';
-  }
   let gal = null;
   function abrirGaleria(barbId, i) {
     const x = st.b.barbeiros.find((y) => y.id === barbId); if (!x || !(x.fotos || []).length) return;
@@ -369,8 +460,8 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (a === 'prox') passo(1);
     if (a === 'ir') { gal.i = Number(g.dataset.i); desenharGaleria(); }
     if (a === 'escolher') {
-      const id = gal.x.id; fecharGaleria(); st.barb = id; st.hora = null; st.erro = ''; render();
-      const dia = app.querySelector('.dia.on'); if (dia && dia.scrollIntoView) dia.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const id = gal.x.id; fecharGaleria(); st.barb = id; st.hora = null; st.erro = ''; st.passo = 3; render(); window.scrollTo(0, 0);
+      if (!st.ocup[st.dia]) carregarDia(st.dia);
     }
   });
   document.addEventListener('keydown', (e) => {
@@ -397,7 +488,7 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (!st.metodo || (st.metodo === 'cartao' && !temCartao) || (st.metodo === 'pix' && !temPix)) st.metodo = temPix ? 'pix' : 'cartao';
     const m = st.metodo;
     const tudo = Math.abs(Number(p.preco) - Number(sn.valor)) < 0.01;
-    let h = topo() +
+    let h = topo() + '<div class="passos" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><div class="passo-lbl"><span class="lbl">Passo 4 de 4</span><span class="tiny"></span></div>' +
       '<div class="card pix"><div class="centro"><span class="masc m-espera" aria-hidden="true">' + MASCOTE + '</span><h2>' + (tudo ? 'Falta só pagar' : 'Falta só o sinal') + '</h2>' +
       '<span class="sub">' + esc(p.servico) + ' com ' + esc(p.barbeiro) + ', ' + esc(diaLongo(p.dia)) + ' às ' + esc(p.hora) + '</span>' +
       '<span class="valor">' + brl(sn.valor) + '</span>' + (tudo ? '' : '<span class="tiny">O restante, ' + brl(Math.max(0, Number(p.preco) - Number(sn.valor))) + ', você paga na barbearia.</span>') + '</div>';
@@ -520,11 +611,12 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (a !== 'desistir') st.confirmaDesistir = false;
     if (['serv', 'barb', 'dia', 'hora'].indexOf(a) >= 0) st.erro = '';
     if (a === 'serv') { st.serv = v; st.hora = null; render(); carregarDia(st.dia); }
+    if (a === 'ir') { const n = Number(v); if (n >= 1 && n <= 3) { st.passo = n; st.erro = ''; render(); window.scrollTo(0, 0); if (n === 3 && !st.ocup[st.dia]) carregarDia(st.dia); } return; }
     if (a === 'barb') { st.barb = v; st.hora = null; render(); }
     if (a === 'galeria') { abrirGaleria(v, Number(el.dataset.i) || 0); return; }
     if (a === 'dia') { st.dia = v; st.hora = null; render(); carregarDia(v); }
     if (a === 'hora') { st.hora = v; render(); }
-    if (a === 'novo') { st.feito = null; st.hora = null; st.ocup = {}; render(); carregarDia(st.dia); }
+    if (a === 'novo') { st.feito = null; st.hora = null; st.passo = 1; st.ocup = {}; render(); carregarDia(st.dia); }
     if (a === 'copiar') {
       const txt = document.getElementById('pix-codigo').textContent;
       try { await navigator.clipboard.writeText(txt); el.textContent = 'Código copiado!'; setTimeout(() => { el.textContent = 'Copiar código Pix'; }, 2000); }
@@ -580,9 +672,13 @@ input{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--l
     if (r.error || !r.data) { msg('Barbearia não encontrada. Confira o link com a barbearia.'); return; }
     st.b = r.data; st.b.servicos = st.b.servicos || []; st.b.barbeiros = st.b.barbeiros || [];
     document.title = 'Agendar · ' + st.b.nome;
-    const antigas = ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3'];
-    document.documentElement.style.setProperty('--marca', !st.b.cor || antigas.indexOf(String(st.b.cor).toUpperCase()) >= 0 ? '#C9A35B' : st.b.cor);
-    if (st.b.tema === 'escuro') document.documentElement.setAttribute('data-tema', 'escuro');
+    const antigas = ['#8B9BFF', '#E8B04B', '#5BD08A', '#F07C6C', '#C792EA', '#F2F2F3', '#C9A35B'];
+    const cor = !st.b.cor || antigas.indexOf(String(st.b.cor).toUpperCase()) >= 0 ? '#FFD60A' : st.b.cor;
+    const rgb = /^#?([0-9a-f]{6})$/i.exec(cor); const n = rgb ? parseInt(rgb[1], 16) : 0xFFD60A; const cr = n >> 16, cg = (n >> 8) & 255, cb = n & 255;
+    const ds = document.documentElement.style;
+    ds.setProperty('--marca', cor); ds.setProperty('--marca-ink', (0.299 * cr + 0.587 * cg + 0.114 * cb) / 255 > 0.55 ? '#0A0A0A' : '#FFFFFF');
+    ds.setProperty('--marca-soft', 'rgba(' + cr + ',' + cg + ',' + cb + ',.12)'); ds.setProperty('--marca-line', 'rgba(' + cr + ',' + cg + ',' + cb + ',.45)');
+    document.documentElement.setAttribute('data-tema', st.b.tema === 'claro' ? 'claro' : 'escuro');
     if (!st.b.servicos.length || !st.b.barbeiros.length) { msg('Esta barbearia ainda não abriu a agenda online.'); return; }
     const p = ler(KEY);
     if (p && p.id && p.sinal && new Date(p.sinal.expira) > new Date()) { st.pend = p; render(); acompanhar(); conferir(); return; }

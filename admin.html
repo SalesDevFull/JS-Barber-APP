@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3B2617">
+<meta name="theme-color" content="#0A0A0A">
 <meta name="robots" content="noindex, nofollow">
 <title>JS Barber APP · Administração</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
 <style>
 /* Painel do administrador: mesma pele de couro e madeira do app, em uma coluna larga (até 900px) com cartões por barbearia. */
 :root{
@@ -92,6 +93,34 @@ a{color:var(--accent)}
 .top h1{background:linear-gradient(180deg,#F3D58C,#C9A35B 55%,#8E6A2E);-webkit-background-clip:text;background-clip:text;color:transparent}
 main{padding-top:26px}
 .btn.pri{background-image:linear-gradient(180deg,#F6DE9C 0%,#D8B064 45%,#B88A3E 55%,#D9B36B 100%);border-color:#E9C877;color:#2A1B12}
+
+/* ===== Design v2 ===== */
+:root{--bg:#0A0A0A;--surface:#151515;--surface2:#1D1D1D;--line:#2A2A2A;--line2:#353535;--fg:#F5F5F5;--fg2:#E2E2E2;--muted:#B0B0B0;--dim:#7A7A7A;
+  --accent:#FFD60A;--accent-ink:#0A0A0A;--accent-soft:rgba(255,214,10,.12);--ok:#7ED98B;--ok-line:rgba(126,217,139,.35);--warn:#FFD60A;--warn-line:rgba(255,214,10,.45);--bad:#FF7A6B;--bad-line:rgba(255,122,107,.45);
+  --wood-1:#121212;--wood-2:#121212;--wood-3:#0A0A0A;--stitch:transparent;--font:'Bai Jamjuree',system-ui,sans-serif;--display:'Bai Jamjuree',system-ui,sans-serif}
+body{background:var(--bg);background-image:none;font-family:var(--font)}
+.top{background:var(--bg)!important;background-image:none!important;border-bottom:1px solid var(--line)!important;box-shadow:none!important}
+.top::after{display:none!important}
+.top h1{background:none!important;color:var(--fg)!important;-webkit-text-fill-color:currentColor;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.top small{color:var(--muted)!important;text-transform:uppercase;letter-spacing:.12em}
+.selo{background:#111!important;border:2px solid var(--accent)!important;box-shadow:none!important}
+.card{background:var(--surface)!important;background-image:none!important;border:1px solid var(--line)!important;box-shadow:none!important;border-radius:16px}
+.card.alerta{border-color:var(--warn-line)!important}.card.bloq{border-color:var(--bad-line)!important}
+.card::after{display:none!important}
+.h2{text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+.kpi{background:var(--surface)!important;background-image:none!important;border:1px solid var(--line)!important;border-radius:16px}
+.kpi b{background:none!important;color:var(--fg)!important;-webkit-text-fill-color:currentColor}
+.btn{background:var(--surface2)!important;background-image:none!important;border:1px solid var(--line)!important;color:var(--fg)!important;box-shadow:none!important;border-radius:14px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;font-size:13px;min-height:46px}
+.btn.pri{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--accent-ink)!important;font-weight:700}
+.btn.bad{color:var(--bad)!important;border-color:var(--bad-line)!important}.btn.ok{color:var(--ok)!important;border-color:var(--ok-line)!important}
+.chip{border-radius:999px}
+.chip.on{background:var(--fg)!important;background-image:none!important;border-color:var(--fg)!important;color:#0A0A0A!important;box-shadow:none!important}
+.pill{border:0!important;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;padding:4px 8px}
+.p-ok{background:rgba(126,217,139,.12)!important}.p-warn{background:var(--accent-soft)!important}.p-bad{background:rgba(255,122,107,.12)!important}.p-acc{background:var(--accent)!important;color:var(--accent-ink)!important}
+input,select,textarea{background:var(--surface)!important;border-color:var(--line)!important;border-radius:14px}
+.form{background:var(--surface2)!important;border-color:var(--line)!important}
+label{text-transform:uppercase;letter-spacing:.08em;font-size:12px!important}
+#toast{background:var(--fg)!important;color:#0A0A0A!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
