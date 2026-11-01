@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="JS Barber APP">
+<meta name="apple-mobile-web-app-title" content="Degradê">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>JS Barber APP</title>
-<link rel="manifest" href="manifest.webmanifest?v=4">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
+<title>Degradê</title>
+<link rel="manifest" href="manifest.webmanifest?v=5">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=5">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=5">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap">
@@ -298,8 +298,14 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
 .abertura .heroi .masc{width:180px;height:198px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.6))}
 .nome-app{font-family:var(--display);font-size:clamp(30px,9.5vw,42px);font-weight:700;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;line-height:1.05;background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
 .abertura .nome-app{background:none;color:var(--fg);-webkit-text-fill-color:currentColor}
-.nome-app em{font-style:normal;color:var(--accent)}
+.nome-app em{font-style:normal;color:var(--accent);background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 18%,var(--accent) 82%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:inline-block;line-height:1.3;padding:.12em .04em 0 0}
+.abertura .nome-app{font-size:clamp(36px,11vw,48px);letter-spacing:.06em;line-height:1.3;overflow:visible}
 .abertura .sub{font-size:15px}
+.marca-app{display:inline-flex;flex-direction:column;gap:6px;align-self:flex-start;margin-bottom:6px}
+.marca-app .nome-app{line-height:1.15}
+.regua{display:flex;flex-direction:column;gap:5px;padding-right:.3em}
+.regua svg{display:block;width:100%;height:clamp(14px,4vw,18px);fill:var(--accent)}
+.regua-num{display:flex;justify-content:space-between;font-family:var(--display);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em}
 /* Início */
 .saud{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .saud h2{margin:2px 0 0;font:600 26px var(--display)}
@@ -589,8 +595,9 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
   const slugify = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const linkPublico = () => { const base = location.origin + location.pathname.replace(/[^/]*$/, ''); return base + 'agendar.html?b=' + encodeURIComponent(S.slug || ''); };
 
+  const REGUA = '<svg viewBox="0 0 400 30" preserveAspectRatio="none" aria-hidden="true"><rect x="0.0" width="14.0" height="30"/><rect x="16.0" width="12.9" height="30"/><rect x="32.5" width="11.9" height="30"/><rect x="49.6" width="10.8" height="30"/><rect x="67.3" width="9.8" height="30"/><rect x="85.5" width="8.8" height="30"/><rect x="104.2" width="7.7" height="30"/><rect x="123.5" width="6.6" height="30"/><rect x="143.4" width="5.6" height="30"/><rect x="163.8" width="4.5" height="30"/><rect x="184.8" width="3.5" height="30"/><rect x="206.2" width="2.4" height="30"/><rect x="228.3" width="1.4" height="30"/><rect x="250.9" width="1.2" height="30"/><rect x="274.9" width="1.2" height="30"/><rect x="300.5" width="1.2" height="30"/><rect x="327.7" width="1.2" height="30"/><rect x="356.5" width="1.2" height="30"/><rect x="386.9" width="1.2" height="30"/></svg>';
   function abertura(sub) {
-    return '<div class="abertura"><div class="heroi">' + mascote('m-hero m-grande', 'Mascote do JS Barber APP') + '</div><div class="nome-app">JS Barber <em>App</em></div><div class="sub">' + sub + '</div></div>';
+    return '<div class="abertura"><div class="heroi">' + mascote('m-hero m-grande', 'Mascote do Degradê') + '</div><div class="marca-app"><div class="nome-app"><em>Degradê</em></div><div class="regua">' + REGUA + '<div class="regua-num"><span>0</span><span>½</span><span>1</span><span>2</span><span>3</span><span>4</span></div></div></div><div class="sub">' + sub + '</div></div>';
   }
 
   // Lê o valor direto do campo (o preenchimento automático do celular nem sempre avisa a página).
@@ -623,13 +630,13 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
       const b = barb(S.meuBarb); const t0 = today();
       const minha = S.ags.filter((a) => a.data === t0 && a.barbeiroId === S.meuBarb && segura(a) && a.status !== 'feito');
       const fala = !b ? 'Peça pro dono ligar sua conta a um barbeiro.' : (minha.length ? 'Você tem ' + minha.length + ' cliente' + (minha.length === 1 ? '' : 's') + ' na agenda hoje.' : 'Sua agenda de hoje está livre.');
-      return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do JS Barber APP') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
+      return '<section class="card costura hero"><div class="row">' + mascote('m-hero', 'Mascote do Degradê') + '<div class="balao"><b>' + saudacao() + (b ? ', ' + esc(primeiroNome(b.nome)) : '') + '!</b><span>' + esc(fala) + '</span></div></div></section>' +
         '<div class="grid2"><button type="button" class="btn pri" data-act="go" data-v="agendar">Agendar</button><button type="button" class="btn" data-act="novaComandaAtalho">Comanda</button></div>' + cardLink() + vBarbeiro();
     }
     const t = today(), m = mesAtual(), c = cfg();
     const fh = fechadas().filter((x) => x.data === t);
     const entrou = fh.reduce((a, x) => a + num(x.total) + num(x.gorjeta), 0);
-    const saiu = S.despesas.filter((d) => d.data === t).reduce((a, d) => a + num(d.valor), 0) + S.vales.filter((v) => v.data === t).reduce((a, v) => a + num(v.valor), 0);
+    const saiu = S.vales.filter((v) => v.data === t).reduce((a, v) => a + num(v.valor), 0);
     const equipe = fh.reduce((a, x) => a + num(x.comissao) + num(x.gorjeta), 0);
     const fm = fechadas().filter((x) => String(x.data || '').indexOf(m) === 0);
     const fat = fm.reduce((a, x) => a + num(x.total), 0);
@@ -873,11 +880,6 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     h += '<section class="stack"><span class="lbl">Serviços</span><div class="grid2">';
     (c.servicos || []).forEach((s) => { h += '<button type="button" class="pick" data-act="cmAdd" data-id="' + esc(x.id) + '" data-v="s:' + esc(s.id) + '"><b>' + esc(s.nome) + '</b><span>' + brl(s.preco) + '</span></button>'; });
     h += '</div>';
-    if (S.produtos.length) {
-      h += '<span class="lbl">Produtos</span><div class="grid2">';
-      S.produtos.slice().sort((a, b2) => String(a.nome).localeCompare(String(b2.nome))).forEach((p) => { const sem = num(p.qtd) <= 0; h += '<button type="button" class="pick" data-act="cmAdd" data-id="' + esc(x.id) + '" data-v="p:' + esc(p.id) + '"' + (sem ? ' disabled' : '') + '><b>' + esc(p.nome) + '</b><span>' + brl(p.preco) + ' · ' + (sem ? 'sem estoque' : num(p.qtd) + ' em estoque') + '</span></button>'; });
-      h += '</div>';
-    }
     h += '</section>';
     h += '<section class="stack"><span class="lbl">Pagamento</span><div class="grid3">' + formas().map((p) => '<button type="button" class="chip' + (x.pagamento === p ? ' on' : '') + '" data-act="cmPag" data-id="' + esc(x.id) + '" data-v="' + p + '" aria-pressed="' + (x.pagamento === p) + '">' + p + '</button>').join('') + '</div>' +
       '<div class="field"><label for="cm-gorj">Gorjeta pro barbeiro (R$)</label><input id="cm-gorj" inputmode="decimal" data-chg="cmGorj" data-id="' + esc(x.id) + '" value="' + (num(x.gorjeta) || '') + '" placeholder="0"></div></section>';
@@ -1041,7 +1043,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
   function vGestao() {
     if (souBarbeiro()) return vConta();
     if (S.ui.gesTab === 'conta') return '<button type="button" class="btn sm" data-act="gesTab" data-v="barbearia" style="align-self:flex-start">‹ Gestão</button>' + vConta();
-    const tabs = [['barbearia', 'Barbearia'], ['horarios', 'Horários'], ['pagamentos', 'Pagamentos'], ['equipe', 'Equipe'], ['servicos', 'Serviços'], ['estoque', 'Estoque'], ['despesas', 'Despesas']];
+    const tabs = [['barbearia', 'Barbearia'], ['horarios', 'Horários'], ['pagamentos', 'Pagamentos'], ['equipe', 'Equipe'], ['servicos', 'Serviços']];
     let h = '<div class="chips">' + tabs.map((t) => chip(t[1], 'gesTab', t[0], S.ui.gesTab === t[0])).join('') + '</div>';
     const g = S.ui.gesTab; const c = cfg(); const m = mesAtual();
     if (g === 'horarios') h += vHorarios();
@@ -1052,14 +1054,13 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
         const r = resumoBarbeiro(b.id, m);
         h += '<section class="card"><div class="row"><span class="logo" style="width:40px;height:40px;font-size:16px" aria-hidden="true">' + esc(String(b.nome)[0] || '?') + '</span><div class="grow"><div class="h2">' + esc(b.nome) + '</div><div class="tiny">' + r.n + ' atendimentos · ' + brl(r.serv + r.prod) + ' faturado</div></div><div style="text-align:right"><div class="tiny">a receber</div><div class="mid num c-acc">' + brl(r.receber) + '</div></div></div>' +
           '<div class="tiny">Comissão ' + brl(r.com) + ' + gorjetas ' + brl(r.gorj) + ' − vales ' + brl(r.vales) + '</div>' +
-          '<div class="grid2"><div class="field"><label for="com-' + esc(b.id) + '">Comissão nos serviços (%)</label><input class="small" id="com-' + esc(b.id) + '" inputmode="numeric" data-chg="barbCom" data-id="' + esc(b.id) + '" value="' + esc(b.com) + '"></div>' +
-          '<div class="field"><label for="comp-' + esc(b.id) + '">Comissão nos produtos (%)</label><input class="small" id="comp-' + esc(b.id) + '" inputmode="numeric" data-chg="barbComProd" data-id="' + esc(b.id) + '" value="' + esc(b.comProd != null ? b.comProd : 10) + '"></div></div>' +
+          '<div class="field"><label for="com-' + esc(b.id) + '">Comissão nos serviços (%)</label><input class="small" id="com-' + esc(b.id) + '" inputmode="numeric" data-chg="barbCom" data-id="' + esc(b.id) + '" value="' + esc(b.com) + '"></div>' +
           (sEx ? '<span class="tiny">Ex.: ' + esc(sEx.nome.toLowerCase()) + ' de ' + brl(sEx.preco) + ' → ' + esc(primeiroNome(b.nome)) + ' recebe <b>' + brl(num(sEx.preco) * num(b.com) / 100) + '</b>. Salva sozinho quando você sai do campo.</span>' : '') +
           '<button type="button" class="btn bad sm" data-act="barbRemover" data-id="' + esc(b.id) + '">' + conf('br' + b.id, 'Remover da equipe') + '</button></section>';
       });
       if (S.papel === 'dono') {
         const opBarb = (sel) => '<option value="">Não atende (sócio/recepção)</option>' + (c.barbeiros || []).map((b) => '<option value="' + esc(b.id) + '"' + (sel === b.id ? ' selected' : '') + '>' + esc(b.nome) + '</option>').join('');
-        h += '<section class="card"><span class="h2">Acesso ao app</span><span class="sub">Cada pessoa entra com o próprio e-mail. O barbeiro vê a agenda, os clientes e só os próprios ganhos e comandas. O caixa da barbearia, as despesas e os ganhos dos colegas ficam com você.</span>';
+        h += '<section class="card"><span class="h2">Acesso ao app</span><span class="sub">Cada pessoa entra com o próprio e-mail. O barbeiro vê a agenda, os clientes e só os próprios ganhos e comandas. O caixa da barbearia e os ganhos dos colegas ficam com você.</span>';
         S.acessos.forEach((a) => {
           h += '<div class="acesso"><div class="grow"><b>' + esc(a.email) + (a.eu ? ' (você)' : '') + '</b></div>' +
             (a.eu ? '<span class="tiny">Dono</span>' :
@@ -1083,20 +1084,6 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
         h += '</section>';
       }
     }
-    if (g === 'estoque') {
-      const ps = S.produtos.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
-      if (!ps.length) h += '<div class="empty"><span>Nenhum produto cadastrado.</span></div>';
-      ps.forEach((p) => {
-        const baixo = num(p.qtd) < num(p.min); const marg = num(p.preco) ? Math.round((num(p.preco) - num(p.custo)) / num(p.preco) * 100) : 0;
-        h += '<section class="card tight' + (baixo ? ' alert' : '') + '"><div class="row"><div class="grow"><div style="font-weight:600">' + esc(p.nome) + '</div><div class="tiny ' + (baixo ? 'c-warn' : '') + '">' + (baixo ? 'Abaixo do mínimo (' + num(p.min) + ') · repor' : 'Mínimo ' + num(p.min)) + ' · ' + brl(p.preco) + ' · margem ' + marg + '%</div></div>' +
-          '<button type="button" class="btn sm" data-act="estMenos" data-id="' + esc(p.id) + '" aria-label="Tirar 1 de ' + esc(p.nome) + '">−</button><span class="mid num" style="min-width:32px;text-align:center">' + num(p.qtd) + '</span><button type="button" class="btn sm" data-act="estMais" data-id="' + esc(p.id) + '" aria-label="Somar 1 em ' + esc(p.nome) + '">+</button></div>' +
-          '<button type="button" class="btn bad sm" data-act="prodApagar" data-id="' + esc(p.id) + '">' + conf('pa' + p.id, 'Apagar produto') + '</button></section>';
-      });
-      h += '<section class="card"><span class="h2">Novo produto</span><div class="field"><label for="np-nome">Nome</label><input id="np-nome" data-f="npNome" value="' + esc(fv('npNome')) + '"></div>' +
-        '<div class="grid2"><div class="field"><label for="np-preco">Preço de venda</label><input id="np-preco" inputmode="decimal" data-f="npPreco" value="' + esc(fv('npPreco')) + '"></div><div class="field"><label for="np-custo">Custo</label><input id="np-custo" inputmode="decimal" data-f="npCusto" value="' + esc(fv('npCusto')) + '"></div>' +
-        '<div class="field"><label for="np-qtd">Quantidade</label><input id="np-qtd" inputmode="numeric" data-f="npQtd" value="' + esc(fv('npQtd')) + '"></div><div class="field"><label for="np-min">Mínimo</label><input id="np-min" inputmode="numeric" data-f="npMin" value="' + esc(fv('npMin', '3')) + '"></div></div>' +
-        '<button type="button" class="btn pri" data-act="prodNovo">Cadastrar produto</button></section>';
-    }
     if (g === 'servicos') {
       const bs = c.barbeiros || [];
       h += '<span class="sub">A comissão é sempre em cima do valor cheio do serviço. Pra mudar a porcentagem de cada barbeiro, vá em Equipe.</span>';
@@ -1108,17 +1095,6 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
           '<button type="button" class="btn bad sm" data-act="svApagar" data-id="' + i + '">' + conf('sv' + s.id, 'Remover serviço') + '</button></section>';
       });
       h += '<section class="card"><span class="h2">Novo serviço</span><div class="field"><label for="ns-nome">Nome</label><input id="ns-nome" data-f="nsNome" value="' + esc(fv('nsNome')) + '"></div><div class="grid2"><div class="field"><label for="ns-preco">Preço (R$)</label><input id="ns-preco" inputmode="decimal" data-f="nsPreco" value="' + esc(fv('nsPreco')) + '"></div><div class="field"><label for="ns-dur">Duração (min)</label><input id="ns-dur" inputmode="numeric" data-f="nsDur" value="' + esc(fv('nsDur', '30')) + '"></div></div><button type="button" class="btn pri" data-act="svNovo">Adicionar serviço</button></section>';
-    }
-    if (g === 'despesas') {
-      const fm = fechadas().filter((x) => String(x.data || '').indexOf(m) === 0);
-      const fat = fm.reduce((a, x) => a + num(x.total), 0); const com = fm.reduce((a, x) => a + num(x.comissao), 0);
-      const ds = S.despesas.filter((d) => String(d.data).indexOf(m) === 0).sort((a, b) => String(b.data).localeCompare(String(a.data)));
-      const desp = ds.reduce((a, d) => a + num(d.valor), 0); const sobra = fat - com - desp;
-      h += '<section class="card"><span class="lbl">Quanto sobrou no mês</span><span class="big num ' + (sobra >= 0 ? 'c-ok' : 'c-bad') + '">' + brl(sobra) + '</span>' +
-        '<div class="item"><span class="grow">Faturado</span><span class="num">' + brl(fat) + '</span></div><div class="item"><span class="grow">Comissões</span><span class="num c-bad">− ' + brl(com) + '</span></div><div class="item"><span class="grow">Despesas</span><span class="num c-bad">− ' + brl(desp) + '</span></div></section>';
-      h += '<section class="card"><span class="h2">Lançar despesa</span><div class="field"><label for="dp-desc">Descrição</label><input id="dp-desc" data-f="dpDesc" value="' + esc(fv('dpDesc')) + '" placeholder="Aluguel, luz, produtos…"></div><div class="field"><label for="dp-valor">Valor (R$)</label><input id="dp-valor" inputmode="decimal" data-f="dpValor" value="' + esc(fv('dpValor')) + '"></div><button type="button" class="btn pri" data-act="despNova">Lançar</button>';
-      ds.forEach((d) => { h += '<div class="item"><div class="grow"><div>' + esc(d.descricao) + '</div><div class="tiny">' + esc(fmtDia(d.data)) + '</div></div><span class="num c-bad">− ' + brl(d.valor) + '</span><button type="button" class="btn sm" data-act="despApagar" data-id="' + esc(d.id) + '" aria-label="Apagar despesa">✕</button></div>'; });
-      h += '</section>';
     }
     if (g === 'pagamentos') {
       const px = c.pix || {}; const sn = c.sinal || {};
@@ -1169,7 +1145,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
         '<div class="row wrap" style="align-items:flex-start"><div class="qr" id="qr-box" role="img" aria-label="QR code do link de agendamento"></div><div class="stack grow"><span class="link">' + esc(linkPublico()) + '</span>' +
         '<button type="button" class="btn pri" data-act="copiarLink">Copiar link</button><a class="btn" href="' + esc(linkPublico()) + '" target="_blank" rel="noopener">Abrir página</a><span class="tiny">Pra imprimir o QR: toque e segure (ou clique com o botão direito) e salve a imagem.</span></div></div></section>';
       h += '<section class="card"><span class="h2">Sua conta</span><span class="sub">' + esc(S.user ? S.user.email : '') + ' · ' + (S.papel === 'dono' ? 'dono' : 'barbeiro') + '</span><button type="button" class="btn" data-act="sair">Sair da conta</button></section>';
-      if (S.papel === 'dono') h += '<section class="card"><span class="h2">Recomeçar do zero</span><span class="sub">Apaga agenda, comandas, clientes, despesas e vales. Serviços, equipe e produtos continuam.</span><button type="button" class="btn bad" data-act="zerar">' + conf('zerar', 'Apagar movimento') + '</button></section>';
+      if (S.papel === 'dono') h += '<section class="card"><span class="h2">Recomeçar do zero</span><span class="sub">Apaga agenda, comandas, clientes e vales. Serviços e equipe continuam.</span><button type="button" class="btn bad" data-act="zerar">' + conf('zerar', 'Apagar movimento') + '</button></section>';
     }
     return h;
   }
@@ -1767,7 +1743,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
         const titulo = lista.length > 1 ? lista.length + ' agendamentos novos' : 'Agendamento novo';
-        const op = { body: txt, icon: 'icon-192.png?v=4', badge: 'favicon-32.png?v=4', tag: 'agendamento-' + a.id, data: { url: '/#agenda' } };
+        const op = { body: txt, icon: 'icon-192.png?v=5', badge: 'favicon-32.png?v=5', tag: 'agendamento-' + a.id, data: { url: '/#agenda' } };
         if (S.swReg) S.swReg.showNotification(titulo, op).catch(() => {});
         else { const n = new Notification(titulo, op); n.onclick = () => { window.focus(); S.ui.agDia = a.data; go('agenda'); n.close(); }; }
       }

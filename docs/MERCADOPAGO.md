@@ -22,7 +22,7 @@ Pode rodar por cima do que já existe. Nada é apagado.
 ## 2. Criar a aplicação no Mercado Pago
 
 1. Entre em <https://www.mercadopago.com.br/developers/panel/app> com a **sua** conta Mercado Pago (a do dono do sistema).
-2. **Criar aplicação**. Dê um nome (ex.: JS Barber APP). Quando perguntar o tipo, escolha **Pagamentos online** e a integração **Checkout Transparente** (às vezes aparece como "Checkout API" ou "Bricks"). Se perguntar se usa plataforma de e-commerce, responda **não**.
+2. **Criar aplicação**. Dê um nome (ex.: Degradê). Quando perguntar o tipo, escolha **Pagamentos online** e a integração **Checkout Transparente** (às vezes aparece como "Checkout API" ou "Bricks"). Se perguntar se usa plataforma de e-commerce, responda **não**.
 3. Dentro da aplicação, procure a parte de **OAuth / URLs de redirecionamento** (fica em "Editar aplicação" ou "Configurações") e cadastre exatamente:
 
    ```
