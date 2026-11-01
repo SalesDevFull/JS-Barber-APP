@@ -8,8 +8,8 @@ self.addEventListener('push', (e) => {
   try { d = e.data ? e.data.json() : {}; } catch (er) { d = { corpo: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(d.titulo || 'Agendamento novo', {
     body: d.corpo || 'Abra o app pra ver.',
-    icon: 'icon-192.png?v=4',
-    badge: 'favicon-32.png?v=4',
+    icon: 'icon-192.png?v=5',
+    badge: 'favicon-32.png?v=5',
     tag: d.tag || undefined,
     renotify: !!d.tag,
     vibrate: [120, 80, 120],
