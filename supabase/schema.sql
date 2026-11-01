@@ -70,6 +70,32 @@ create table if not exists public.registros (
 );
 create index if not exists registros_colecao_idx on public.registros (barbearia_id, colecao);
 
+-- Configurações do sistema que só você (admin) muda: teste grátis, tolerância, planos e seu Pix.
+create table if not exists public.sistema (
+  id            integer primary key default 1 check (id = 1),
+  teste_dias    integer not null default 10,
+  tolerancia    integer not null default 5,
+  pix           jsonb,
+  planos        jsonb not null default '[]'::jsonb,
+  atualizado_em timestamptz not null default now()
+);
+insert into public.sistema (id) values (1) on conflict (id) do nothing;
+alter table public.sistema enable row level security;
+revoke all on public.sistema from anon, authenticated;
+alter table public.barbearias add column if not exists plano text;
+
+-- Chaves internas (notificações). Ninguém do navegador lê.
+create table if not exists public.sistema_privado (
+  chave text primary key,
+  valor text not null
+);
+alter table public.sistema_privado enable row level security;
+revoke all on public.sistema_privado from anon, authenticated;
+
+-- Índices pra consultas que crescem com o número de barbearias.
+create index if not exists membros_user_idx on public.membros (user_id);
+create index if not exists pagamentos_barbearia_idx on public.pagamentos (barbearia_id);
+
 -- Qual barbeiro da agenda é cada conta (o barbeiro só vê as próprias comandas e ganhos).
 alter table public.membros  add column if not exists barbeiro_id text;
 alter table public.convites add column if not exists barbeiro_id text;
@@ -89,7 +115,9 @@ create trigger registros_atualizado_em before update on public.registros
 
 -- Dias de tolerância depois do vencimento antes de bloquear o acesso.
 create or replace function public.tolerancia_dias() returns integer
-language sql immutable as $$ select 5 $$;
+language sql stable security definer set search_path = public as $$
+  select coalesce((select tolerancia from sistema where id = 1), 5);
+$$;
 
 -- Liberada = não foi desativada por você E a mensalidade não venceu há mais que a tolerância.
 create or replace function public.barbearia_liberada(p_ativa boolean, p_venc date) returns boolean
@@ -129,9 +157,9 @@ drop policy if exists barbearias_editar on public.barbearias;
 create policy barbearias_editar on public.barbearias for update using (public.eh_dono(id)) with check (public.eh_dono(id));
 
 drop policy if exists membros_ler on public.membros;
-create policy membros_ler on public.membros for select using (user_id = auth.uid() or public.eh_membro(barbearia_id));
+create policy membros_ler on public.membros for select using (user_id = (select auth.uid()) or public.eh_membro(barbearia_id));
 drop policy if exists membros_remover on public.membros;
-create policy membros_remover on public.membros for delete using (public.eh_dono(barbearia_id) and user_id <> auth.uid());
+create policy membros_remover on public.membros for delete using (public.eh_dono(barbearia_id) and user_id <> (select auth.uid()));
 
 drop policy if exists convites_dono on public.convites;
 create policy convites_dono on public.convites for all using (public.eh_dono(barbearia_id)) with check (public.eh_dono(barbearia_id));
@@ -206,7 +234,13 @@ begin
   if coalesce(trim(p_nome), '') = '' then raise exception 'Informe o nome da barbearia.'; end if;
   if p_slug !~ '^[a-z0-9][a-z0-9-]{2,59}$' then raise exception 'O link precisa ter de 3 a 60 letras minúsculas, números ou hífens.'; end if;
   if exists (select 1 from barbearias where slug = p_slug) then raise exception 'Esse link já está em uso. Escolha outro.'; end if;
-  insert into barbearias (slug, nome, config) values (p_slug, trim(p_nome), coalesce(p_config, '{}'::jsonb)) returning id into v_id;
+  insert into barbearias (slug, nome, config, vencimento, plano, mensalidade)
+    select p_slug, trim(p_nome), coalesce(p_config, '{}'::jsonb),
+      (now() at time zone 'America/Sao_Paulo')::date + coalesce(x.teste_dias, 10),
+      x.planos -> 0 ->> 'id', (x.planos -> 0 ->> 'preco')::numeric
+    from (select (select teste_dias from sistema where id = 1) as teste_dias,
+                 coalesce((select planos from sistema where id = 1), '[]'::jsonb) as planos) x
+    returning id into v_id;
   insert into membros (barbearia_id, user_id, papel) values (v_id, auth.uid(), 'dono');
   return v_id;
 end $$;
@@ -319,6 +353,7 @@ create table if not exists public.mp_estados (
   user_id uuid not null,
   criado_em timestamptz not null default now()
 );
+create index if not exists mp_estados_barbearia_idx on public.mp_estados (barbearia_id);
 alter table public.mp_estados enable row level security;
 revoke all on public.mp_estados from anon, authenticated;
 
@@ -670,7 +705,8 @@ declare v_hoje date := (now() at time zone 'America/Sao_Paulo')::date; v json;
 begin
   perform exigir_admin();
   select coalesce(json_agg(x order by x.criado_em desc), '[]'::json) into v from (
-    select b.id, b.nome, b.slug, b.ativa, b.vencimento, b.mensalidade, b.obs_admin, b.criado_em,
+    select b.id, b.nome, b.slug, b.ativa, b.vencimento, b.mensalidade, b.obs_admin, b.criado_em, b.plano,
+      b.config ->> 'whatsapp' as whatsapp,
       barbearia_liberada(b.ativa, b.vencimento) as liberada,
       (select u.email from membros m join auth.users u on u.id = m.user_id
         where m.barbearia_id = b.id and m.papel = 'dono' order by m.criado_em limit 1) as dono_email,
@@ -717,12 +753,14 @@ begin
 end $$;
 
 -- Ajusta manualmente: ativar/desativar, vencimento, mensalidade e anotações.
-create or replace function public.admin_salvar_barbearia(p_id uuid, p_ativa boolean, p_vencimento date, p_mensalidade numeric, p_obs text)
+drop function if exists public.admin_salvar_barbearia(uuid, boolean, date, numeric, text);
+create or replace function public.admin_salvar_barbearia(p_id uuid, p_ativa boolean, p_vencimento date, p_mensalidade numeric, p_obs text, p_plano text default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   perform exigir_admin();
   update barbearias set ativa = coalesce(p_ativa, ativa), vencimento = p_vencimento,
-    mensalidade = p_mensalidade, obs_admin = nullif(trim(coalesce(p_obs, '')), '')
+    mensalidade = p_mensalidade, obs_admin = nullif(trim(coalesce(p_obs, '')), ''),
+    plano = coalesce(p_plano, plano)
   where id = p_id;
   if not found then raise exception 'Barbearia não encontrada.'; end if;
 end $$;
@@ -759,6 +797,186 @@ begin
   return json_build_object('barbearia', v_nome, 'contas_apagadas', v_emails);
 end $$;
 
+-- ---------- Configurações do sistema (admin) ----------
+
+create or replace function public.admin_sistema()
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  perform exigir_admin();
+  return (select json_build_object('teste_dias', teste_dias, 'tolerancia', tolerancia, 'pix', pix, 'planos', planos) from sistema where id = 1);
+end $$;
+
+create or replace function public.admin_salvar_sistema(p jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_planos jsonb := coalesce(p -> 'planos', '[]'::jsonb);
+begin
+  perform exigir_admin();
+  if coalesce((p ->> 'teste_dias')::int, -1) not between 0 and 90 then raise exception 'Teste grátis: de 0 a 90 dias.'; end if;
+  if coalesce((p ->> 'tolerancia')::int, -1) not between 0 and 30 then raise exception 'Tolerância: de 0 a 30 dias.'; end if;
+  if jsonb_typeof(v_planos) <> 'array' or exists (
+    select 1 from jsonb_array_elements(v_planos) x
+    where coalesce(trim(x ->> 'nome'), '') = '' or coalesce((x ->> 'preco')::numeric, -1) < 0 or coalesce(x ->> 'id', '') = '') then
+    raise exception 'Cada plano precisa de nome e preço.';
+  end if;
+  update sistema set teste_dias = (p ->> 'teste_dias')::int, tolerancia = (p ->> 'tolerancia')::int,
+    pix = case when coalesce(p -> 'pix' ->> 'chave', '') = '' then null else p -> 'pix' end,
+    planos = v_planos, atualizado_em = now()
+  where id = 1;
+end $$;
+
+-- ---------- Devolução de pagamento (Mercado Pago) ----------
+
+create or replace function public.mp_devolvido(p_b uuid, p_id text, p_pagamento text, p_status text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  update registros set dados = dados || jsonb_build_object('sinalDevolvido', true, 'sinalDevolvidoEm', now(),
+      'mpEstorno', p_status, 'devolvidoOk', true)
+  where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id
+    and dados ->> 'mpPagamento' = p_pagamento and coalesce(dados ->> 'sinalDevolvido', 'false') <> 'true';
+  return found;
+end $$;
+
+-- ---------- Notificações no celular (com o app fechado) ----------
+
+create table if not exists public.push_inscricoes (
+  endpoint     text primary key,
+  barbearia_id uuid not null references public.barbearias(id) on delete cascade,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  p256dh       text not null,
+  auth         text not null,
+  criado_em    timestamptz not null default now()
+);
+create index if not exists push_inscricoes_barbearia_idx on public.push_inscricoes (barbearia_id);
+create index if not exists push_inscricoes_user_idx on public.push_inscricoes (user_id);
+alter table public.push_inscricoes enable row level security;
+revoke all on public.push_inscricoes from anon, authenticated;
+
+-- Chave pública que o celular usa pra se inscrever (não é segredo).
+create or replace function public.push_chave()
+returns text language sql stable security definer set search_path = public as $$
+  select valor from sistema_privado where chave = 'vapid_publica';
+$$;
+
+create or replace function public.push_inscrever(p_b uuid, p_endpoint text, p_p256dh text, p_auth text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  if not eh_membro(p_b) then raise exception 'Sem acesso a essa barbearia.'; end if;
+  if p_endpoint !~ '^https://' or char_length(p_endpoint) > 1000 or coalesce(p_p256dh, '') = '' or coalesce(p_auth, '') = '' then
+    raise exception 'Inscrição inválida.';
+  end if;
+  insert into push_inscricoes (endpoint, barbearia_id, user_id, p256dh, auth)
+    values (p_endpoint, p_b, auth.uid(), p_p256dh, p_auth)
+    on conflict (endpoint) do update set barbearia_id = excluded.barbearia_id, user_id = excluded.user_id,
+      p256dh = excluded.p256dh, auth = excluded.auth;
+  return true;
+end $$;
+
+create or replace function public.push_cancelar(p_endpoint text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  delete from push_inscricoes where endpoint = p_endpoint and user_id = auth.uid();
+  return found;
+end $$;
+
+-- Monta o aviso e marca como enviado (uma vez só por evento). Só o servidor chama.
+create or replace function public.push_pendente(p_b uuid, p_id text, p_evento text)
+returns json language plpgsql security definer set search_path = public as $$
+declare r registros%rowtype; b barbearias%rowtype; v_flag text := 'push_' || p_evento;
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date; v_quando text; v_serv text; v_barb text;
+  v_nome text; v_titulo text; v_corpo text; v_subs json;
+begin
+  if p_evento not in ('novo', 'pago') then return null; end if;
+  select * into r from registros where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id for update;
+  if not found or r.dados ? v_flag or r.atualizado_em < now() - interval '15 minutes' then return null; end if;
+  if p_evento = 'novo' and coalesce(r.dados ->> 'origem', '') <> 'link' then return null; end if;
+  if p_evento = 'pago' and coalesce(r.dados ->> 'status', '') <> 'agendado' then return null; end if;
+  update registros set dados = dados || jsonb_build_object(v_flag, true) where barbearia_id = p_b and colecao = 'agendamentos' and id = p_id;
+
+  select * into b from barbearias where id = p_b;
+  v_nome := split_part(trim(coalesce(r.dados ->> 'clienteNome', 'Cliente')), ' ', 1);
+  v_serv := (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1);
+  v_barb := (select x ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x where x ->> 'id' = r.dados ->> 'barbeiroId' limit 1);
+  v_quando := case when r.dados ->> 'data' = v_hoje::text then 'hoje'
+                   when r.dados ->> 'data' = (v_hoje + 1)::text then 'amanhã'
+                   else to_char((r.dados ->> 'data')::date, 'DD/MM') end || ' às ' || coalesce(r.dados ->> 'hora', '');
+  if p_evento = 'novo' then
+    v_titulo := 'Novo agendamento';
+    v_corpo := v_nome || ' marcou ' || lower(coalesce(v_serv, 'um horário')) || ' ' || v_quando || coalesce(' com ' || v_barb, '') ||
+      case when r.dados ->> 'status' = 'aguardando_sinal' then '. Esperando o sinal.' else '.' end;
+  else
+    v_titulo := 'Sinal pago';
+    v_corpo := v_nome || ' pagou o sinal de R$ ' || replace(to_char(coalesce((r.dados ->> 'sinalPago')::numeric, 0), 'FM999990.00'), '.', ',') ||
+      '. Horário de ' || v_quando || ' confirmado.';
+  end if;
+
+  select coalesce(json_agg(json_build_object('endpoint', p.endpoint, 'p256dh', p.p256dh, 'auth', p.auth)), '[]'::json) into v_subs
+  from push_inscricoes p join membros m on m.user_id = p.user_id and m.barbearia_id = p.barbearia_id
+  where p.barbearia_id = p_b and (m.papel = 'dono' or m.barbeiro_id = r.dados ->> 'barbeiroId');
+
+  return json_build_object('titulo', v_titulo, 'corpo', v_corpo, 'tag', case when p_evento = 'novo' then 'agendamento-' else 'pago-' end || p_id, 'url', '/#agenda',
+    'inscricoes', v_subs,
+    'vapid', json_build_object('publica', (select valor from sistema_privado where chave = 'vapid_publica'),
+                               'privada', (select valor from sistema_privado where chave = 'vapid_privada'),
+                               'contato', coalesce((select valor from sistema_privado where chave = 'vapid_contato'), 'mailto:suporte@example.com')));
+end $$;
+
+create or replace function public.push_remover(p_endpoints text[])
+returns void language sql security definer set search_path = public as $$
+  delete from push_inscricoes where endpoint = any(p_endpoints);
+$$;
+
+-- Quando chega agendamento pelo link (ou o sinal é pago online), chama a função que manda o aviso.
+do $$ begin create extension if not exists pg_net; exception when others then null; end $$;
+
+create or replace function public.avisar_push() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare v_evento text; v_url text;
+begin
+  if tg_op = 'INSERT' and new.dados ->> 'origem' = 'link' then v_evento := 'novo';
+  elsif tg_op = 'UPDATE' and old.dados ->> 'status' = 'aguardando_sinal' and new.dados ->> 'status' = 'agendado'
+        and new.dados ? 'mpPagamento' then v_evento := 'pago';
+  end if;
+  if v_evento is null or not exists (select 1 from push_inscricoes where barbearia_id = new.barbearia_id) then return null; end if;
+  select valor into v_url from sistema_privado where chave = 'push_url';
+  if v_url is null then return null; end if;
+  begin
+    execute 'select net.http_post(url := $1, body := $2)' using v_url,
+      jsonb_build_object('b', new.barbearia_id, 'id', new.id, 'evento', v_evento);
+  exception when others then null; -- aviso nunca atrapalha o agendamento
+  end;
+  return null;
+end $$;
+
+drop trigger if exists registros_avisar_push on public.registros;
+create trigger registros_avisar_push after insert or update on public.registros
+  for each row when (new.colecao = 'agendamentos') execute function public.avisar_push();
+
+-- Funções sem caminho de busca fixo (recomendação de segurança do Supabase).
+alter function public.segura_horario(jsonb) set search_path = public;
+alter function public.sinal_ativo(jsonb) set search_path = public;
+alter function public.tocar_atualizado_em() set search_path = public;
+alter function public.proteger_ativa() set search_path = public;
+alter function public.barbearia_liberada(boolean, date) set search_path = public;
+alter function public.minutos(text) set search_path = public;
+alter function public.expediente(jsonb, date) set search_path = public;
+alter function public.horario_permitido(jsonb, date, integer, integer, text) set search_path = public;
+
+-- Permissões das funções novas.
+do $$
+declare f text;
+begin
+  foreach f in array array['mp_devolvido(uuid, text, text, text)', 'push_pendente(uuid, text, text)', 'push_remover(text[])', 'avisar_push()'] loop
+    execute 'revoke all on function public.' || f || ' from public, anon, authenticated';
+    if exists (select 1 from pg_roles where rolname = 'service_role') then
+      execute 'grant execute on function public.' || f || ' to service_role';
+    end if;
+  end loop;
+  foreach f in array array['admin_sistema()', 'admin_salvar_sistema(jsonb)', 'push_chave()', 'push_inscrever(uuid, text, text, text)', 'push_cancelar(text)', 'tolerancia_dias()'] loop
+    execute 'revoke all on function public.' || f || ' from public, anon';
+    execute 'grant execute on function public.' || f || ' to authenticated';
+  end loop;
+end $$;
+
 -- ---------- Permissões das funções ----------
 revoke all on function public.criar_barbearia(text, text, jsonb) from public, anon;
 revoke all on function public.entrar_por_convite() from public, anon;
@@ -777,7 +995,7 @@ revoke all on function public.exigir_admin() from public, anon;
 revoke all on function public.admin_barbearias() from public, anon;
 revoke all on function public.admin_pagamentos(uuid) from public, anon;
 revoke all on function public.admin_registrar_pagamento(uuid, numeric, integer, text) from public, anon;
-revoke all on function public.admin_salvar_barbearia(uuid, boolean, date, numeric, text) from public, anon;
+revoke all on function public.admin_salvar_barbearia(uuid, boolean, date, numeric, text, text) from public, anon;
 revoke all on function public.admin_apagar_pagamento(uuid) from public, anon;
 revoke all on function public.admin_excluir_barbearia(uuid, text) from public, anon;
 grant execute on function public.admin_excluir_barbearia(uuid, text) to authenticated;
@@ -786,7 +1004,7 @@ grant execute on function public.exigir_admin() to authenticated;
 grant execute on function public.admin_barbearias() to authenticated;
 grant execute on function public.admin_pagamentos(uuid) to authenticated;
 grant execute on function public.admin_registrar_pagamento(uuid, numeric, integer, text) to authenticated;
-grant execute on function public.admin_salvar_barbearia(uuid, boolean, date, numeric, text) to authenticated;
+grant execute on function public.admin_salvar_barbearia(uuid, boolean, date, numeric, text, text) to authenticated;
 grant execute on function public.admin_apagar_pagamento(uuid) to authenticated;
 
 -- ---------- Tempo real (atualiza as telas de todo mundo na hora) ----------

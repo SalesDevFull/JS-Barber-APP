@@ -123,6 +123,7 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 - Parcelamento do sinal em até 12x, à escolha do dono. O dinheiro cai na conta Mercado Pago da barbearia.
 - Os dados do cartão vão direto pro Mercado Pago e nunca passam pelo app.
 - Se um pagamento chegar depois de a reserva cair, o painel avisa pra devolver ou remarcar.
+- Devolução feita pelo Mercado Pago aparece sozinha na agenda ("sinal devolvido").
 
 ### Página de agendamento do cliente
 - Sem cadastro e sem senha: serviço, barbeiro (ou "qualquer um"), dia e horário em poucos toques.
@@ -145,6 +146,7 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 ### Avisos de agendamento
 - Quando um cliente marca pelo link: aviso na tela com o mascote, som, vibração e notificação do celular.
 - Contador de novos agendamentos na aba Agenda.
+- **Aviso com o app fechado** (notificação push): o dono recebe tudo, e cada barbeiro recebe só os horários dele. Também avisa quando o sinal é pago online.
 
 ### Gestão
 - Serviços com preço e duração.
@@ -157,8 +159,11 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 - Todas as barbearias, com o dono, o uso dos últimos 30 dias e a situação: em teste, em dia, vencendo ou bloqueada.
 - Receita mensal prevista e recebida no mês.
 - Registrar pagamento, editar mensalidade e vencimento, desativar e reativar, com histórico de pagamentos.
-- **10 dias de teste grátis** pra toda barbearia nova.
-- **Bloqueio automático** depois de 5 dias de mensalidade vencida, sem apagar nenhum dado. O acesso volta na hora em que o pagamento é registrado.
+- **Teste grátis** pra toda barbearia nova (10 dias, configurável).
+- **Bloqueio automático** depois da tolerância (5 dias, configurável) de mensalidade vencida, sem apagar nenhum dado. O acesso volta na hora em que o pagamento é registrado.
+- **Planos** com preço (ex.: Básico e Completo). A barbearia nova já entra no primeiro plano.
+- **Cobrança pelo WhatsApp**: monta a mensagem com o Pix copia e cola da mensalidade e abre o WhatsApp da barbearia.
+- **Excluir barbearia**, liberando o e-mail pra um novo cadastro.
 
 ---
 
@@ -208,7 +213,8 @@ flowchart LR
 ├── pix.js              Gerador do Pix "copia e cola"
 ├── config.js           Endereço e chave pública do Supabase
 ├── supabase/schema.sql Banco de dados, regras de acesso e funções
-├── supabase/functions/ Conexão e cobrança do Mercado Pago (mp-oauth, mp-pagar, mp-webhook)
+├── supabase/functions/ Mercado Pago (mp-oauth, mp-pagar, mp-webhook) e avisos no celular (push-enviar)
+├── sw.js               Recebe os avisos com o app fechado
 ├── manifest.webmanifest, *.png   Nome e ícone do app no celular
 └── docs/               Imagens deste README e guia técnico
 ```
@@ -218,10 +224,10 @@ flowchart LR
 ## Próximos passos
 
 - [x] Cartão de crédito e Pix automático pelo Mercado Pago, com confirmação automática do pagamento
-- [ ] Aviso de agendamento com o app fechado (notificação push)
+- [x] Aviso de agendamento com o app fechado (notificação push)
 - [ ] Lembrete automático no WhatsApp pela API oficial
 - [ ] Clube de assinatura pros clientes da barbearia
-- [ ] Cobrança das mensalidades pelo WhatsApp com Pix, e planos com preço automático no admin
+- [x] Cobrança das mensalidades pelo WhatsApp com Pix, e planos com preço automático no admin
 - [ ] Emissão de nota fiscal (NFS-e)
 
 ---
