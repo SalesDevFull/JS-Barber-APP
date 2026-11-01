@@ -258,6 +258,19 @@ main{padding-top:26px}
     view.innerHTML = h;
   }
 
+  // Apaga do Storage as fotos dos trabalhos (o banco apaga os registros junto com a barbearia).
+  async function apagarFotosDaBarbearia(id) {
+    try {
+      const st = S.sb.storage.from('trabalhos');
+      const pastas = await st.list(id, { limit: 100 });
+      for (const p of (pastas.data || [])) {
+        const arqs = await st.list(id + '/' + p.name, { limit: 100 });
+        const nomes = (arqs.data || []).map((a) => id + '/' + p.name + '/' + a.name);
+        if (nomes.length) await st.remove(nomes);
+      }
+    } catch (e) { /* sem fotos ou sem acesso: segue com a exclusão */ }
+  }
+
   async function carregar() {
     const [a, b, c] = await Promise.all([S.sb.rpc('admin_barbearias'), S.sb.rpc('admin_pagamentos', { p_id: null }), S.sb.rpc('admin_sistema')]);
     if (a.error) { toast(a.error.message, true); return; }
@@ -350,6 +363,7 @@ main{padding-top:26px}
       const b = S.lista.find((x) => x.id === id); const nome = document.getElementById('ex-nome').value.trim();
       if (!b || nome.toLowerCase() !== String(b.nome).trim().toLowerCase()) { toast('Digite o nome exato da barbearia pra confirmar.', true); return; }
       el.disabled = true; el.textContent = 'Excluindo…';
+      await apagarFotosDaBarbearia(id);
       const r = await S.sb.rpc('admin_excluir_barbearia', { p_id: id, p_nome: nome });
       if (r.error) { toast(r.error.message, true); el.disabled = false; el.textContent = 'Excluir pra sempre'; return; }
       const em = (r.data && r.data.contas_apagadas) || [];
