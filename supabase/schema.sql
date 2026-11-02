@@ -222,6 +222,9 @@ begin
   end if;
   return new;
 end $$;
+revoke all on function public.limitar_fotos() from public, anon, authenticated;
+revoke all on function public.pode_postar_foto(text, text) from public, anon;
+grant execute on function public.pode_postar_foto(text, text) to authenticated;
 drop trigger if exists fotos_limite on public.fotos;
 create trigger fotos_limite before insert on public.fotos for each row execute function public.limitar_fotos();
 
@@ -237,10 +240,10 @@ begin
       with check (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
     execute 'drop policy if exists trabalhos_ver on storage.objects';
     execute $p$create policy trabalhos_ver on storage.objects for select to authenticated
-      using (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
+      using (bucket_id = 'trabalhos' and (public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]) or public.eh_admin()))$p$;
     execute 'drop policy if exists trabalhos_apagar on storage.objects';
     execute $p$create policy trabalhos_apagar on storage.objects for delete to authenticated
-      using (bucket_id = 'trabalhos' and public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]))$p$;
+      using (bucket_id = 'trabalhos' and (public.pode_postar_foto((storage.foldername(name))[1], (storage.foldername(name))[2]) or public.eh_admin()))$p$;
   end if;
 end $$;
 
@@ -1008,7 +1011,15 @@ returns void language sql security definer set search_path = public as $$
 $$;
 
 -- Quando chega agendamento pelo link (ou o sinal é pago online), chama a função que manda o aviso.
-do $$ begin create extension if not exists pg_net; exception when others then null; end $$;
+-- pg_net fica no schema "extensions" (recomendação do Supabase); as funções dele ficam em "net".
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_net' and extnamespace = 'public'::regnamespace) then
+    drop extension pg_net;
+  end if;
+  create extension if not exists pg_net with schema extensions;
+exception when others then null;
+end $$;
 
 create or replace function public.avisar_push() returns trigger
 language plpgsql security definer set search_path = public as $$
