@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="JS Barber APP: agenda, caixa, comissão e clientes da barbearia num app só" width="100%">
+  <img src="docs/banner.png" alt="Degradê: agenda, caixa, comissão e clientes da barbearia num app só" width="100%">
 </p>
 
 <p align="center">
@@ -31,13 +31,13 @@
 
 ## O que é
 
-O **JS Barber APP** é um sistema de gestão pra barbearias que funciona no navegador e se instala na tela do celular como um aplicativo. Um único sistema atende várias barbearias: cada uma tem o próprio espaço, a própria marca e o próprio link de agendamento, e nenhuma enxerga os dados da outra.
+O **Degradê** é um sistema de gestão pra barbearias que funciona no navegador e se instala na tela do celular como um aplicativo. Um único sistema atende várias barbearias: cada uma tem o próprio espaço, a própria marca e o próprio link de agendamento, e nenhuma enxerga os dados da outra.
 
 São três aplicativos em um:
 
 | | Pra quem | O que faz |
 |---|---|---|
-| **Painel da barbearia** | Dono e barbeiros | Agenda, caixa, comissões, clientes, estoque, horários e configurações |
+| **Painel da barbearia** | Dono e barbeiros | Agenda, caixa, comissões, clientes, horários e configurações |
 | **Página de agendamento** | Cliente final | Escolhe serviço, barbeiro, dia e hora, e paga o sinal no Pix ou no cartão. Sem precisar de conta |
 | **Painel do administrador** | Dono do sistema | Todas as barbearias assinantes, mensalidades, testes grátis e bloqueios |
 
@@ -94,7 +94,6 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 - **Comissão calculada sozinha**, sempre em cima do valor cheio do serviço.
 - O sinal pago no Pix já aparece descontado, mostrando só o que falta receber.
 - Fechamento do dia por forma de pagamento.
-- O produto vendido sai do estoque automaticamente.
 - O mascote comemora com confete quando a comanda fecha.
 
 ### Clientes
@@ -150,8 +149,6 @@ E quem recebe o cliente é o **mascote**, um barbeiro bigodudo que dá bom dia, 
 
 ### Gestão
 - Serviços com preço e duração.
-- Estoque com alerta de mínimo.
-- Despesas e "quanto sobrou no mês".
 - Perfil da barbearia: logo, nome, cor, mensagem, endereço e redes.
 - Botão Sair no cabeçalho e menu da conta ao tocar no mascote.
 
@@ -233,6 +230,6 @@ flowchart LR
 ---
 
 <p align="center">
-  <img src="mascote.svg" width="72" alt="Mascote do JS Barber APP"><br>
+  <img src="mascote.svg" width="72" alt="Mascote do Degradê"><br>
   <sub>Feito por <a href="https://github.com/SalesDevFull">SalesDevFull</a> · O guia técnico de instalação está em <a href="docs/INSTALACAO.md">docs/INSTALACAO.md</a></sub>
 </p>

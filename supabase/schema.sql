@@ -247,7 +247,7 @@ begin
   end if;
 end $$;
 
--- Dono: tudo. Barbeiro: agenda, clientes e estoque; comandas e vales só os dele; despesas não.
+-- Dono: tudo. Barbeiro: clientes; agenda, comandas e vales só os dele; despesas não.
 drop policy if exists registros_membro on public.registros;
 drop policy if exists registros_dono on public.registros;
 drop policy if exists registros_barbeiro_ler on public.registros;
@@ -258,20 +258,20 @@ create policy registros_dono on public.registros for all
   using (public.meu_papel(barbearia_id) = 'dono') with check (public.meu_papel(barbearia_id) = 'dono');
 create policy registros_barbeiro_ler on public.registros for select using (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao in ('comandas', 'vales') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas', 'vales') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_criar on public.registros for insert with check (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao = 'clientes'
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_editar on public.registros for update using (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))))
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))))
   with check (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_apagar on public.registros for delete using (
   public.meu_papel(barbearia_id) = 'barbeiro' and colecao = 'comandas'
   and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id));
@@ -529,8 +529,17 @@ begin
   v_tel := regexp_replace(coalesce(p_tel, ''), '\D', '', 'g');
   if char_length(v_tel) < 10 or char_length(v_tel) > 13 then raise exception 'Informe o WhatsApp com DDD.'; end if;
 
-  select s into v_serv from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = p_servico limit 1;
-  if v_serv is null then raise exception 'Serviço não encontrado.'; end if;
+  -- Um ou mais serviços (ids separados por vírgula, ex.: "corte,sobrancelha"): soma tempo e preço.
+  if coalesce(p_servico, '') = '' or array_length(string_to_array(p_servico, ','), 1) > 6 then raise exception 'Escolha de 1 a 6 serviços.'; end if;
+  select jsonb_build_object('id', string_agg(s ->> 'id', ',' order by k), 'nome', string_agg(s ->> 'nome', ' + ' order by k),
+           'preco', sum(coalesce((s ->> 'preco')::numeric, 0)), 'dur', sum(coalesce((s ->> 'dur')::int, 30)),
+           'ids', jsonb_agg(s ->> 'id' order by k), 'qtd', count(*))
+    into v_serv
+    from (select distinct on (x.id) x.id, x.k from unnest(string_to_array(p_servico, ',')) with ordinality as x(id, k) order by x.id, x.k) pedido
+    join jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s on s ->> 'id' = trim(pedido.id);
+  if v_serv is null or (v_serv ->> 'qtd')::int <> (select count(distinct trim(x)) from unnest(string_to_array(p_servico, ',')) x) then
+    raise exception 'Serviço não encontrado.';
+  end if;
   v_dur := coalesce((v_serv ->> 'dur')::int, 30);
   if expediente(b.config, v_dia) is null or jsonb_typeof(expediente(b.config, v_dia)) <> 'object' then
     raise exception 'A barbearia não abre nesse dia.';
@@ -582,7 +591,8 @@ begin
   end if;
 
   insert into registros (barbearia_id, colecao, id, dados) values (b.id, 'agendamentos', v_id, jsonb_build_object(
-    'data', p_dia, 'hora', p_hora, 'dur', v_dur, 'servicoId', p_servico, 'barbeiroId', v_barb_id,
+    'data', p_dia, 'hora', p_hora, 'dur', v_dur, 'servicoId', v_serv -> 'ids' ->> 0, 'barbeiroId', v_barb_id,
+    'servicoIds', v_serv -> 'ids', 'servicoNome', v_serv ->> 'nome', 'preco', (v_serv ->> 'preco')::numeric,
     'clienteId', v_cli, 'clienteNome', trim(p_nome), 'telefone', p_tel,
     'status', case when v_sinal then 'aguardando_sinal' else 'agendado' end,
     'sinalValor', case when v_sinal then v_valor end,
@@ -688,7 +698,7 @@ returns json language sql stable security definer set search_path = public as $$
   select json_build_object(
     'b', b.id, 'barbearia', b.nome, 'status', r.dados ->> 'status',
     'valor', (r.dados ->> 'sinalValor')::numeric, 'expira', r.dados ->> 'sinalExpira',
-    'servico', (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1),
+    'servico', coalesce(r.dados ->> 'servicoNome', (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1)),
     'dia', r.dados ->> 'data', 'hora', r.dados ->> 'hora',
     'mp', r.dados -> 'mp', 'online', mp_online(b.id, b.config),
     'conta', mp_conta(b.id))
@@ -969,7 +979,7 @@ begin
 
   select * into b from barbearias where id = p_b;
   v_nome := split_part(trim(coalesce(r.dados ->> 'clienteNome', 'Cliente')), ' ', 1);
-  v_serv := (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1);
+  v_serv := coalesce(r.dados ->> 'servicoNome', (select s ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'servicos', '[]'::jsonb)) s where s ->> 'id' = r.dados ->> 'servicoId' limit 1));
   v_barb := (select x ->> 'nome' from jsonb_array_elements(coalesce(b.config -> 'barbeiros', '[]'::jsonb)) x where x ->> 'id' = r.dados ->> 'barbeiroId' limit 1);
   v_quando := case when r.dados ->> 'data' = v_hoje::text then 'hoje'
                    when r.dados ->> 'data' = (v_hoje + 1)::text then 'amanhã'
