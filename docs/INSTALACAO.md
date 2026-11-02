@@ -76,7 +76,7 @@ Sem isso, os links de confirmação de e-mail e de "esqueci a senha" levam pro l
    - **Pagamentos**: formas aceitas, chave Pix e o **sinal pra agendar** (veja abaixo).
    - **Serviços**: preços e duração.
    - **Equipe**: barbeiros (aparecem na agenda) e **Acesso ao app**: convide pelo e-mail e diga qual barbeiro da agenda a pessoa é.
-     - **Barbeiro** vê a agenda (mexe só nos horários dele), os clientes e só as próprias comandas e ganhos. Não vê o caixa da barbearia, as despesas nem os ganhos dos colegas. Isso é travado no banco, não só escondido na tela.
+     - **Barbeiro** vê só a própria agenda, os clientes e só as próprias comandas e ganhos. Não vê a agenda, o caixa da barbearia nem os ganhos dos colegas. Isso é travado no banco, não só escondido na tela.
      - **Sócio** tem o mesmo acesso do dono.
      - Quem já tinha acesso antes desta versão aparece na lista sem barbeiro ligado: escolha em "Na agenda é".
    - **Avisos de agendamento** (em Equipe, ou em Conta pro barbeiro): som, vibração e notificação quando um cliente marca pelo link. Toque em "Ativar notificação neste aparelho" em cada celular. Funciona com o app aberto ou em segundo plano; com o app totalmente fechado, ainda não.
@@ -127,7 +127,7 @@ O endereço é o do seu site com `/admin.html` no final (ex.: `https://seusite.n
 - O dono da barbearia não consegue mudar vencimento, mensalidade nem se reativar: isso é travado no banco.
 
 ### Pelo Supabase (se precisar ir mais fundo)
-No **Table Editor**: `barbearias` (cadastro e assinatura), `pagamentos` (histórico), `membros` (quem acessa cada barbearia), `registros` (agenda, comandas, clientes, estoque, despesas e vales).
+No **Table Editor**: `barbearias` (cadastro e assinatura), `pagamentos` (histórico), `membros` (quem acessa cada barbearia), `registros` (agenda, comandas, clientes e vales; produtos e despesas antigos continuam guardados ali).
 
 **Backup:** o plano grátis não faz backup automático. Antes de ter clientes pagando, vale migrar pro plano pago do Supabase (tem backup diário). Confira os valores atuais em supabase.com/pricing. No plano grátis o projeto também é pausado depois de um período sem uso; é só reativar no painel.
 
