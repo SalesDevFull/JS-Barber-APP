@@ -189,6 +189,11 @@ h2{font-size:26px;color:var(--fg)}
 .op span{font-size:13px;color:var(--muted)}
 .op .preco{font-weight:700;color:var(--fg);font-size:15px}
 .marca-ok.quad{border-radius:8px}
+.lembrar{display:flex;flex-direction:column;gap:8px}
+.legal{display:block;font-size:12px;line-height:1.4;color:var(--dim);text-align:center}
+.legal a{color:var(--muted)}
+.lembrar .btn{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.mini-link{font-size:13px;color:var(--muted);text-align:center;text-decoration:underline}
 .marca-ok{width:28px;height:28px;border-radius:50%;border:2px solid var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .on>.marca-ok,.op.on .marca-ok{background:var(--marca);border-color:var(--marca)}
 .card{background:var(--surface);border-color:var(--line);border-radius:16px}
@@ -197,6 +202,9 @@ h2{font-size:26px;color:var(--fg)}
 .card.ok::after,.card.pix::after{display:none}
 .btn{background:var(--marca);background-image:none;color:var(--marca-ink);font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;min-height:56px;box-shadow:none}
 :root[data-tema="escuro"] .btn{color:var(--marca-ink)}
+:root[data-tema="escuro"] .btn.sec,:root .btn.sec{color:var(--fg)}
+:root[data-tema="escuro"] .btn.zap,:root .btn.zap{color:#fff}
+:root[data-tema="escuro"] .btn:disabled{color:var(--dim)}
 .btn:disabled{background:var(--surface2);color:var(--dim)}
 .btn.sec{background:var(--surface2);border:1px solid var(--line);color:var(--fg);font-size:14px;min-height:50px}
 .btn.zap{background:#1E7A3C;color:#fff}
@@ -342,6 +350,31 @@ input{border-radius:14px;min-height:52px}
     return h ? '<section class="card info"><span class="lbl">Sobre a barbearia</span>' + h + '</section>' : '';
   }
 
+  // Lembrete no celular do cliente: evento na agenda dele com aviso 1 dia e 1 hora antes.
+  function lembrarBotoes(f) {
+    if (!f || !f.dia || !f.hora) return '';
+    const ini = new Date(f.dia + 'T' + f.hora + ':00-03:00'); if (isNaN(ini)) return '';
+    const fim = new Date(ini.getTime() + (Number(f.dur) || 30) * 60000);
+    const z = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const titulo = (f.servico || 'Horário') + ' · ' + st.b.nome;
+    const det = 'Com ' + (f.barbeiro || 'a barbearia') + '.' + (st.b.whatsapp ? ' WhatsApp da barbearia: ' + st.b.whatsapp : '');
+    const loc = st.b.endereco || st.b.nome;
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Degrade//Agendamento//PT', 'BEGIN:VEVENT',
+      'UID:' + z(ini) + '-' + Math.random().toString(36).slice(2) + '@degrade', 'DTSTAMP:' + z(new Date()), 'DTSTART:' + z(ini), 'DTEND:' + z(fim),
+      'SUMMARY:' + titulo.replace(/[,;]/g, ' '), 'DESCRIPTION:' + det.replace(/[,;]/g, ' '), 'LOCATION:' + loc.replace(/[,;]/g, ' '),
+      'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:Amanhã: ' + titulo.replace(/[,;]/g, ' '), 'END:VALARM',
+      'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Daqui a 1 hora: ' + titulo.replace(/[,;]/g, ' '), 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    const icsHref = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+    const gHref = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(titulo) + '&dates=' + z(ini) + '/' + z(fim) + '&details=' + encodeURIComponent(det) + '&location=' + encodeURIComponent(loc);
+    const android = /Android/i.test(navigator.userAgent || '');
+    const sino = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+    const pri = android ? '<a class="btn" href="' + esc(gHref) + '" target="_blank" rel="noopener">' + sino + ' Lembrar no meu celular</a>'
+      : '<a class="btn" href="' + icsHref + '" download="horario.ics">' + sino + ' Lembrar no meu celular</a>';
+    const outro = android ? '<a class="mini-link" href="' + icsHref + '" download="horario.ics">Usa outra agenda? Baixar o evento</a>'
+      : '<a class="mini-link" href="' + esc(gHref) + '" target="_blank" rel="noopener">Usa Google Agenda? Abrir lá</a>';
+    return '<div class="lembrar">' + pri + '<span class="sub" style="margin:0">Salva o horário na agenda do seu celular' + (android ? '.' : ', com aviso um dia antes e uma hora antes.') + '</span>' + outro + '</div>';
+  }
   function render() {
     const b = st.b;
     clearInterval(timer);
@@ -355,6 +388,7 @@ input{border-radius:14px;min-height:52px}
         '<div class="linha"><span>Barbeiro</span><b>' + esc(f.barbeiro) + '</b></div>' +
         '<div class="linha"><span>Quando</span><b>' + esc(diaLongo(f.dia)) + ' às ' + esc(f.hora) + '</b></div>' +
         (f.sinal ? '<div class="linha"><span>Sinal pago</span><b>' + brl(f.sinal) + '</b></div>' : '') + '</div>' +
+        lembrarBotoes(f) +
         '<p class="sub" style="margin:0">A barbearia já está vendo seu horário. Se precisar desmarcar, fale com ela pelo WhatsApp.</p>' +
         infos() + '<button type="button" class="btn sec" data-a="novo">Marcar outro horário</button>';
       return;
@@ -408,7 +442,8 @@ input{border-radius:14px;min-height:52px}
       const rotulo = st.enviando ? 'Reservando…' : (b.sinal ? (tudo ? 'Pagar e agendar' : 'Pagar sinal e agendar') : 'Confirmar agendamento');
       acao = (st.hora ? '<div class="card" style="padding:12px 14px;gap:2px"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-size:16px">' + esc(diaLongo(st.dia).split(',')[0]) + ' · ' + esc(st.hora) + '</b><b style="color:var(--marca)">' + brl(s.preco) + '</b></div>' +
           (b.sinal ? '<span class="tiny">' + (tudo ? 'Pagamento de ' + brl(sinalV) : 'Sinal de ' + brl(sinalV)) + ' ' + comoPaga(b.sinal) + (tudo ? '' : ' · o resto na barbearia') + '. O horário fica reservado por ' + esc(b.sinal.prazo) + ' min enquanto você paga.</span>' : '<span class="tiny">Você paga na barbearia.</span>') + '</div>' : '') +
-        '<div class="row">' + voltar + '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button></div>';
+        '<div class="row">' + voltar + '<button type="button" class="btn" data-a="confirmar"' + (pronto && !st.enviando ? '' : ' disabled') + '>' + esc(rotulo) + '</button></div>' +
+        '<span class="legal">Ao agendar, você concorda com os <a href="termos.html" target="_blank" rel="noopener">termos de uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>.</span>';
     }
     h += '<div class="acao">' + acao + '</div>';
     if (P === 1) h += infos();
@@ -580,7 +615,7 @@ input{border-radius:14px;min-height:52px}
   function pagou() {
     const p = st.pend; if (!p) return;
     clearInterval(poll); tirarCartao(); guardar(KEY, null);
-    st.feito = { servico: p.servico, barbeiro: p.barbeiro, dia: p.dia, hora: p.hora, sinal: p.sinal.valor };
+    st.feito = { servico: p.servico, barbeiro: p.barbeiro, dia: p.dia, hora: p.hora, sinal: p.sinal.valor, dur: (pacote() || {}).dur };
     st.pend = null; st.erroPag = ''; st.metodo = ''; render(); window.scrollTo(0, 0);
   }
   const fmtRel = (s) => pad(Math.floor(s / 60)) + ':' + pad(Math.floor(s % 60));
@@ -660,7 +695,7 @@ input{border-radius:14px;min-height:52px}
       try { localStorage.setItem('ag_nome', st.nome.trim()); localStorage.setItem('ag_tel', st.tel.trim()); } catch (er) { /* sem armazenamento */ }
       if (r.data.status === 'aguardando_sinal' && r.data.sinal) {
         st.pend = r.data; guardar(KEY, r.data); render(); acompanhar();
-      } else { st.feito = r.data; render(); }
+      } else { st.feito = Object.assign({}, r.data, { dur: (pacote() || {}).dur }); render(); }
       window.scrollTo(0, 0);
     }
   });

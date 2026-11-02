@@ -244,7 +244,7 @@ begin
   end if;
 end $$;
 
--- Dono: tudo. Barbeiro: agenda, clientes e estoque; comandas e vales só os dele; despesas não.
+-- Dono: tudo. Barbeiro: clientes; agenda, comandas e vales só os dele; despesas não.
 drop policy if exists registros_membro on public.registros;
 drop policy if exists registros_dono on public.registros;
 drop policy if exists registros_barbeiro_ler on public.registros;
@@ -255,20 +255,20 @@ create policy registros_dono on public.registros for all
   using (public.meu_papel(barbearia_id) = 'dono') with check (public.meu_papel(barbearia_id) = 'dono');
 create policy registros_barbeiro_ler on public.registros for select using (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao in ('comandas', 'vales') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas', 'vales') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_criar on public.registros for insert with check (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao = 'clientes'
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_editar on public.registros for update using (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))))
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))))
   with check (
   public.meu_papel(barbearia_id) = 'barbeiro' and (
-    colecao in ('agendamentos', 'clientes', 'produtos')
-    or (colecao = 'comandas' and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
+    colecao in ('clientes', 'produtos')
+    or (colecao in ('agendamentos', 'comandas') and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id))));
 create policy registros_barbeiro_apagar on public.registros for delete using (
   public.meu_papel(barbearia_id) = 'barbeiro' and colecao = 'comandas'
   and dados ->> 'barbeiroId' = public.meu_barbeiro(barbearia_id));
