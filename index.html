@@ -301,6 +301,12 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
 .nome-app em{font-style:normal;color:var(--accent);background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 18%,var(--accent) 82%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:inline-block;line-height:1.3;padding:.12em .04em 0 0}
 .abertura .nome-app{font-size:clamp(36px,11vw,48px);letter-spacing:.06em;line-height:1.3;overflow:visible}
 .abertura .sub{font-size:15px}
+.manter{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--fg);cursor:pointer;min-height:40px;user-select:none}
+.manter input{appearance:none;-webkit-appearance:none;width:24px;height:24px;margin:0;border:2px solid var(--dim);border-radius:7px;background:transparent;display:grid;place-items:center;flex-shrink:0;cursor:pointer}
+.manter input[type=checkbox]{width:24px;height:24px;min-height:0;min-width:0;padding:0;flex:none;box-shadow:none}
+.manter input:checked{background:var(--accent);border-color:var(--accent)}
+.manter input:checked::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 3px 3px 0;transform:translateY(-1px) rotate(45deg)}
+.manter input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .legal{display:block;font-size:12px;line-height:1.4;color:var(--dim);text-align:center}
 .legal a{color:var(--muted)}
 .marca-app{display:inline-flex;flex-direction:column;gap:6px;align-self:flex-start;margin-bottom:6px}
@@ -624,6 +630,14 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
   // Lê o valor direto do campo (o preenchimento automático do celular nem sempre avisa a página).
   const campo = (id, key) => { const el = document.getElementById(id); const v = el ? el.value : fv(key); if (key) S.f[key] = v; return String(v || ''); };
 
+  // "Manter conectado": marcado, a sessão fica no aparelho; desmarcado, some quando o navegador fecha.
+  const MANTER_KEY = 'degrade-manter';
+  function manter() { try { return localStorage.getItem(MANTER_KEY) !== '0'; } catch (e) { return true; } }
+  const GUARDA_SESSAO = {
+    getItem: (k) => { try { return sessionStorage.getItem(k) || localStorage.getItem(k); } catch (e) { return null; } },
+    setItem: (k, v) => { try { if (manter()) { localStorage.setItem(k, v); sessionStorage.removeItem(k); } else { sessionStorage.setItem(k, v); localStorage.removeItem(k); } } catch (e) { /* sem armazenamento */ } },
+    removeItem: (k) => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) { /* sem armazenamento */ } },
+  };
   // Oferece salvar a senha logo depois de entrar (e não mais tarde, ao trocar de aba).
   function guardarSenha(email, senha) {
     const el = document.getElementById('lg-senha'); if (el) el.value = '';
@@ -637,6 +651,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
       '<p class="sub" style="margin:0">' + (criar ? 'Dono de barbearia ou barbeiro convidado: crie a conta com o seu e-mail.' : 'Use o e-mail e a senha da sua conta.') + '</p>' +
       '<form id="lg-form" class="stack" action="#" method="post" onsubmit="return false" autocomplete="on"><div class="field"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="email" data-f="lgEmail" value="' + esc(fv('lgEmail')) + '"></div>' +
       '<div class="field"><label for="lg-senha">Senha' + (criar ? ' (mínimo 6 caracteres)' : '') + '</label><input id="lg-senha" type="password" autocomplete="' + (criar ? 'new-password' : 'current-password') + '" data-f="lgSenha" value=""></div>' +
+      '<label class="manter"><input type="checkbox" id="lg-manter"' + (manter() ? ' checked' : '') + '><span>Manter conectado neste aparelho</span></label>' +
       '<button type="submit" class="btn pri lg full" data-act="' + (criar ? 'cadastrar' : 'entrar') + '">' + (criar ? 'Criar conta' : 'Entrar') + '</button></form>' +
       (S.ui.loginMsg ? '<span class="sub c-ok">' + esc(S.ui.loginMsg) + '</span>' : '') +
       '<button type="button" class="btn" data-act="loginModo">' + (criar ? 'Já tenho conta' : 'Criar conta nova') + '</button>' +
@@ -1765,6 +1780,9 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     const id = l.dataset.lembrou; const ag = S.ags.find((x) => x.id === id);
     if (ag && !ag.lembreteEm) col('agendamentos').doc(id).update({ lembreteEm: new Date().toISOString() }).catch(() => {});
   });
+  document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'lg-manter') { try { localStorage.setItem(MANTER_KEY, e.target.checked ? '1' : '0'); } catch (er) { /* sem armazenamento */ } }
+  });
   document.addEventListener('input', (e) => {
     const el = e.target;
     if (el.dataset.f) S.f[el.dataset.f] = el.value;
@@ -1997,7 +2015,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     render();
     const C = window.APP_CONFIG || {};
     if (!window.supabase || !C.SUPABASE_URL || !C.SUPABASE_ANON_KEY || /COLE_AQUI/.test(C.SUPABASE_URL + C.SUPABASE_ANON_KEY)) { S.status = 'semconfig'; render(); return; }
-    S.sb = window.supabase.createClient(urlSupabase(C.SUPABASE_URL), String(C.SUPABASE_ANON_KEY).trim());
+    S.sb = window.supabase.createClient(urlSupabase(C.SUPABASE_URL), String(C.SUPABASE_ANON_KEY).trim(), { auth: { storage: GUARDA_SESSAO, persistSession: true, autoRefreshToken: true } });
     S.db = DB;
     S.sb.auth.onAuthStateChange((ev, session) => {
       if (ev === 'PASSWORD_RECOVERY') { S.user = session && session.user; S.status = 'novaSenha'; render(); return; }
