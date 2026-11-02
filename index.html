@@ -787,25 +787,27 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
 
   function vAgenda() {
     const dia = S.ui.agDia, t = today();
-    let list = S.ags.filter((a) => a.data === dia && a.status !== 'cancelado');
-    if (S.ui.agBarb !== 'todos') list = list.filter((a) => a.barbeiroId === S.ui.agBarb);
+    const so = souBarbeiro() ? (S.meuBarb || '-') : null; // barbeiro só vê a própria agenda
+    const filtro = so || S.ui.agBarb;
+    let list = S.ags.filter((a) => a.data === dia && a.status !== 'cancelado' && (!so || a.barbeiroId === so));
+    if (filtro !== 'todos') list = list.filter((a) => a.barbeiroId === filtro);
     list.sort(byHora);
     const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const SEM3 = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const pdia = (x) => { const q = x.split('-').map(Number); return new Date(q[0], q[1] - 1, q[2]); };
     const ini = addDays(dia, -pdia(dia).getDay());
-    const temAg = new Set(S.ags.filter((a) => segura(a)).map((a) => a.data));
+    const temAg = new Set(S.ags.filter((a) => segura(a) && (!so || a.barbeiroId === so)).map((a) => a.data));
     let h = '<div class="row between"><div><div class="lbl">' + MESES[pdia(dia).getMonth()] + ' ' + pdia(dia).getFullYear() + '</div><div class="tiny">' + (dia === t ? 'hoje' : (dia === addDays(t, 1) ? 'amanhã' : esc(fmtDia(dia)))) + '</div></div>' +
       '<div class="row" style="gap:8px">' + (dia !== t ? '<button type="button" class="btn sm" data-act="agHoje">Hoje</button>' : '') +
       '<button type="button" class="btn sm" data-act="agDia" data-v="-7" aria-label="Semana anterior">‹</button><button type="button" class="btn sm" data-act="agDia" data-v="7" aria-label="Próxima semana">›</button></div></div>';
     h += '<div class="semana7">' + [0, 1, 2, 3, 4, 5, 6].map((k) => { const d = addDays(ini, k); return '<button type="button" class="' + (d === dia ? 'on' : '') + '" data-act="agDiaSet" data-v="' + d + '" aria-pressed="' + (d === dia) + '"><small>' + SEM3[pdia(d).getDay()] + '</small><b>' + pdia(d).getDate() + '</b>' + (temAg.has(d) ? '<i></i>' : '<span style="height:5px"></span>') + '</button>'; }).join('') + '</div>';
-    h += barbChips('agBarb', S.ui.agBarb, 'todos', 'Todos');
+    if (!so) h += barbChips('agBarb', S.ui.agBarb, 'todos', 'Todos');
     const exp = expediente(dia); const avisos = [];
     if (!exp) avisos.push('Barbearia fechada nesse dia.');
     else {
       avisos.push('Aberto das ' + exp.abre + ' às ' + exp.fecha + (cfg().almoco && cfg().almoco.ini ? ' · almoço ' + cfg().almoco.ini + '–' + cfg().almoco.fim : '') + '.');
-      (cfg().barbeiros || []).filter((b) => folgaNoDia(b, dia)).forEach((b) => avisos.push(b.nome + ' de folga.'));
-      bloqueiosDoDia(dia).forEach((x) => avisos.push((x.barbeiroId ? barbNome(x.barbeiroId) : 'Todos') + ' bloqueado ' + (x.ini ? 'das ' + x.ini + ' às ' + x.fim : 'o dia inteiro') + (x.motivo ? ' (' + x.motivo + ')' : '') + '.'));
+      (cfg().barbeiros || []).filter((b) => folgaNoDia(b, dia) && (!so || b.id === so)).forEach((b) => avisos.push((so ? 'Você está' : b.nome) + ' de folga.'));
+      bloqueiosDoDia(dia).filter((x) => !so || !x.barbeiroId || x.barbeiroId === so).forEach((x) => avisos.push((x.barbeiroId ? (so ? 'Você está' : barbNome(x.barbeiroId)) : 'Todos') + ' bloqueado ' + (x.ini ? 'das ' + x.ini + ' às ' + x.fim : 'o dia inteiro') + (x.motivo ? ' (' + x.motivo + ')' : '') + '.'));
     }
     h += '<div class="msg dia-info">' + avisos.map(esc).join('<br>') + '</div>';
     h += '<button type="button" class="fab" data-act="agendarNoDia" aria-label="Agendar nesse dia"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>';
@@ -841,7 +843,7 @@ input,select,textarea{border-radius:14px;border-color:var(--line);background:var
     if (!pos && list.length) h += linhaAgora();
     // Próximo horário livre do dia: um toque e já abre o agendamento nele.
     if (exp && dia >= t) {
-      const bs = S.ui.agBarb !== 'todos' ? [S.ui.agBarb] : (cfg().barbeiros || []).map((b) => b.id);
+      const bs = filtro !== 'todos' ? [filtro] : (cfg().barbeiros || []).map((b) => b.id);
       let prox = null; bs.forEach((bid) => { const l = livres(dia, bid, 30)[0]; if (l != null && (prox === null || l < prox.m)) prox = { m: l, b: bid }; });
       if (prox) h += '<button type="button" class="encaixe" data-act="encaixar" data-v="' + toHora(prox.m) + '" data-b="' + esc(prox.b) + '">+ Encaixar às ' + toHora(prox.m) + (bs.length > 1 ? ' com ' + esc(primeiroNome(barbNome(prox.b))) : '') + '</button>';
     }
