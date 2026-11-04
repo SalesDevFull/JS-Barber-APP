@@ -1,0 +1,42 @@
+# Cabeçalhos para o Cloudflare Pages (o mesmo que o vercel.json faz na Vercel).
+# Páginas e scripts sempre na versão mais nova; ícones guardados por 1 dia.
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/config.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/pix.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/legal.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index
+  Cache-Control: public, max-age=0, must-revalidate
+
+/agendar
+  Cache-Control: public, max-age=0, must-revalidate
+
+/admin
+  Cache-Control: public, max-age=0, must-revalidate
+
+/termos
+  Cache-Control: public, max-age=0, must-revalidate
+
+/privacidade
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.png
+  Cache-Control: public, max-age=86400
